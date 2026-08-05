@@ -126,7 +126,7 @@
         <input type="text" id="local" placeholder="Ex: F40, Coluna, etc.">
 
         <label>Ocorrência:</label>
-        <select id="ocorrencia">
+        <select id="ocorrencia" onchange="verificarOcorrenciaOutros()">
             <option value="" disabled selected>Selecione a ocorrência...</option>
             <option value="Vazamentos de Ar">Vazamentos de Ar</option>
             <option value="Vazamento de Agua">Vazamento de Agua</option>
@@ -135,6 +135,7 @@
             <option value="TV Ligada">TV Ligada</option>
             <option value="Outros">Outros</option>
         </select>
+        <input type="text" id="ocorrencia_outros" placeholder="Especifique a ocorrência..." style="display: none; margin-top: 5px; border-color: var(--primary);">
 
         <label>Descrição do Problema (Opcional se a Ocorrência já explicar):</label>
         <input type="text" id="descricao" placeholder="Detalhes adicionais...">
@@ -207,6 +208,17 @@
             }
         }
 
+        function verificarOcorrenciaOutros() {
+            const ocorrencia = document.getElementById('ocorrencia').value;
+            const campoOutros = document.getElementById('ocorrencia_outros');
+            if (ocorrencia === 'Outros') {
+                campoOutros.style.display = 'block';
+            } else {
+                campoOutros.style.display = 'none';
+                campoOutros.value = '';
+            }
+        }
+
         // ====== CÂMERA ======
         async function abrirCamera() {
             const modal = document.getElementById('camera-modal');
@@ -255,8 +267,13 @@
                 if (!areaVal) { alert("Você marcou 'Outros', por favor digite o nome da área!"); return; }
             }
 
+            let ocorrenciaVal = document.getElementById('ocorrencia').value;
+            if (ocorrenciaVal === 'Outros') {
+                ocorrenciaVal = document.getElementById('ocorrencia_outros').value;
+                if (!ocorrenciaVal) { alert("Você marcou 'Outros', por favor especifique a ocorrência!"); return; }
+            }
+
             const local = document.getElementById('local').value;
-            const ocorrencia = document.getElementById('ocorrencia').value;
             const descricao = document.getElementById('descricao').value;
             const foto = document.getElementById('foto_base64').value;
             
@@ -264,32 +281,31 @@
             let horaAtual = new Date().toLocaleTimeString('pt-BR');
 
             if (!areaVal) { alert("Selecione a Área!"); return; }
-            if (!ocorrencia) { alert("Selecione a Ocorrência!"); return; }
+            if (!ocorrenciaVal) { alert("Selecione a Ocorrência!"); return; }
 
             if (indiceEdicao !== null) {
-                // Modo Edição: tenta manter a data/hora original, se existir
                 let regAntigo = registros[indiceEdicao];
                 let dataSalva = regAntigo.data || dataAtual;
                 let horaSalva = regAntigo.hora || horaAtual;
                 
-                // Tratamento caso a data antiga esteja no formato "dd/mm/aaaa hh:mm"
                 if (dataSalva.includes(' ')) {
                     let parts = dataSalva.split(' ');
                     dataSalva = parts[0];
                     horaSalva = parts[1] || horaAtual;
                 }
 
-                registros[indiceEdicao] = { data: dataSalva, hora: horaSalva, area: areaVal, local, ocorrencia, descricao, foto };
+                registros[indiceEdicao] = { data: dataSalva, hora: horaSalva, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto };
                 alert("Registro atualizado com sucesso!");
                 cancelarEdicao();
             } else {
-                // Modo Inserção
-                const novoRegistro = { data: dataAtual, hora: horaAtual, area: areaVal, local, ocorrencia, descricao, foto };
+                const novoRegistro = { data: dataAtual, hora: horaAtual, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto };
                 registros.push(novoRegistro);
                 alert("Registro inserido com sucesso!");
                 
                 // Limpa campos para nova entrada
                 document.getElementById('local').value = '';
+                document.getElementById('ocorrencia').value = '';
+                verificarOcorrenciaOutros(); // Esconde o campo "outros" da ocorrência se estiver visível
                 document.getElementById('descricao').value = '';
                 document.getElementById('foto_base64').value = '';
                 document.getElementById('photo-preview').style.display = 'none';
@@ -316,8 +332,19 @@
             }
             verificarAreaOutros();
 
+            // Preenche a Ocorrência
+            const opcoesOcorrencia = Array.from(document.getElementById('ocorrencia').options).map(o => o.value);
+            if (opcoesOcorrencia.includes(reg.ocorrencia)) {
+                document.getElementById('ocorrencia').value = reg.ocorrencia;
+            } else if (reg.ocorrencia) {
+                document.getElementById('ocorrencia').value = 'Outros';
+                document.getElementById('ocorrencia_outros').value = reg.ocorrencia;
+            } else {
+                document.getElementById('ocorrencia').value = '';
+            }
+            verificarOcorrenciaOutros();
+
             document.getElementById('local').value = reg.local || '';
-            document.getElementById('ocorrencia').value = reg.ocorrencia || '';
             document.getElementById('descricao').value = reg.descricao || '';
             document.getElementById('foto_base64').value = reg.foto || '';
             
@@ -345,6 +372,7 @@
             
             document.getElementById('local').value = '';
             document.getElementById('ocorrencia').value = '';
+            verificarOcorrenciaOutros();
             document.getElementById('descricao').value = '';
             document.getElementById('foto_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
@@ -380,7 +408,6 @@
                 let ocorrenciaTxt = reg.ocorrencia ? `<strong>Ocorrência:</strong> ${reg.ocorrencia} <br>` : '';
                 let descTxt = reg.descricao ? `<strong>Descrição:</strong> ${reg.descricao} <br>` : '';
                 
-                // Formatação retroativa para registros antigos que tinham data e hora juntos
                 let displayDataHora = reg.data || '';
                 if (reg.hora && !displayDataHora.includes(reg.hora)) {
                     displayDataHora += ` às ${reg.hora}`;
@@ -408,13 +435,11 @@
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             let csvContent = "\uFEFF"; 
             
-            // CABEÇALHO NA ORDEM EXATA SOLICITADA
             csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             
             registros.forEach((r, index) => {
                 let numItem = index + 1;
                 
-                // Trata dados antigos (se houver) que estavam no formato "DD/MM/AAAA HH:MM"
                 let rData = r.data || "";
                 let rHora = r.hora || "";
                 if (rData.includes(' ')) {
@@ -427,8 +452,6 @@
                 let local = r.local ? r.local.replace(/;/g, ",") : "";
                 let ocorrencia = r.ocorrencia ? r.ocorrencia.replace(/;/g, ",") : "";
                 let desc = r.descricao ? r.descricao.replace(/;/g, ",") : "";
-                
-                // Classificação da Mídia
                 let midia = r.foto ? "Foto" : "Não tem";
 
                 csvContent += `${numItem};${rData};${rHora};${area};${local};${ocorrencia};${desc};${midia}\n`;
