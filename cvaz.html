@@ -82,19 +82,31 @@
             background-color: rgba(0,0,0,0.9);
             z-index: 1000;
             text-align: center;
+            padding-top: 20px;
         }
 
-        #video-preview { width: 100%; max-height: 70vh; background-color: black; margin-top: 20px; }
-        #photo-preview { display: none; width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; border: 1px solid #ccc; }
+        #video-preview { width: 100%; max-height: 60vh; background-color: black; }
+        .media-preview { display: none; width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; border: 1px solid #ccc; }
 
         .registro-item { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
         .registro-item:last-child { border-bottom: none; }
         .registro-img { max-width: 100px; border-radius: 5px; display: block; margin-top: 10px; }
+        .registro-video { max-width: 150px; border-radius: 5px; display: block; margin-top: 10px; }
 
         .acoes-export { display: flex; flex-wrap: wrap; gap: 10px; }
         .acoes-export button { flex: 1 1 calc(50% - 10px); margin-top: 5px; }
         .acoes-item { display: flex; gap: 10px; margin-top: 10px; }
         .acoes-item button { margin-top: 0; padding: 8px; font-size: 14px; }
+        
+        .modal-botoes {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 90%;
+            margin: 0 auto;
+        }
+        .modal-botoes button { margin-top: 0; width: 100%; }
     </style>
 </head>
 <body>
@@ -140,10 +152,13 @@
         <label>Descrição do Problema (Opcional):</label>
         <input type="text" id="descricao" placeholder="Detalhes adicionais...">
 
-        <label>Foto:</label>
-        <img id="photo-preview" src="" alt="Preview">
-        <button class="btn-secondary" onclick="abrirCamera()">📸 Tirar Foto / Alterar Foto</button>
+        <label>Mídia (Foto ou Vídeo):</label>
+        <img id="photo-preview" class="media-preview" src="" alt="Preview Foto">
+        <video id="video-file-preview" class="media-preview" controls></video>
+        
+        <button class="btn-secondary" onclick="abrirCamera()">📷 Tirar Foto / Gravar Vídeo</button>
         <input type="hidden" id="foto_base64">
+        <input type="hidden" id="video_base64">
 
         <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()">➕ Inserir Registro</button>
         <button class="btn-secondary" id="btn-cancelar-edicao" style="display: none; margin-top: 10px;" onclick="cancelarEdicao()">❌ Cancelar Edição</button>
@@ -167,13 +182,20 @@
 
     <div id="camera-modal">
         <video id="video-preview" autoplay playsinline></video>
-        <button class="btn-success" style="width: 80%; margin: 10px auto;" onclick="capturarFoto()">📷 Capturar</button>
-        <button class="btn-danger" style="width: 80%; margin: 0 auto;" onclick="fecharCamera()">❌ Cancelar</button>
+        <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 Gravando vídeo...</p>
+        <div class="modal-botoes">
+            <button id="btn-tirar-foto" class="btn-success" onclick="capturarFoto()">📷 Capturar Foto</button>
+            <button id="btn-iniciar-gravacao" class="btn-warning" style="color: var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 Gravar Vídeo</button>
+            <button id="btn-parar-gravacao" class="btn-danger" style="display: none;" onclick="pararGravacaoVideo()">⏹️ Parar e Salvar Vídeo</button>
+            <button class="btn-danger" onclick="fecharCamera()">❌ Fechar / Cancelar</button>
+        </div>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
     <script>
         let streamDeVideo;
+        let mediaRecorder;
+        let pedacosGravados = [];
         let registros = [];
         let indiceEdicao = null; 
 
@@ -219,17 +241,22 @@
             }
         }
 
-        // ====== CÂMERA ======
+        // ====== CÂMERA E MÍDIA ======
         async function abrirCamera() {
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('video-preview');
             modal.style.display = 'block';
 
+            document.getElementById('btn-tirar-foto').style.display = 'block';
+            document.getElementById('btn-iniciar-gravacao').style.display = 'block';
+            document.getElementById('btn-parar-gravacao').style.display = 'none';
+            document.getElementById('status-gravacao').style.display = 'none';
+
             try {
-                streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
                 video.srcObject = streamDeVideo;
             } catch (erro) {
-                alert("Erro ao acessar câmera: " + erro);
+                alert("Erro ao acessar câmera/microfone: " + erro);
                 fecharCamera();
             }
         }
@@ -237,7 +264,12 @@
         function fecharCamera() {
             const modal = document.getElementById('camera-modal');
             modal.style.display = 'none';
-            if (streamDeVideo) streamDeVideo.getTracks().forEach(track => track.stop());
+            if (streamDeVideo) {
+                streamDeVideo.getTracks().forEach(track => track.stop());
+            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
         }
 
         function capturarFoto() {
@@ -245,17 +277,76 @@
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth || 1280;
+            canvas.height = video.videoHeight || 720;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
-            document.getElementById('foto_base64').value = fotoBase64;
             
-            const preview = document.getElementById('photo-preview');
-            preview.src = fotoBase64;
-            preview.style.display = 'block';
+            // Limpa o vídeo anterior se houver e seta a foto
+            document.getElementById('foto_base64').value = fotoBase64;
+            document.getElementById('video_base64').value = '';
+            
+            const previewFoto = document.getElementById('photo-preview');
+            const previewVideo = document.getElementById('video-file-preview');
+            
+            previewFoto.src = fotoBase64;
+            previewFoto.style.display = 'block';
+            previewVideo.style.display = 'none';
+            previewVideo.src = '';
 
+            fecharCamera();
+        }
+
+        function iniciarGravacaoVideo() {
+            pedacosGravados = [];
+            try {
+                mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' });
+            } catch (e) {
+                try {
+                    mediaRecorder = new MediaRecorder(streamDeVideo); // fallback padrão
+                } catch (err) {
+                    alert("Seu navegador não suporta gravação de vídeo integrada.");
+                    return;
+                }
+            }
+
+            mediaRecorder.ondataavailable = function(event) {
+                if (event.data && event.data.size > 0) {
+                    pedacosGravados.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = function() {
+                const blob = new Blob(pedacosGravados, { type: 'video/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = function() {
+                    const videoBase64 = reader.result;
+                    document.getElementById('video_base64').value = videoBase64;
+                    document.getElementById('foto_base64').value = ''; // Limpa foto
+
+                    const previewFoto = document.getElementById('photo-preview');
+                    const previewVideo = document.getElementById('video-file-preview');
+                    
+                    previewFoto.style.display = 'none';
+                    previewFoto.src = '';
+                    previewVideo.src = videoBase64;
+                    previewVideo.style.display = 'block';
+                };
+            };
+
+            mediaRecorder.start();
+            document.getElementById('btn-tirar-foto').style.display = 'none';
+            document.getElementById('btn-iniciar-gravacao').style.display = 'none';
+            document.getElementById('btn-parar-gravacao').style.display = 'block';
+            document.getElementById('status-gravacao').style.display = 'block';
+        }
+
+        function pararGravacaoVideo() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
             fecharCamera();
         }
 
@@ -276,6 +367,7 @@
             const local = document.getElementById('local').value;
             const descricao = document.getElementById('descricao').value;
             const foto = document.getElementById('foto_base64').value;
+            const video = document.getElementById('video_base64').value;
             
             let dataAtual = new Date().toLocaleDateString('pt-BR');
             let horaAtual = new Date().toLocaleTimeString('pt-BR');
@@ -294,11 +386,11 @@
                     horaSalva = parts[1] || horaAtual;
                 }
 
-                registros[indiceEdicao] = { data: dataSalva, hora: horaSalva, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto };
+                registros[indiceEdicao] = { data: dataSalva, hora: horaSalva, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto, video };
                 alert("Registro atualizado com sucesso!");
                 cancelarEdicao();
             } else {
-                const novoRegistro = { data: dataAtual, hora: horaAtual, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto };
+                const novoRegistro = { data: dataAtual, hora: horaAtual, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto, video };
                 registros.push(novoRegistro);
                 alert("Registro inserido com sucesso!");
                 
@@ -307,7 +399,9 @@
                 verificarOcorrenciaOutros();
                 document.getElementById('descricao').value = '';
                 document.getElementById('foto_base64').value = '';
+                document.getElementById('video_base64').value = '';
                 document.getElementById('photo-preview').style.display = 'none';
+                document.getElementById('video-file-preview').style.display = 'none';
             }
             
             await localforage.setItem('registros_caca_desperdicios', registros);
@@ -343,14 +437,24 @@
 
             document.getElementById('local').value = reg.local || '';
             document.getElementById('descricao').value = reg.descricao || '';
-            document.getElementById('foto_base64').value = reg.foto || '';
             
-            const preview = document.getElementById('photo-preview');
+            document.getElementById('foto_base64').value = reg.foto || '';
+            document.getElementById('video_base64').value = reg.video || '';
+            
+            const previewFoto = document.getElementById('photo-preview');
+            const previewVideo = document.getElementById('video-file-preview');
+
             if (reg.foto) {
-                preview.src = reg.foto;
-                preview.style.display = 'block';
+                previewFoto.src = reg.foto;
+                previewFoto.style.display = 'block';
+                previewVideo.style.display = 'none';
+            } else if (reg.video) {
+                previewVideo.src = reg.video;
+                previewVideo.style.display = 'block';
+                previewFoto.style.display = 'none';
             } else {
-                preview.style.display = 'none';
+                previewFoto.style.display = 'none';
+                previewVideo.style.display = 'none';
             }
 
             document.getElementById('titulo-form').innerText = "Editando Registro";
@@ -372,7 +476,9 @@
             verificarOcorrenciaOutros();
             document.getElementById('descricao').value = '';
             document.getElementById('foto_base64').value = '';
+            document.getElementById('video_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
+            document.getElementById('video-file-preview').style.display = 'none';
 
             const btnSalvar = document.getElementById('btn-salvar');
             btnSalvar.innerText = "➕ Inserir Registro";
@@ -400,7 +506,13 @@
                 const item = document.createElement('div');
                 item.className = 'registro-item';
                 
-                let htmlImg = reg.foto ? `<img src="${reg.foto}" class="registro-img">` : '';
+                let htmlMidia = '';
+                if (reg.foto) {
+                    htmlMidia = `<img src="${reg.foto}" class="registro-img">`;
+                } else if (reg.video) {
+                    htmlMidia = `<video src="${reg.video}" class="registro-video" controls></video>`;
+                }
+
                 let localTxt = reg.local ? `<strong>Local:</strong> ${reg.local} <br>` : '';
                 let ocorrenciaTxt = reg.ocorrencia ? `<strong>Ocorrência:</strong> ${reg.ocorrencia} <br>` : '';
                 let descTxt = reg.descricao ? `<strong>Descrição:</strong> ${reg.descricao} <br>` : '';
@@ -416,7 +528,7 @@
                     ${ocorrenciaTxt}
                     ${descTxt}
                     <strong>Registrado em:</strong> ${displayDataHora} <br>
-                    ${htmlImg}
+                    ${htmlMidia}
                     <div class="acoes-item">
                         <button class="btn-warning" onclick="editarRegistro(${index})">✏️ Editar</button>
                         <button class="btn-danger" onclick="excluirRegistro(${index})">🗑 Excluir</button>
@@ -436,7 +548,6 @@
             if (!nomeArquivo.endsWith('.csv')) nomeArquivo += '.csv';
 
             let csvContent = "\uFEFF"; 
-            
             csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             
             let registrosOrdenados = [...registros].sort((a, b) => {
@@ -447,7 +558,6 @@
 
             registrosOrdenados.forEach((r, index) => {
                 let numItem = index + 1;
-                
                 let rData = r.data || "";
                 let rHora = r.hora || "";
                 if (rData.includes(' ')) {
@@ -460,7 +570,7 @@
                 let local = r.local ? r.local.replace(/;/g, ",") : "";
                 let ocorrencia = r.ocorrencia ? r.ocorrencia.replace(/;/g, ",") : "";
                 let desc = r.descricao ? r.descricao.replace(/;/g, ",") : "";
-                let midia = r.foto ? "Foto" : "Não tem";
+                let midia = r.foto ? "Foto" : (r.video ? "Vídeo" : "Não tem");
 
                 csvContent += `${numItem};${rData};${rHora};${area};${local};${ocorrencia};${desc};${midia}\n`;
             });
@@ -471,7 +581,6 @@
             link.click();
         }
 
-        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE COM TEXTOS NA ESQUERDA E FOTOS NA DIREITA
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             
@@ -482,12 +591,10 @@
             alert("Gerando PPTX (Formato de Lista: 4 por página), aguarde um instante...");
             let pptx = new PptxGenJS();
             
-            // Capa
             let slideCapa = pptx.addSlide();
             slideCapa.addText("Relatório - Caça Desperdícios", { x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0056b3', align: 'center' });
             slideCapa.addText("Gerado em: " + new Date().toLocaleDateString('pt-BR'), { x: 1, y: 3, w: '80%', fontSize: 18, align: 'center' });
             
-            // Ordenando por Área
             let registrosOrdenados = [...registros].sort((a, b) => {
                 let areaA = a.area ? a.area.toLowerCase() : "";
                 let areaB = b.area ? b.area.toLowerCase() : "";
@@ -498,20 +605,15 @@
             
             registrosOrdenados.forEach((reg, index) => {
                 let posicaoNoSlide = index % 4;
-                
                 if (posicaoNoSlide === 0) {
                     slideAtual = pptx.addSlide();
                 }
                 
-                // O Y base desce 1.35 polegadas a cada nova linha
                 let yBase = 0.2 + (posicaoNoSlide * 1.35); 
-                
-                // Organização dos textos (NA ESQUERDA)
-                let textX = 0.3; // Distância da margem esquerda
-                let textW = 7.0; // Largura limite para não sobrepor a imagem da direita
+                let textX = 0.3; 
+                let textW = 7.0; 
                 let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
                 
-                // Preparando string de Data e Hora
                 let displayDataHora = reg.data || '';
                 if (reg.hora && !displayDataHora.includes(reg.hora)) {
                     displayDataHora += ` às ${reg.hora}`;
@@ -526,10 +628,9 @@
                     yDetalhe += 0.25; 
                 }
                 
-                // Data e Hora no final das informações daquele registro
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 11, color: '888888', italic: true });
 
-                // Foto à direita (NA DIREITA - x: 7.5)
+                // No PPTX, como vídeos não são imagens estáticas, se for foto coloca no slide. Se for vídeo, avisa no slide ou pula para não quebrar.
                 if (reg.foto) {
                     slideAtual.addImage({ 
                         data: reg.foto, 
@@ -539,6 +640,8 @@
                         h: 1.25, 
                         sizing: { type: 'contain', w: 2.2, h: 1.25 } 
                     }); 
+                } else if (reg.video) {
+                    slideAtual.addText("[ARQUIVO DE VÍDEO NO JSON]", { x: 7.5, y: yBase + 0.4, w: 2.2, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
                 }
             });
             
