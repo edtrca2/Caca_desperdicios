@@ -506,7 +506,7 @@
                 // O Y base desce 1.35 polegadas a cada nova linha
                 let yBase = 0.2 + (posicaoNoSlide * 1.35); 
                 
-                // Organização dos textos (AGORA NA ESQUERDA)
+                // Organização dos textos (NA ESQUERDA)
                 let textX = 0.3; // Distância da margem esquerda
                 let textW = 7.0; // Largura limite para não sobrepor a imagem da direita
                 let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
@@ -529,7 +529,7 @@
                 // Data e Hora no final das informações daquele registro
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 11, color: '888888', italic: true });
 
-                // Foto à direita (AGORA NA DIREITA - x: 7.5)
+                // Foto à direita (NA DIREITA - x: 7.5)
                 if (reg.foto) {
                     slideAtual.addImage({ 
                         data: reg.foto, 
@@ -607,6 +607,19 @@
             }
 
             event.target.value = ''; 
+        }
+    </script>
+
+    <!-- REGISTRO DO SERVICE WORKER (OFFLINE) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').then(function(registration) {
+                    console.log('ServiceWorker registrado com sucesso com o escopo: ', registration.scope);
+                }, function(err) {
+                    console.log('Falha ao registrar o ServiceWorker: ', err);
+                });
+            });
         }
     </script>
 </body>
