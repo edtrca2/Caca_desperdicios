@@ -2,13 +2,12 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <!-- Bloqueia o Google de achar a página -->
     <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <title>Caça Desperdícios</title>
 
-    <!-- Bibliotecas (LocalForage para banco de dados offline e PptxGenJS para PowerPoint) -->
+    <!-- Bibliotecas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -21,6 +20,8 @@
             --text: #333333;
             --danger: #dc3545;
             --success: #28a745;
+            --warning: #fd7e14;
+            --info: #17a2b8;
         }
 
         body {
@@ -29,7 +30,7 @@
             color: var(--text);
             margin: 0;
             padding: 15px;
-            padding-bottom: 80px; /* Espaço para botões de exportação no final */
+            padding-bottom: 120px; 
         }
 
         h2 { text-align: center; color: var(--primary); }
@@ -49,7 +50,7 @@
             font-size: 14px;
         }
 
-        input[type="text"], input[type="date"] {
+        input[type="text"], select {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
@@ -57,6 +58,7 @@
             border-radius: 5px;
             box-sizing: border-box;
             font-size: 16px;
+            background-color: white;
         }
 
         button {
@@ -75,8 +77,9 @@
         .btn-success { background-color: var(--success); }
         .btn-danger { background-color: var(--danger); margin-top: 5px;}
         .btn-secondary { background-color: #6c757d; }
+        .btn-warning { background-color: var(--warning); }
+        .btn-info { background-color: var(--info); }
 
-        /* Modal da Câmera */
         #camera-modal {
             display: none;
             position: fixed;
@@ -102,7 +105,6 @@
             border: 1px solid #ccc;
         }
 
-        /* Lista de Registros */
         .registro-item {
             border-bottom: 1px solid #eee;
             padding-bottom: 10px;
@@ -119,7 +121,12 @@
 
         .acoes-export {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
+        }
+        .acoes-export button {
+            flex: 1 1 calc(50% - 10px);
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -131,7 +138,15 @@
         <h3>Novo Registro</h3>
         
         <label>Área / Setor:</label>
-        <input type="text" id="area" placeholder="Ex: Produção linha 1">
+        <select id="area">
+            <option value="" disabled selected>Selecione uma área...</option>
+            <option value="Produção - Linha 1">Produção - Linha 1</option>
+            <option value="Produção - Linha 2">Produção - Linha 2</option>
+            <option value="Manutenção">Manutenção</option>
+            <option value="Logística / Estoque">Logística / Estoque</option>
+            <option value="Qualidade">Qualidade</option>
+            <option value="Administrativo">Administrativo</option>
+        </select>
 
         <label>Descrição do Problema:</label>
         <input type="text" id="descricao" placeholder="O que está acontecendo?">
@@ -149,12 +164,18 @@
         <div id="lista-registros"></div>
     </div>
 
-    <div class="card acoes-export">
-        <button class="btn-success" onclick="exportarCSV()">📊 Exportar CSV</button>
-        <button class="btn-primary" onclick="exportarPPTX()">📺 Exportar PPTX</button>
+    <div class="card">
+        <h3 style="margin-top: 0;">Exportação / Importação</h3>
+        <div class="acoes-export">
+            <button class="btn-success" onclick="exportarCSV()">📊 Exportar CSV</button>
+            <button class="btn-primary" onclick="exportarPPTX()">📺 Exportar PPTX</button>
+            <button class="btn-info" onclick="exportarJSON()">💾 Exportar JSON</button>
+            <button class="btn-warning" onclick="acionarImportarJSON()">📂 Importar JSON</button>
+        </div>
+        <!-- Input escondido para carregar o arquivo JSON -->
+        <input type="file" id="input-json" accept=".json" style="display: none;" onchange="importarJSON(event)">
     </div>
 
-    <!-- Modal da Câmera (Fica escondido até o usuário clicar) -->
     <div id="camera-modal">
         <video id="video-preview" autoplay playsinline></video>
         <button class="btn-success" style="width: 80%; margin: 10px auto;" onclick="capturarFoto()">📷 Capturar</button>
@@ -166,23 +187,28 @@
         let streamDeVideo;
         let registros = [];
 
-        // Inicia carregando dados salvos
         window.onload = async function() {
+            // Recupera os dados do banco offline
             let dadosSalvos = await localforage.getItem('registros_caca_desperdicios');
             if (dadosSalvos) {
                 registros = dadosSalvos;
                 atualizarLista();
             }
+
+            // Persistência da Área: Recupera a última área selecionada
+            let ultimaArea = localStorage.getItem('ultima_area_selecionada');
+            if (ultimaArea) {
+                document.getElementById('area').value = ultimaArea;
+            }
         };
 
-        // ====== LÓGICA DA CÂMERA ======
+        // ====== CÂMERA ======
         async function abrirCamera() {
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('video-preview');
             modal.style.display = 'block';
 
             try {
-                // Pede acesso à câmera traseira (environment)
                 streamDeVideo = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: 'environment' } 
                 });
@@ -196,7 +222,6 @@
         function fecharCamera() {
             const modal = document.getElementById('camera-modal');
             modal.style.display = 'none';
-            // Desliga a câmera para economizar bateria
             if (streamDeVideo) {
                 streamDeVideo.getTracks().forEach(track => track.stop());
             }
@@ -211,7 +236,7 @@
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); // 60% de qualidade para não pesar muito
+            const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
             
             document.getElementById('foto_base64').value = fotoBase64;
             
@@ -222,25 +247,25 @@
             fecharCamera();
         }
 
-        // ====== LÓGICA DE INSERIR E EXCLUIR ======
+        // ====== INSERIR E EXCLUIR ======
         async function inserirRegistro() {
             const area = document.getElementById('area').value;
             const descricao = document.getElementById('descricao').value;
             const foto = document.getElementById('foto_base64').value;
-            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const dataAtual = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR');
 
-            if (!area || !descricao) {
-                alert("Preencha a Área e a Descrição!");
-                return;
-            }
+            if (!area) { alert("Selecione a Área!"); return; }
+            if (!descricao) { alert("Preencha a Descrição!"); return; }
 
             const novoRegistro = { data: dataAtual, area, descricao, foto };
             registros.push(novoRegistro);
             
             await localforage.setItem('registros_caca_desperdicios', registros);
             
-            // Limpa o formulário
-            document.getElementById('area').value = '';
+            // Persistência: Salva a área atual para o próximo registro
+            localStorage.setItem('ultima_area_selecionada', area);
+            
+            // Limpa APENAS a descrição e a foto, mantendo a área selecionada!
             document.getElementById('descricao').value = '';
             document.getElementById('foto_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
@@ -251,7 +276,7 @@
 
         async function excluirRegistro(index) {
             if (confirm("Tem certeza que deseja excluir este registro?")) {
-                registros.splice(index, 1); // Remove o item
+                registros.splice(index, 1);
                 await localforage.setItem('registros_caca_desperdicios', registros);
                 atualizarLista();
             }
@@ -271,7 +296,7 @@
                 item.innerHTML = `
                     <strong>Área:</strong> ${reg.area} <br>
                     <strong>Problema:</strong> ${reg.descricao} <br>
-                    <strong>Data:</strong> ${reg.data} <br>
+                    <strong>Data/Hora:</strong> ${reg.data} <br>
                     ${htmlImg}
                     <button class="btn-danger" style="padding: 5px; width: auto; font-size: 14px;" onclick="excluirRegistro(${index})">🗑 Excluir</button>
                 `;
@@ -279,52 +304,78 @@
             });
         }
 
-        // ====== EXPORTAÇÕES ======
+        // ====== EXPORTAÇÃO E IMPORTAÇÃO ======
+        
         function exportarCSV() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-
-            let csvContent = "\uFEFF"; // Garante os acentos corretos no Excel
+            let csvContent = "\uFEFF"; 
             csvContent += "Data;Area;Descricao\n";
-            
             registros.forEach(r => {
-                let desc = r.descricao.replace(/;/g, ","); // Evita quebra do CSV
+                let desc = r.descricao.replace(/;/g, ",");
                 let area = r.area.replace(/;/g, ",");
                 csvContent += `${r.data};${area};${desc}\n`;
             });
-
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "auditoria_desperdicios.csv");
-            document.body.appendChild(link);
+            link.href = URL.createObjectURL(blob);
+            link.download = "auditoria_desperdicios.csv";
             link.click();
-            document.body.removeChild(link);
         }
 
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-            
             alert("Gerando PPTX, aguarde um instante...");
             let pptx = new PptxGenJS();
-
-            // Slide de Título
             let slideCapa = pptx.addSlide();
             slideCapa.addText("Relatório - Caça Desperdícios", { x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0056b3', align: 'center' });
             slideCapa.addText("Gerado em: " + new Date().toLocaleDateString('pt-BR'), { x: 1, y: 3, w: '80%', fontSize: 18, align: 'center' });
-
-            // Um slide para cada registro
             registros.forEach(reg => {
                 let slide = pptx.addSlide();
                 slide.addText("Área: " + reg.area, { x: 0.5, y: 0.5, w: '90%', fontSize: 24, bold: true, color: '333333' });
                 slide.addText("Problema: " + reg.descricao, { x: 0.5, y: 1.2, w: '90%', fontSize: 18, color: '666666' });
-                
                 if (reg.foto) {
-                    slide.addImage({ data: reg.foto, x: 0.5, y: 2.0, w: 6, h: 3.3 }); // w/h ajustado para proporção 16:9
+                    slide.addImage({ data: reg.foto, x: 0.5, y: 2.0, w: 6, h: 3.3 }); 
                 }
             });
-
             pptx.writeFile({ fileName: "Relatorio_Desperdicios.pptx" });
+        }
+
+        function exportarJSON() {
+            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+            const jsonString = JSON.stringify(registros, null, 2);
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "backup_desperdicios.json";
+            link.click();
+        }
+
+        function acionarImportarJSON() {
+            document.getElementById('input-json').click();
+        }
+
+        function importarJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const dadosImportados = JSON.parse(e.target.result);
+                    if (Array.isArray(dadosImportados)) {
+                        registros = dadosImportados;
+                        await localforage.setItem('registros_caca_desperdicios', registros);
+                        atualizarLista();
+                        alert("Dados importados com sucesso!");
+                    } else {
+                        alert("Formato de arquivo inválido. O arquivo JSON deve conter uma lista de registros.");
+                    }
+                } catch (erro) {
+                    alert("Erro ao ler o arquivo JSON: " + erro);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Limpa o input para permitir importar o mesmo arquivo novamente, se necessário
         }
     </script>
 </body>
