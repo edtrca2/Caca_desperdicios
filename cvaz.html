@@ -137,7 +137,7 @@
         </select>
         <input type="text" id="ocorrencia_outros" placeholder="Especifique a ocorrência..." style="display: none; margin-top: 5px; border-color: var(--primary);">
 
-        <label>Descrição do Problema (Opcional se a Ocorrência já explicar):</label>
+        <label>Descrição do Problema (Opcional):</label>
         <input type="text" id="descricao" placeholder="Detalhes adicionais...">
 
         <label>Foto:</label>
@@ -162,7 +162,7 @@
             <button class="btn-info" onclick="exportarJSON()">💾 Exportar JSON</button>
             <button class="btn-warning" style="color: var(--warning-text);" onclick="acionarImportarJSON()">📂 Importar JSON</button>
         </div>
-        <input type="file" id="input-json" accept=".json" style="display: none;" onchange="importarJSON(event)">
+        <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
     </div>
 
     <div id="camera-modal">
@@ -302,10 +302,9 @@
                 registros.push(novoRegistro);
                 alert("Registro inserido com sucesso!");
                 
-                // Limpa campos para nova entrada
                 document.getElementById('local').value = '';
                 document.getElementById('ocorrencia').value = '';
-                verificarOcorrenciaOutros(); // Esconde o campo "outros" da ocorrência se estiver visível
+                verificarOcorrenciaOutros();
                 document.getElementById('descricao').value = '';
                 document.getElementById('foto_base64').value = '';
                 document.getElementById('photo-preview').style.display = 'none';
@@ -322,7 +321,6 @@
             const reg = registros[index];
             indiceEdicao = index;
 
-            // Preenche a Área
             const opcoesArea = Array.from(document.getElementById('area').options).map(o => o.value);
             if (opcoesArea.includes(reg.area)) {
                 document.getElementById('area').value = reg.area;
@@ -332,7 +330,6 @@
             }
             verificarAreaOutros();
 
-            // Preenche a Ocorrência
             const opcoesOcorrencia = Array.from(document.getElementById('ocorrencia').options).map(o => o.value);
             if (opcoesOcorrencia.includes(reg.ocorrencia)) {
                 document.getElementById('ocorrencia').value = reg.ocorrencia;
@@ -437,7 +434,14 @@
             
             csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             
-            registros.forEach((r, index) => {
+            // Ordenando por Área antes de exportar
+            let registrosOrdenados = [...registros].sort((a, b) => {
+                let areaA = a.area ? a.area.toLowerCase() : "";
+                let areaB = b.area ? b.area.toLowerCase() : "";
+                return areaA.localeCompare(areaB);
+            });
+
+            registrosOrdenados.forEach((r, index) => {
                 let numItem = index + 1;
                 
                 let rData = r.data || "";
@@ -471,7 +475,14 @@
             slideCapa.addText("Relatório - Caça Desperdícios", { x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0056b3', align: 'center' });
             slideCapa.addText("Gerado em: " + new Date().toLocaleDateString('pt-BR'), { x: 1, y: 3, w: '80%', fontSize: 18, align: 'center' });
             
-            registros.forEach(reg => {
+            // Ordenando por Área antes de exportar
+            let registrosOrdenados = [...registros].sort((a, b) => {
+                let areaA = a.area ? a.area.toLowerCase() : "";
+                let areaB = b.area ? b.area.toLowerCase() : "";
+                return areaA.localeCompare(areaB);
+            });
+
+            registrosOrdenados.forEach(reg => {
                 let slide = pptx.addSlide();
                 let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
                 
@@ -491,34 +502,69 @@
 
         function exportarJSON() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+            
+            let nomeArquivo = prompt("Digite o nome do arquivo para salvar (sem a extensão .json):", "dados_auditoria");
+            if (nomeArquivo === null || nomeArquivo.trim() === "") {
+                return; 
+            }
+            if (!nomeArquivo.endsWith('.json')) {
+                nomeArquivo += '.json';
+            }
+
             const jsonString = JSON.stringify(registros, null, 2);
             const blob = new Blob([jsonString], { type: "application/json" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "backup_desperdicios.json";
+            link.download = nomeArquivo;
             link.click();
         }
 
         function acionarImportarJSON() { document.getElementById('input-json').click(); }
 
-        function importarJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const dadosImportados = JSON.parse(e.target.result);
-                    if (Array.isArray(dadosImportados)) {
-                        registros = dadosImportados;
-                        await localforage.setItem('registros_caca_desperdicios', registros);
-                        atualizarLista();
-                        alert("Dados importados com sucesso!");
-                    } else {
-                        alert("Formato inválido. O arquivo JSON deve ser uma lista.");
-                    }
-                } catch (erro) { alert("Erro ao ler o arquivo JSON: " + erro); }
-            };
-            reader.readAsText(file);
+        async function importarJSON(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            
+            let totalImportados = 0;
+            let temErro = false;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const dadosImportados = JSON.parse(e.target.result);
+                            if (Array.isArray(dadosImportados)) {
+                                registros = registros.concat(dadosImportados);
+                                totalImportados += dadosImportados.length;
+                            } else {
+                                alert(`O arquivo ${file.name} não possui o formato correto de lista.`);
+                                temErro = true;
+                            }
+                        } catch (erro) { 
+                            alert(`Erro ao ler o arquivo ${file.name}: ` + erro); 
+                            temErro = true;
+                        }
+                        resolve();
+                    };
+                    reader.readAsText(file);
+                });
+            }
+
+            if (totalImportados > 0) {
+                await localforage.setItem('registros_caca_desperdicios', registros);
+                atualizarLista();
+                if (!temErro) {
+                    alert(`Sucesso! ${totalImportados} registros foram somados à sua lista.`);
+                } else {
+                    alert(`Importação parcial. ${totalImportados} registros adicionados, mas houve erros em alguns arquivos.`);
+                }
+            } else if (!temErro) {
+                alert("Nenhum dado válido encontrado para importar.");
+            }
+
             event.target.value = ''; 
         }
     </script>
