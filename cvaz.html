@@ -20,7 +20,8 @@
             --text: #333333;
             --danger: #dc3545;
             --success: #28a745;
-            --warning: #fd7e14;
+            --warning: #ffc107; /* Amarelo para edição */
+            --warning-text: #212529;
             --info: #17a2b8;
         }
 
@@ -77,7 +78,7 @@
         .btn-success { background-color: var(--success); }
         .btn-danger { background-color: var(--danger); margin-top: 5px;}
         .btn-secondary { background-color: #6c757d; }
-        .btn-warning { background-color: var(--warning); }
+        .btn-warning { background-color: var(--warning); color: var(--warning-text); }
         .btn-info { background-color: var(--info); }
 
         #camera-modal {
@@ -107,8 +108,8 @@
 
         .registro-item {
             border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
         }
         .registro-item:last-child { border-bottom: none; }
         
@@ -116,7 +117,7 @@
             max-width: 100px;
             border-radius: 5px;
             display: block;
-            margin-top: 5px;
+            margin-top: 10px;
         }
 
         .acoes-export {
@@ -128,6 +129,18 @@
             flex: 1 1 calc(50% - 10px);
             margin-top: 5px;
         }
+        
+        /* Layout dos botões nos itens da lista */
+        .acoes-item {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .acoes-item button {
+            margin-top: 0;
+            padding: 8px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -135,9 +148,9 @@
     <h2>Caça Desperdícios</h2>
 
     <div class="card">
-        <h3>Novo Registro</h3>
+        <h3 id="titulo-form">Novo Registro</h3>
         
-        <label>Área / Setor:</label>
+        <label>Área / Setor principal:</label>
         <select id="area">
             <option value="" disabled selected>Selecione uma área...</option>
             <option value="Produção - Linha 1">Produção - Linha 1</option>
@@ -148,15 +161,19 @@
             <option value="Administrativo">Administrativo</option>
         </select>
 
+        <label>Local Específico (Opcional):</label>
+        <input type="text" id="local" placeholder="Ex: Coluna F40, Máquina 03, Corredor B...">
+
         <label>Descrição do Problema:</label>
         <input type="text" id="descricao" placeholder="O que está acontecendo?">
 
         <label>Foto:</label>
         <img id="photo-preview" src="" alt="Preview">
-        <button class="btn-secondary" onclick="abrirCamera()">📸 Tirar Foto</button>
+        <button class="btn-secondary" onclick="abrirCamera()">📸 Tirar Foto / Alterar Foto</button>
         <input type="hidden" id="foto_base64">
 
-        <button class="btn-primary" onclick="inserirRegistro()">➕ Inserir Registro</button>
+        <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()">➕ Inserir Registro</button>
+        <button class="btn-secondary" id="btn-cancelar-edicao" style="display: none; margin-top: 10px;" onclick="cancelarEdicao()">❌ Cancelar Edição</button>
     </div>
 
     <div class="card">
@@ -170,9 +187,8 @@
             <button class="btn-success" onclick="exportarCSV()">📊 Exportar CSV</button>
             <button class="btn-primary" onclick="exportarPPTX()">📺 Exportar PPTX</button>
             <button class="btn-info" onclick="exportarJSON()">💾 Exportar JSON</button>
-            <button class="btn-warning" onclick="acionarImportarJSON()">📂 Importar JSON</button>
+            <button class="btn-warning" style="color: var(--warning-text);" onclick="acionarImportarJSON()">📂 Importar JSON</button>
         </div>
-        <!-- Input escondido para carregar o arquivo JSON -->
         <input type="file" id="input-json" accept=".json" style="display: none;" onchange="importarJSON(event)">
     </div>
 
@@ -186,16 +202,15 @@
     <script>
         let streamDeVideo;
         let registros = [];
+        let indiceEdicao = null; // Controla se estamos editando um registro existente
 
         window.onload = async function() {
-            // Recupera os dados do banco offline
             let dadosSalvos = await localforage.getItem('registros_caca_desperdicios');
             if (dadosSalvos) {
                 registros = dadosSalvos;
                 atualizarLista();
             }
 
-            // Persistência da Área: Recupera a última área selecionada
             let ultimaArea = localStorage.getItem('ultima_area_selecionada');
             if (ultimaArea) {
                 document.getElementById('area').value = ultimaArea;
@@ -247,37 +262,104 @@
             fecharCamera();
         }
 
-        // ====== INSERIR E EXCLUIR ======
-        async function inserirRegistro() {
+        // ====== SALVAR (INSERIR OU EDITAR) ======
+        async function salvarRegistro() {
             const area = document.getElementById('area').value;
+            const local = document.getElementById('local').value;
             const descricao = document.getElementById('descricao').value;
             const foto = document.getElementById('foto_base64').value;
-            const dataAtual = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR');
+            let dataHora = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR');
 
             if (!area) { alert("Selecione a Área!"); return; }
             if (!descricao) { alert("Preencha a Descrição!"); return; }
 
-            const novoRegistro = { data: dataAtual, area, descricao, foto };
-            registros.push(novoRegistro);
+            if (indiceEdicao !== null) {
+                // Modo de Edição
+                dataHora = registros[indiceEdicao].data; // Mantém a data original
+                registros[indiceEdicao] = { data: dataHora, area, local, descricao, foto };
+                alert("Registro atualizado com sucesso!");
+                cancelarEdicao(); // Volta o formulário ao normal
+            } else {
+                // Modo de Inserção Nova
+                const novoRegistro = { data: dataHora, area, local, descricao, foto };
+                registros.push(novoRegistro);
+                alert("Registro inserido com sucesso!");
+                
+                // Limpa os campos após inserir novo (mas mantém a área)
+                document.getElementById('local').value = '';
+                document.getElementById('descricao').value = '';
+                document.getElementById('foto_base64').value = '';
+                document.getElementById('photo-preview').style.display = 'none';
+            }
             
             await localforage.setItem('registros_caca_desperdicios', registros);
-            
-            // Persistência: Salva a área atual para o próximo registro
             localStorage.setItem('ultima_area_selecionada', area);
             
-            // Limpa APENAS a descrição e a foto, mantendo a área selecionada!
+            atualizarLista();
+        }
+
+        // ====== PREPARAR PARA EDITAR ======
+        function editarRegistro(index) {
+            const reg = registros[index];
+            indiceEdicao = index;
+
+            // Preenche os campos com os dados do registro clicado
+            document.getElementById('area').value = reg.area;
+            document.getElementById('local').value = reg.local || ''; // Usa || '' caso seja um registro antigo sem esse campo
+            document.getElementById('descricao').value = reg.descricao;
+            document.getElementById('foto_base64').value = reg.foto || '';
+            
+            const preview = document.getElementById('photo-preview');
+            if (reg.foto) {
+                preview.src = reg.foto;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+
+            // Muda a aparência do formulário para mostrar que é uma edição
+            document.getElementById('titulo-form').innerText = "Editando Registro";
+            const btnSalvar = document.getElementById('btn-salvar');
+            btnSalvar.innerText = "💾 Atualizar Registro";
+            btnSalvar.classList.remove('btn-primary');
+            btnSalvar.classList.add('btn-warning');
+            
+            document.getElementById('btn-cancelar-edicao').style.display = 'block';
+
+            // Rola a tela suavemente para o topo
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicao() {
+            indiceEdicao = null;
+            document.getElementById('titulo-form').innerText = "Novo Registro";
+            
+            document.getElementById('local').value = '';
             document.getElementById('descricao').value = '';
             document.getElementById('foto_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
+
+            const btnSalvar = document.getElementById('btn-salvar');
+            btnSalvar.innerText = "➕ Inserir Registro";
+            btnSalvar.classList.remove('btn-warning');
+            btnSalvar.classList.add('btn-primary');
             
-            atualizarLista();
-            alert("Registro inserido com sucesso!");
+            document.getElementById('btn-cancelar-edicao').style.display = 'none';
         }
 
         async function excluirRegistro(index) {
             if (confirm("Tem certeza que deseja excluir este registro?")) {
                 registros.splice(index, 1);
                 await localforage.setItem('registros_caca_desperdicios', registros);
+                
+                // Se estiver excluindo o item que estava sendo editado no momento
+                if (indiceEdicao === index) {
+                    cancelarEdicao();
+                } else if (indiceEdicao !== null && index < indiceEdicao) {
+                    // Ajusta o índice se excluiu um item que estava acima do item em edição
+                    indiceEdicao--;
+                }
+                
                 atualizarLista();
             }
         }
@@ -292,13 +374,18 @@
                 item.className = 'registro-item';
                 
                 let htmlImg = reg.foto ? `<img src="${reg.foto}" class="registro-img">` : '';
+                let localTxt = reg.local ? `<strong>Local:</strong> ${reg.local} <br>` : '';
                 
                 item.innerHTML = `
                     <strong>Área:</strong> ${reg.area} <br>
+                    ${localTxt}
                     <strong>Problema:</strong> ${reg.descricao} <br>
                     <strong>Data/Hora:</strong> ${reg.data} <br>
                     ${htmlImg}
-                    <button class="btn-danger" style="padding: 5px; width: auto; font-size: 14px;" onclick="excluirRegistro(${index})">🗑 Excluir</button>
+                    <div class="acoes-item">
+                        <button class="btn-warning" onclick="editarRegistro(${index})">✏️ Editar</button>
+                        <button class="btn-danger" onclick="excluirRegistro(${index})">🗑 Excluir</button>
+                    </div>
                 `;
                 lista.appendChild(item);
             });
@@ -309,11 +396,12 @@
         function exportarCSV() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             let csvContent = "\uFEFF"; 
-            csvContent += "Data;Area;Descricao\n";
+            csvContent += "Data;Area;Local;Descricao\n";
             registros.forEach(r => {
-                let desc = r.descricao.replace(/;/g, ",");
-                let area = r.area.replace(/;/g, ",");
-                csvContent += `${r.data};${area};${desc}\n`;
+                let area = r.area ? r.area.replace(/;/g, ",") : "";
+                let local = r.local ? r.local.replace(/;/g, ",") : "";
+                let desc = r.descricao ? r.descricao.replace(/;/g, ",") : "";
+                csvContent += `${r.data};${area};${local};${desc}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -329,9 +417,12 @@
             let slideCapa = pptx.addSlide();
             slideCapa.addText("Relatório - Caça Desperdícios", { x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0056b3', align: 'center' });
             slideCapa.addText("Gerado em: " + new Date().toLocaleDateString('pt-BR'), { x: 1, y: 3, w: '80%', fontSize: 18, align: 'center' });
+            
             registros.forEach(reg => {
                 let slide = pptx.addSlide();
-                slide.addText("Área: " + reg.area, { x: 0.5, y: 0.5, w: '90%', fontSize: 24, bold: true, color: '333333' });
+                let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
+                
+                slide.addText(titulo, { x: 0.5, y: 0.5, w: '90%', fontSize: 24, bold: true, color: '333333' });
                 slide.addText("Problema: " + reg.descricao, { x: 0.5, y: 1.2, w: '90%', fontSize: 18, color: '666666' });
                 if (reg.foto) {
                     slide.addImage({ data: reg.foto, x: 0.5, y: 2.0, w: 6, h: 3.3 }); 
@@ -375,7 +466,7 @@
                 }
             };
             reader.readAsText(file);
-            event.target.value = ''; // Limpa o input para permitir importar o mesmo arquivo novamente, se necessário
+            event.target.value = ''; 
         }
     </script>
 </body>
