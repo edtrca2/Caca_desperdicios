@@ -434,7 +434,6 @@
             
             csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             
-            // Ordenando por Área antes de exportar
             let registrosOrdenados = [...registros].sort((a, b) => {
                 let areaA = a.area ? a.area.toLowerCase() : "";
                 let areaB = b.area ? b.area.toLowerCase() : "";
@@ -467,36 +466,63 @@
             link.click();
         }
 
+        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-            alert("Gerando PPTX, aguarde um instante...");
+            alert("Gerando PPTX (Formato Grade: 4 por página), aguarde um instante...");
             let pptx = new PptxGenJS();
+            
+            // Capa
             let slideCapa = pptx.addSlide();
             slideCapa.addText("Relatório - Caça Desperdícios", { x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0056b3', align: 'center' });
             slideCapa.addText("Gerado em: " + new Date().toLocaleDateString('pt-BR'), { x: 1, y: 3, w: '80%', fontSize: 18, align: 'center' });
             
-            // Ordenando por Área antes de exportar
+            // Ordenando por Área
             let registrosOrdenados = [...registros].sort((a, b) => {
                 let areaA = a.area ? a.area.toLowerCase() : "";
                 let areaB = b.area ? b.area.toLowerCase() : "";
                 return areaA.localeCompare(areaB);
             });
 
-            registrosOrdenados.forEach(reg => {
-                let slide = pptx.addSlide();
+            let slideAtual;
+            
+            registrosOrdenados.forEach((reg, index) => {
+                let posicaoNoSlide = index % 4;
+                
+                // Se for o primeiro do grupo de 4, cria um slide novo
+                if (posicaoNoSlide === 0) {
+                    slideAtual = pptx.addSlide();
+                }
+                
+                // Define a posição X e Y (Quadrante)
+                // Esquerda (0.3) ou Direita (5.2)
+                let xBase = (posicaoNoSlide % 2 === 0) ? 0.3 : 5.2; 
+                // Topo (0.2) ou Base (2.9)
+                let yBase = (posicaoNoSlide < 2) ? 0.2 : 2.9;       
+
                 let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
                 
-                slide.addText(titulo, { x: 0.5, y: 0.3, w: '90%', fontSize: 24, bold: true, color: '333333' });
-                slide.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: 0.5, y: 1.0, w: '90%', fontSize: 18, bold: true, color: '0056b3' });
+                // Textos menores para caberem bem nos quadrantes
+                slideAtual.addText(titulo, { x: xBase, y: yBase, w: 4.5, h: 0.3, fontSize: 14, bold: true, color: '333333' });
+                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: xBase, y: yBase + 0.3, w: 4.5, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
                 
                 if (reg.descricao) {
-                    slide.addText("Detalhe: " + reg.descricao, { x: 0.5, y: 1.5, w: '90%', fontSize: 16, color: '666666' });
+                    slideAtual.addText("Detalhe: " + reg.descricao, { x: xBase, y: yBase + 0.5, w: 4.5, h: 0.2, fontSize: 11, color: '666666' });
                 }
                 
                 if (reg.foto) {
-                    slide.addImage({ data: reg.foto, x: 0.5, y: 2.2, w: 6, h: 3.3 }); 
+                    // Utilizando sizing do tipo 'contain' para não deformar a foto do celular
+                    slideAtual.addImage({ 
+                        data: reg.foto, 
+                        x: xBase, 
+                        y: yBase + 0.75, 
+                        w: 4.5, 
+                        h: 1.8, 
+                        sizing: { type: 'contain', w: 4.5, h: 1.8 } 
+                    }); 
                 }
             });
+            
             pptx.writeFile({ fileName: "Relatorio_Desperdicios.pptx" });
         }
 
