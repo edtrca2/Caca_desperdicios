@@ -2,23 +2,16 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <!-- Bloqueia o Google e outros buscadores de acharem a página -->
+    <!-- Bloqueia o Google de achar a página -->
     <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <!-- Otimizações para iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Caça Desperdícios">
-    <meta name="format-detection" content="telephone=no, email=no">
-    
-    <title>Caça Desperdícios - Auditoria</title>
+    <title>Caça Desperdícios</title>
 
-    <!-- Bibliotecas Necessárias -->
+    <!-- Bibliotecas (LocalForage para banco de dados offline e PptxGenJS para PowerPoint) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/libs/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 
     <style>
         :root {
@@ -26,6 +19,8 @@
             --bg: #f4f7f6;
             --card: #ffffff;
             --text: #333333;
+            --danger: #dc3545;
+            --success: #28a745;
         }
 
         body {
@@ -33,503 +28,303 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-            padding-top: 20px;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
             padding: 15px;
+            padding-bottom: 80px; /* Espaço para botões de exportação no final */
         }
 
-        h1 {
-            text-align: center;
-            color: var(--primary);
-            font-size: 24px;
-        }
+        h2 { text-align: center; color: var(--primary); }
 
         .card {
-            background: var(--card);
-            border-radius: 12px;
+            background-color: var(--card);
+            border-radius: 8px;
             padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .card-sync {
-            border: 2px dashed #0056b3;
-            background-color: #eef5ff;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         label {
             display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
             margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
         }
 
-        input[type="text"], textarea, select {
+        input[type="text"], input[type="date"] {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
+            margin-top: 5px;
             border: 1px solid #ccc;
-            border-radius: 8px;
+            border-radius: 5px;
             box-sizing: border-box;
             font-size: 16px;
-            font-family: inherit;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .camera-container {
-            width: 100%;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-top: 15px;
-            position: relative;
-        }
-
-        video {
-            width: 100%;
-            display: block;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
         }
 
         button {
-            flex: 1;
-            padding: 15px;
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             font-size: 16px;
             font-weight: bold;
             color: white;
             cursor: pointer;
-            background-color: var(--primary);
-            touch-action: manipulation;
         }
 
-        button.record { background-color: #dc3545; }
-        
-        .add-btn {
-            background-color: #28a745;
+        .btn-primary { background-color: var(--primary); }
+        .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); margin-top: 5px;}
+        .btn-secondary { background-color: #6c757d; }
+
+        /* Modal da Câmera */
+        #camera-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        #video-preview {
             width: 100%;
+            max-height: 70vh;
+            background-color: black;
             margin-top: 20px;
-            font-size: 18px;
-            padding: 18px;
         }
 
-        button.export {
-            background-color: #6c757d;
-            margin-top: 10px;
+        #photo-preview {
+            display: none;
             width: 100%;
-        }
-
-        button.sync-btn {
-            background-color: #17a2b8;
+            max-height: 200px;
+            object-fit: contain;
             margin-top: 10px;
-            width: 100%;
+            border: 1px solid #ccc;
         }
 
-        .list-item {
-            display: flex;
-            align-items: center;
+        /* Lista de Registros */
+        .registro-item {
             border-bottom: 1px solid #eee;
-            padding: 10px 0;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .registro-item:last-child { border-bottom: none; }
+        
+        .registro-img {
+            max-width: 100px;
+            border-radius: 5px;
+            display: block;
+            margin-top: 5px;
         }
 
-        .list-item img, .list-item video {
-            width: 70px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 6px;
-            margin-right: 15px;
-        }
-
-        .list-item-info {
-            flex: 1;
+        .acoes-export {
+            display: flex;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Caça Desperdícios</h1>
+    <h2>Caça Desperdícios</h2>
 
-        <!-- PAINEL DE COLETA -->
-        <div class="card">
-            <label for="area">Área:</label>
-            <select id="area" onchange="verificarArea()">
-                <option value="">Selecione a área...</option>
-                <option value="Montagem">Montagem</option>
-                <option value="Armação">Armação</option>
-                <option value="Pintura">Pintura</option>
-                <option value="Estamparia">Estamparia</option>
-                <option value="Canal 1">Canal 1</option>
-                <option value="Canal 2">Canal 2</option>
-                <option value="Canal 3">Canal 3</option>
-                <option value="Canal 4">Canal 4</option>
-                <option value="Canal 5">Canal 5</option>
-                <option value="Canal 6">Canal 6</option>
-                <option value="SM">SM</option>
-                <option value="Vutek">Vutek</option>
-                <option value="EP">EP</option>
-                <option value="Outros">Outros</option>
-            </select>
-            
-            <input type="text" id="areaOutros" placeholder="Digite o nome da área..." style="display: none; margin-top: 10px;" autocomplete="off">
+    <div class="card">
+        <h3>Novo Registro</h3>
+        
+        <label>Área / Setor:</label>
+        <input type="text" id="area" placeholder="Ex: Produção linha 1">
 
-            <label for="coluna">Local (Ex: Terraço do 21m, Coluna H16):</label>
-            <input type="text" id="coluna" placeholder="Digite o local específico..." autocomplete="off">
+        <label>Descrição do Problema:</label>
+        <input type="text" id="descricao" placeholder="O que está acontecendo?">
 
-            <label for="categoria">Ocorrência:</label>
-            <select id="categoria">
-                <option value="Lâmpada(s) acesa(s)">Lâmpada(s) acesa(s)</option>
-                <option value="Lâmpada(s) queimada(s)">Lâmpada(s) queimada(s)</option>
-                <option value="Vazamento de água">Vazamento de água</option>
-                <option value="Vazamento de ar">Vazamento de ar</option>
-                <option value="Ventilador(es) ligado(s)">Ventilador(es) ligado(s)</option>
-                <option value="Máquina Parada">Máquina Parada</option>
-            </select>
+        <label>Foto:</label>
+        <img id="photo-preview" src="" alt="Preview">
+        <button class="btn-secondary" onclick="abrirCamera()">📸 Tirar Foto</button>
+        <input type="hidden" id="foto_base64">
 
-            <label for="descricao">Descrição (Opcional):</label>
-            <textarea id="descricao" placeholder="Detalhes da ocorrência..."></textarea>
+        <button class="btn-primary" onclick="inserirRegistro()">➕ Inserir Registro</button>
+    </div>
 
-            <div class="camera-container">
-                <video id="cameraFeed" autoplay playsinline muted></video>
-            </div>
+    <div class="card">
+        <h3>Registros Salvos (<span id="contador">0</span>)</h3>
+        <div id="lista-registros"></div>
+    </div>
 
-            <div class="btn-group">
-                <button type="button" onclick="tirarFoto()">📸 Capturar Foto</button>
-                <button type="button" class="record" id="btnGravar" onclick="alternarGravacao()">🎥 Gravar (10s)</button>
-            </div>
+    <div class="card acoes-export">
+        <button class="btn-success" onclick="exportarCSV()">📊 Exportar CSV</button>
+        <button class="btn-primary" onclick="exportarPPTX()">📺 Exportar PPTX</button>
+    </div>
 
-            <button type="button" class="add-btn" onclick="adicionarItem()">➕ Adicionar Item</button>
-        </div>
-
-        <!-- PAINEL DE SINCRONIZAÇÃO -->
-        <div class="card card-sync">
-            <h3 style="margin-top: 0; color: #0056b3; text-align: center;">Sincronização de Dados</h3>
-            <p style="font-size: 12px; color: #555; text-align: center; margin-bottom: 15px;">Use para transferir os dados entre os celulares.</p>
-            
-            <button class="sync-btn" onclick="exportarJSON()">📤 Exportar Lote (Para enviar)</button>
-            
-            <button class="sync-btn" style="background-color: #6f42c1;" onclick="document.getElementById('importFile').click()">📥 Importar Lote (Recebido)</button>
-            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importarJSON(event)">
-        </div>
-
-        <!-- PAINEL DE RELATÓRIOS FINAIS -->
-        <div class="card">
-            <h3>Exportar Relatórios Finais</h3>
-            <button class="export" style="background-color: #28a745;" onclick="exportarCSV()">📊 Gerar Excel CSV (Indexado)</button>
-            <button class="export" style="background-color: #d83b01;" onclick="exportarPPTX()">📑 Gerar PPTX (Indexado)</button>
-        </div>
-
-        <!-- LISTA DE REGISTROS -->
-        <div class="card" id="listaRegistros" style="display: none;">
-            <h3>Registros na Memória</h3>
-            <div id="itensSalvos"></div>
-            <button onclick="limparTudo()" style="background-color: #dc3545; margin-top: 15px; width: 100%;">🗑️ Limpar Banco de Dados</button>
-        </div>
+    <!-- Modal da Câmera (Fica escondido até o usuário clicar) -->
+    <div id="camera-modal">
+        <video id="video-preview" autoplay playsinline></video>
+        <button class="btn-success" style="width: 80%; margin: 10px auto;" onclick="capturarFoto()">📷 Capturar</button>
+        <button class="btn-danger" style="width: 80%; margin: 0 auto;" onclick="fecharCamera()">❌ Cancelar</button>
+        <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
     <script>
-        const video = document.getElementById('cameraFeed');
-        let stream;
-        let mediaRecorder;
-        let chunks = [];
-        let isRecording = false;
-        
-        let midiaPendente = null;
-        let tipoMidiaPendente = null;
+        let streamDeVideo;
+        let registros = [];
 
-        function verificarArea() {
-            const selectArea = document.getElementById('area').value;
-            const inputAreaOutros = document.getElementById('areaOutros');
-            
-            if (selectArea === 'Outros') {
-                inputAreaOutros.style.display = 'block';
-            } else {
-                inputAreaOutros.style.display = 'none';
+        // Inicia carregando dados salvos
+        window.onload = async function() {
+            let dadosSalvos = await localforage.getItem('registros_caca_desperdicios');
+            if (dadosSalvos) {
+                registros = dadosSalvos;
+                atualizarLista();
             }
-        }
-
-        async function iniciarCamera() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' },
-                    audio: true
-                });
-                video.srcObject = stream;
-            } catch (err) {
-                // Alerta na tela para identificar o motivo do bloqueio
-                alert("Erro ao acessar a câmera: " + err.name + "\nMensagem: " + err.message);
-                console.error("Erro ao acessar câmera: ", err);
-            }
-        }
-
-        window.onload = () => {
-            iniciarCamera();
-            carregarRegistros();
         };
 
-        function tirarFoto() {
-            const canvas = document.createElement('canvas');
+        // ====== LÓGICA DA CÂMERA ======
+        async function abrirCamera() {
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('video-preview');
+            modal.style.display = 'block';
+
+            try {
+                // Pede acesso à câmera traseira (environment)
+                streamDeVideo = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = streamDeVideo;
+            } catch (erro) {
+                alert("Erro ao acessar câmera: " + erro);
+                fecharCamera();
+            }
+        }
+
+        function fecharCamera() {
+            const modal = document.getElementById('camera-modal');
+            modal.style.display = 'none';
+            // Desliga a câmera para economizar bateria
+            if (streamDeVideo) {
+                streamDeVideo.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function capturarFoto() {
+            const video = document.getElementById('video-preview');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); // 60% de qualidade para não pesar muito
             
-            midiaPendente = canvas.toDataURL('image/jpeg', 0.7);
-            tipoMidiaPendente = 'imagem';
+            document.getElementById('foto_base64').value = fotoBase64;
             
-            alert("📸 Foto capturada! Preencha os campos e clique em 'Adicionar Item'.");
+            const preview = document.getElementById('photo-preview');
+            preview.src = fotoBase64;
+            preview.style.display = 'block';
+
+            fecharCamera();
         }
 
-        function alternarGravacao() {
-            if (isRecording) return;
-            const btn = document.getElementById('btnGravar');
-            chunks = [];
-            
-            try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' }); } 
-            catch (e) { mediaRecorder = new MediaRecorder(stream); }
-
-            mediaRecorder.ondataavailable = e => chunks.push(e.data);
-            mediaRecorder.onstop = async () => {
-                const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'video/mp4' });
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = () => {
-                    midiaPendente = reader.result;
-                    tipoMidiaPendente = 'video';
-                    btn.innerText = "🎥 Gravar (10s)";
-                    isRecording = false;
-                    alert("🎥 Vídeo capturado! Preencha os campos e clique em 'Adicionar Item'.");
-                };
-            };
-            mediaRecorder.start();
-            isRecording = true;
-            btn.innerText = "⏳ Gravando... (10s)";
-            setTimeout(() => { if(mediaRecorder.state !== "inactive") mediaRecorder.stop(); }, 10000);
-        }
-
-        async function adicionarItem() {
-            let area = document.getElementById('area').value;
-            const coluna = document.getElementById('coluna').value;
-            const categoria = document.getElementById('categoria').value;
+        // ====== LÓGICA DE INSERIR E EXCLUIR ======
+        async function inserirRegistro() {
+            const area = document.getElementById('area').value;
             const descricao = document.getElementById('descricao').value;
+            const foto = document.getElementById('foto_base64').value;
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
 
-            if (!area) { alert("Selecione uma Área!"); return; }
-            if (area === 'Outros') {
-                area = document.getElementById('areaOutros').value;
-                if (!area) { alert("Digite o nome da área!"); return; }
-            }
-            if(!coluna) { alert("Preencha o Local específico!"); return; }
-            if(!midiaPendente) { alert("Capture uma foto ou vídeo!"); return; }
-
-            const dataAtual = new Date();
-            const registro = {
-                id: Date.now() + Math.floor(Math.random() * 1000),
-                area: area,
-                coluna: coluna,
-                categoria: categoria,
-                descricao: descricao,
-                data: dataAtual.toLocaleDateString('pt-BR'),
-                hora: dataAtual.toLocaleTimeString('pt-BR'),
-                midia: midiaPendente,
-                tipoMidia: tipoMidiaPendente
-            };
-
-            let registros = await localforage.getItem('registros') || [];
-            registros.push(registro);
-            await localforage.setItem('registros', registros);
-            
-            document.getElementById('coluna').value = '';
-            document.getElementById('descricao').value = '';
-            midiaPendente = null;
-            tipoMidiaPendente = null;
-
-            alert("Item adicionado com sucesso!");
-            carregarRegistros();
-        }
-
-        async function carregarRegistros() {
-            let registros = await localforage.getItem('registros') || [];
-            const container = document.getElementById('itensSalvos');
-            const wrapper = document.getElementById('listaRegistros');
-            
-            container.innerHTML = '';
-            
-            if(registros.length === 0) {
-                wrapper.style.display = 'none';
+            if (!area || !descricao) {
+                alert("Preencha a Área e a Descrição!");
                 return;
             }
 
-            wrapper.style.display = 'block';
-
-            registros.slice().reverse().forEach(reg => {
-                const div = document.createElement('div');
-                div.className = 'list-item';
-                let midiaHtml = reg.tipoMidia === 'imagem' 
-                    ? `<img src="${reg.midia}" alt="Foto">`
-                    : `<video src="${reg.midia}"></video>`;
-                div.innerHTML = `
-                    ${midiaHtml}
-                    <div class="list-item-info">
-                        <strong>${reg.area} - ${reg.coluna}</strong><br>
-                        <small>${reg.categoria}</small><br>
-                        <small style="color:#666;">${reg.data} às ${reg.hora}</small>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+            const novoRegistro = { data: dataAtual, area, descricao, foto };
+            registros.push(novoRegistro);
+            
+            await localforage.setItem('registros_caca_desperdicios', registros);
+            
+            // Limpa o formulário
+            document.getElementById('area').value = '';
+            document.getElementById('descricao').value = '';
+            document.getElementById('foto_base64').value = '';
+            document.getElementById('photo-preview').style.display = 'none';
+            
+            atualizarLista();
+            alert("Registro inserido com sucesso!");
         }
 
-        async function limparTudo() {
-            if(confirm("ATENÇÃO: Apagar todos os registros da memória deste aparelho?")) {
-                await localforage.removeItem('registros');
-                carregarRegistros();
+        async function excluirRegistro(index) {
+            if (confirm("Tem certeza que deseja excluir este registro?")) {
+                registros.splice(index, 1); // Remove o item
+                await localforage.setItem('registros_caca_desperdicios', registros);
+                atualizarLista();
             }
         }
 
-        async function exportarJSON() {
-            const registros = await localforage.getItem('registros') || [];
-            if(registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+        function atualizarLista() {
+            const lista = document.getElementById('lista-registros');
+            document.getElementById('contador').innerText = registros.length;
+            lista.innerHTML = '';
 
-            let nomeArquivo = prompt("Qual será o nome do arquivo JSON?", "lote_auditoria_app");
-            if (nomeArquivo === null) return; 
-            if (nomeArquivo.trim() === "") nomeArquivo = "lote_auditoria";
-
-            const jsonStr = JSON.stringify(registros);
-            const blob = new Blob([jsonStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${nomeArquivo}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        async function importarJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const novosRegistros = JSON.parse(e.target.result);
-                    if (!Array.isArray(novosRegistros)) throw new Error("Formato inválido");
-
-                    let registrosAtuais = await localforage.getItem('registros') || [];
-                    registrosAtuais = registrosAtuais.concat(novosRegistros);
-                    
-                    await localforage.setItem('registros', registrosAtuais);
-                    
-                    alert(`${novosRegistros.length} itens importados e consolidados com sucesso!`);
-                    carregarRegistros();
-                } catch (err) {
-                    alert("Erro ao ler o arquivo. Certifique-se de que é um arquivo JSON válido.");
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = ''; 
-        }
-
-        async function exportarCSV() {
-            let registros = await localforage.getItem('registros') || [];
-            if(registros.length === 0) { alert("Nenhum registro para exportar."); return; }
-
-            let nomeArquivo = prompt("Qual será o nome da Planilha Excel?", "Relatorio_Caca_Desperdicios");
-            if (nomeArquivo === null) return; 
-            if (nomeArquivo.trim() === "") nomeArquivo = "Relatorio_Caca_Desperdicios";
-
-            registros.sort((a, b) => a.area.localeCompare(b.area));
-
-            let csv = '\uFEFFItem;Data;Hora;Área;Local;Ocorrência;Descricao;Midia\n';
-            
             registros.forEach((reg, index) => {
-                let item = index + 1;
-                let data = reg.data;
-                let hora = reg.hora;
-                let area = (reg.area || '').replace(/"/g, '""');
-                let local = (reg.coluna || '').replace(/"/g, '""');
-                let ocorrencia = (reg.categoria || '').replace(/"/g, '""');
-                let desc = (reg.descricao || '').replace(/"/g, '""');
-                let midia = reg.tipoMidia === 'imagem' ? 'Foto' : 'Vídeo';
-
-                csv += `"${item}";"${data}";"${hora}";"${area}";"${local}";"${ocorrencia}";"${desc}";"${midia}"\n`;
+                const item = document.createElement('div');
+                item.className = 'registro-item';
+                
+                let htmlImg = reg.foto ? `<img src="${reg.foto}" class="registro-img">` : '';
+                
+                item.innerHTML = `
+                    <strong>Área:</strong> ${reg.area} <br>
+                    <strong>Problema:</strong> ${reg.descricao} <br>
+                    <strong>Data:</strong> ${reg.data} <br>
+                    ${htmlImg}
+                    <button class="btn-danger" style="padding: 5px; width: auto; font-size: 14px;" onclick="excluirRegistro(${index})">🗑 Excluir</button>
+                `;
+                lista.appendChild(item);
             });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const dataUrl = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = `${nomeArquivo}.csv`;
-            a.target = '_blank';
-            
-            document.body.appendChild(a);
-            a.click();
-            
-            setTimeout(() => URL.revokeObjectURL(dataUrl), 100);
         }
 
-        async function exportarPPTX() {
-            let registros = await localforage.getItem('registros') || [];
-            if(registros.length === 0) { alert("Nenhum registro para exportar."); return; }
+        // ====== EXPORTAÇÕES ======
+        function exportarCSV() {
+            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
 
-            let nomeArquivo = prompt("Qual será o nome da Apresentação PPTX?", "Apresentacao_Caca_Desperdicios");
-            if (nomeArquivo === null) return; 
-            if (nomeArquivo.trim() === "") nomeArquivo = "Apresentacao_Caca_Desperdicios";
-
-            let imagens = registros.filter(r => r.tipoMidia === 'imagem');
-            imagens.sort((a, b) => a.area.localeCompare(b.area));
-
-            let pres = new PptxGenJS();
-            pres.layout = 'LAYOUT_16x9';
+            let csvContent = "\uFEFF"; // Garante os acentos corretos no Excel
+            csvContent += "Data;Area;Descricao\n";
             
-            for (let i = 0; i < imagens.length; i += 4) {
-                let slide = pres.addSlide();
+            registros.forEach(r => {
+                let desc = r.descricao.replace(/;/g, ","); // Evita quebra do CSV
+                let area = r.area.replace(/;/g, ",");
+                csvContent += `${r.data};${area};${desc}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "auditoria_desperdicios.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportarPPTX() {
+            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+            
+            alert("Gerando PPTX, aguarde um instante...");
+            let pptx = new PptxGenJS();
+
+            // Slide de Título
+            let slideCapa = pptx.addSlide();
+            slideCapa.addText("Relatório - Caça Desperdícios", { x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0056b3', align: 'center' });
+            slideCapa.addText("Gerado em: " + new Date().toLocaleDateString('pt-BR'), { x: 1, y: 3, w: '80%', fontSize: 18, align: 'center' });
+
+            // Um slide para cada registro
+            registros.forEach(reg => {
+                let slide = pptx.addSlide();
+                slide.addText("Área: " + reg.area, { x: 0.5, y: 0.5, w: '90%', fontSize: 24, bold: true, color: '333333' });
+                slide.addText("Problema: " + reg.descricao, { x: 0.5, y: 1.2, w: '90%', fontSize: 18, color: '666666' });
                 
-                let areaDestaque = imagens[i].area;
-
-                slide.addText(`Relatório - Caça Desperdícios (${areaDestaque})`, { 
-                    x: 0.5, y: 0.2, w: '90%', h: 0.5, fontSize: 24, bold: true, color: '0056b3', align: 'center' 
-                });
-
-                const posicoes = [
-                    { x: 0.5, y: 1.0, w: 4.0, h: 2.2, textY: 3.3 },
-                    { x: 5.5, y: 1.0, w: 4.0, h: 2.2, textY: 3.3 },
-                    { x: 0.5, y: 4.0, w: 4.0, h: 2.2, textY: 6.3 },
-                    { x: 5.5, y: 4.0, w: 4.0, h: 2.2, textY: 6.3 }
-                ];
-
-                for (let j = 0; j < 4; j++) {
-                    if (imagens[i + j]) {
-                        const item = imagens[i + j];
-                        const p = posicoes[j];
-
-                        slide.addImage({ data: item.midia, x: p.x, y: p.y, w: p.w, h: p.h, sizing: { type: 'contain' } });
-                        
-                        const legenda = `Área: ${item.area} | Local: ${item.coluna}\nOcorrência: ${item.categoria}\nData: ${item.data} às ${item.hora}`;
-                        
-                        slide.addText(legenda, {
-                            x: p.x, y: p.textY, w: p.w, h: 0.6, fontSize: 9, align: 'center', color: '333333'
-                        });
-                    }
+                if (reg.foto) {
+                    slide.addImage({ data: reg.foto, x: 0.5, y: 2.0, w: 6, h: 3.3 }); // w/h ajustado para proporção 16:9
                 }
-            }
-            pres.writeFile({ fileName: `${nomeArquivo}.pptx` });
+            });
+
+            pptx.writeFile({ fileName: "Relatorio_Desperdicios.pptx" });
         }
     </script>
 </body>
