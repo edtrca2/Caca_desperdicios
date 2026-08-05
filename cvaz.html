@@ -7,7 +7,6 @@
     
     <title>Caça Desperdícios</title>
 
-    <!-- Bibliotecas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -20,7 +19,7 @@
             --text: #333333;
             --danger: #dc3545;
             --success: #28a745;
-            --warning: #ffc107; /* Amarelo para edição */
+            --warning: #ffc107;
             --warning-text: #212529;
             --info: #17a2b8;
         }
@@ -44,12 +43,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-            font-size: 14px;
-        }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
 
         input[type="text"], select {
             width: 100%;
@@ -90,57 +84,17 @@
             text-align: center;
         }
 
-        #video-preview {
-            width: 100%;
-            max-height: 70vh;
-            background-color: black;
-            margin-top: 20px;
-        }
+        #video-preview { width: 100%; max-height: 70vh; background-color: black; margin-top: 20px; }
+        #photo-preview { display: none; width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; border: 1px solid #ccc; }
 
-        #photo-preview {
-            display: none;
-            width: 100%;
-            max-height: 200px;
-            object-fit: contain;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-        }
-
-        .registro-item {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-        }
+        .registro-item { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
         .registro-item:last-child { border-bottom: none; }
-        
-        .registro-img {
-            max-width: 100px;
-            border-radius: 5px;
-            display: block;
-            margin-top: 10px;
-        }
+        .registro-img { max-width: 100px; border-radius: 5px; display: block; margin-top: 10px; }
 
-        .acoes-export {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .acoes-export button {
-            flex: 1 1 calc(50% - 10px);
-            margin-top: 5px;
-        }
-        
-        /* Layout dos botões nos itens da lista */
-        .acoes-item {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .acoes-item button {
-            margin-top: 0;
-            padding: 8px;
-            font-size: 14px;
-        }
+        .acoes-export { display: flex; flex-wrap: wrap; gap: 10px; }
+        .acoes-export button { flex: 1 1 calc(50% - 10px); margin-top: 5px; }
+        .acoes-item { display: flex; gap: 10px; margin-top: 10px; }
+        .acoes-item button { margin-top: 0; padding: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -150,22 +104,40 @@
     <div class="card">
         <h3 id="titulo-form">Novo Registro</h3>
         
-        <label>Área / Setor principal:</label>
-        <select id="area">
+        <label>Área / Setor:</label>
+        <select id="area" onchange="verificarAreaOutros()">
             <option value="" disabled selected>Selecione uma área...</option>
-            <option value="Produção - Linha 1">Produção - Linha 1</option>
-            <option value="Produção - Linha 2">Produção - Linha 2</option>
-            <option value="Manutenção">Manutenção</option>
-            <option value="Logística / Estoque">Logística / Estoque</option>
-            <option value="Qualidade">Qualidade</option>
-            <option value="Administrativo">Administrativo</option>
+            <option value="Montagem final">Montagem final</option>
+            <option value="Armação">Armação</option>
+            <option value="Estamparia">Estamparia</option>
+            <option value="Pintura">Pintura</option>
+            <option value="Canal 1">Canal 1</option>
+            <option value="Canal 2">Canal 2</option>
+            <option value="Canal 3">Canal 3</option>
+            <option value="Canal 4">Canal 4</option>
+            <option value="Canal 5">Canal 5</option>
+            <option value="Canal 6">Canal 6</option>
+            <option value="Canal estreito">Canal estreito</option>
+            <option value="Outros">Outros</option>
+        </select>
+        <input type="text" id="area_outros" placeholder="Digite o nome da Área..." style="display: none; margin-top: 5px; border-color: var(--primary);">
+
+        <label>Local Específico:</label>
+        <input type="text" id="local" placeholder="Ex: F40, Coluna, etc.">
+
+        <label>Ocorrência:</label>
+        <select id="ocorrencia">
+            <option value="" disabled selected>Selecione a ocorrência...</option>
+            <option value="Vazamentos de Ar">Vazamentos de Ar</option>
+            <option value="Vazamento de Agua">Vazamento de Agua</option>
+            <option value="Luz acesa">Luz acesa</option>
+            <option value="Ventilador Ligado">Ventilador Ligado</option>
+            <option value="TV Ligada">TV Ligada</option>
+            <option value="Outros">Outros</option>
         </select>
 
-        <label>Local Específico (Opcional):</label>
-        <input type="text" id="local" placeholder="Ex: Coluna F40, Máquina 03, Corredor B...">
-
-        <label>Descrição do Problema:</label>
-        <input type="text" id="descricao" placeholder="O que está acontecendo?">
+        <label>Descrição do Problema (Opcional se a Ocorrência já explicar):</label>
+        <input type="text" id="descricao" placeholder="Detalhes adicionais...">
 
         <label>Foto:</label>
         <img id="photo-preview" src="" alt="Preview">
@@ -202,7 +174,7 @@
     <script>
         let streamDeVideo;
         let registros = [];
-        let indiceEdicao = null; // Controla se estamos editando um registro existente
+        let indiceEdicao = null; 
 
         window.onload = async function() {
             let dadosSalvos = await localforage.getItem('registros_caca_desperdicios');
@@ -213,9 +185,27 @@
 
             let ultimaArea = localStorage.getItem('ultima_area_selecionada');
             if (ultimaArea) {
-                document.getElementById('area').value = ultimaArea;
+                const opcoesArea = Array.from(document.getElementById('area').options).map(o => o.value);
+                if (opcoesArea.includes(ultimaArea)) {
+                    document.getElementById('area').value = ultimaArea;
+                } else {
+                    document.getElementById('area').value = 'Outros';
+                    document.getElementById('area_outros').value = ultimaArea;
+                    verificarAreaOutros();
+                }
             }
         };
+
+        function verificarAreaOutros() {
+            const area = document.getElementById('area').value;
+            const campoOutros = document.getElementById('area_outros');
+            if (area === 'Outros') {
+                campoOutros.style.display = 'block';
+            } else {
+                campoOutros.style.display = 'none';
+                campoOutros.value = '';
+            }
+        }
 
         // ====== CÂMERA ======
         async function abrirCamera() {
@@ -224,9 +214,7 @@
             modal.style.display = 'block';
 
             try {
-                streamDeVideo = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
+                streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = streamDeVideo;
             } catch (erro) {
                 alert("Erro ao acessar câmera: " + erro);
@@ -237,9 +225,7 @@
         function fecharCamera() {
             const modal = document.getElementById('camera-modal');
             modal.style.display = 'none';
-            if (streamDeVideo) {
-                streamDeVideo.getTracks().forEach(track => track.stop());
-            }
+            if (streamDeVideo) streamDeVideo.getTracks().forEach(track => track.stop());
         }
 
         function capturarFoto() {
@@ -252,7 +238,6 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
             const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
-            
             document.getElementById('foto_base64').value = fotoBase64;
             
             const preview = document.getElementById('photo-preview');
@@ -264,28 +249,46 @@
 
         // ====== SALVAR (INSERIR OU EDITAR) ======
         async function salvarRegistro() {
-            const area = document.getElementById('area').value;
+            let areaVal = document.getElementById('area').value;
+            if (areaVal === 'Outros') {
+                areaVal = document.getElementById('area_outros').value;
+                if (!areaVal) { alert("Você marcou 'Outros', por favor digite o nome da área!"); return; }
+            }
+
             const local = document.getElementById('local').value;
+            const ocorrencia = document.getElementById('ocorrencia').value;
             const descricao = document.getElementById('descricao').value;
             const foto = document.getElementById('foto_base64').value;
-            let dataHora = new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR');
+            
+            let dataAtual = new Date().toLocaleDateString('pt-BR');
+            let horaAtual = new Date().toLocaleTimeString('pt-BR');
 
-            if (!area) { alert("Selecione a Área!"); return; }
-            if (!descricao) { alert("Preencha a Descrição!"); return; }
+            if (!areaVal) { alert("Selecione a Área!"); return; }
+            if (!ocorrencia) { alert("Selecione a Ocorrência!"); return; }
 
             if (indiceEdicao !== null) {
-                // Modo de Edição
-                dataHora = registros[indiceEdicao].data; // Mantém a data original
-                registros[indiceEdicao] = { data: dataHora, area, local, descricao, foto };
+                // Modo Edição: tenta manter a data/hora original, se existir
+                let regAntigo = registros[indiceEdicao];
+                let dataSalva = regAntigo.data || dataAtual;
+                let horaSalva = regAntigo.hora || horaAtual;
+                
+                // Tratamento caso a data antiga esteja no formato "dd/mm/aaaa hh:mm"
+                if (dataSalva.includes(' ')) {
+                    let parts = dataSalva.split(' ');
+                    dataSalva = parts[0];
+                    horaSalva = parts[1] || horaAtual;
+                }
+
+                registros[indiceEdicao] = { data: dataSalva, hora: horaSalva, area: areaVal, local, ocorrencia, descricao, foto };
                 alert("Registro atualizado com sucesso!");
-                cancelarEdicao(); // Volta o formulário ao normal
+                cancelarEdicao();
             } else {
-                // Modo de Inserção Nova
-                const novoRegistro = { data: dataHora, area, local, descricao, foto };
+                // Modo Inserção
+                const novoRegistro = { data: dataAtual, hora: horaAtual, area: areaVal, local, ocorrencia, descricao, foto };
                 registros.push(novoRegistro);
                 alert("Registro inserido com sucesso!");
                 
-                // Limpa os campos após inserir novo (mas mantém a área)
+                // Limpa campos para nova entrada
                 document.getElementById('local').value = '';
                 document.getElementById('descricao').value = '';
                 document.getElementById('foto_base64').value = '';
@@ -293,20 +296,29 @@
             }
             
             await localforage.setItem('registros_caca_desperdicios', registros);
-            localStorage.setItem('ultima_area_selecionada', area);
+            localStorage.setItem('ultima_area_selecionada', areaVal);
             
             atualizarLista();
         }
 
-        // ====== PREPARAR PARA EDITAR ======
+        // ====== EDITAR E CANCELAR ======
         function editarRegistro(index) {
             const reg = registros[index];
             indiceEdicao = index;
 
-            // Preenche os campos com os dados do registro clicado
-            document.getElementById('area').value = reg.area;
-            document.getElementById('local').value = reg.local || ''; // Usa || '' caso seja um registro antigo sem esse campo
-            document.getElementById('descricao').value = reg.descricao;
+            // Preenche a Área
+            const opcoesArea = Array.from(document.getElementById('area').options).map(o => o.value);
+            if (opcoesArea.includes(reg.area)) {
+                document.getElementById('area').value = reg.area;
+            } else {
+                document.getElementById('area').value = 'Outros';
+                document.getElementById('area_outros').value = reg.area;
+            }
+            verificarAreaOutros();
+
+            document.getElementById('local').value = reg.local || '';
+            document.getElementById('ocorrencia').value = reg.ocorrencia || '';
+            document.getElementById('descricao').value = reg.descricao || '';
             document.getElementById('foto_base64').value = reg.foto || '';
             
             const preview = document.getElementById('photo-preview');
@@ -317,16 +329,13 @@
                 preview.style.display = 'none';
             }
 
-            // Muda a aparência do formulário para mostrar que é uma edição
             document.getElementById('titulo-form').innerText = "Editando Registro";
             const btnSalvar = document.getElementById('btn-salvar');
             btnSalvar.innerText = "💾 Atualizar Registro";
             btnSalvar.classList.remove('btn-primary');
             btnSalvar.classList.add('btn-warning');
-            
             document.getElementById('btn-cancelar-edicao').style.display = 'block';
 
-            // Rola a tela suavemente para o topo
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -335,6 +344,7 @@
             document.getElementById('titulo-form').innerText = "Novo Registro";
             
             document.getElementById('local').value = '';
+            document.getElementById('ocorrencia').value = '';
             document.getElementById('descricao').value = '';
             document.getElementById('foto_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
@@ -343,7 +353,6 @@
             btnSalvar.innerText = "➕ Inserir Registro";
             btnSalvar.classList.remove('btn-warning');
             btnSalvar.classList.add('btn-primary');
-            
             document.getElementById('btn-cancelar-edicao').style.display = 'none';
         }
 
@@ -351,15 +360,8 @@
             if (confirm("Tem certeza que deseja excluir este registro?")) {
                 registros.splice(index, 1);
                 await localforage.setItem('registros_caca_desperdicios', registros);
-                
-                // Se estiver excluindo o item que estava sendo editado no momento
-                if (indiceEdicao === index) {
-                    cancelarEdicao();
-                } else if (indiceEdicao !== null && index < indiceEdicao) {
-                    // Ajusta o índice se excluiu um item que estava acima do item em edição
-                    indiceEdicao--;
-                }
-                
+                if (indiceEdicao === index) cancelarEdicao();
+                else if (indiceEdicao !== null && index < indiceEdicao) indiceEdicao--;
                 atualizarLista();
             }
         }
@@ -375,12 +377,21 @@
                 
                 let htmlImg = reg.foto ? `<img src="${reg.foto}" class="registro-img">` : '';
                 let localTxt = reg.local ? `<strong>Local:</strong> ${reg.local} <br>` : '';
+                let ocorrenciaTxt = reg.ocorrencia ? `<strong>Ocorrência:</strong> ${reg.ocorrencia} <br>` : '';
+                let descTxt = reg.descricao ? `<strong>Descrição:</strong> ${reg.descricao} <br>` : '';
                 
+                // Formatação retroativa para registros antigos que tinham data e hora juntos
+                let displayDataHora = reg.data || '';
+                if (reg.hora && !displayDataHora.includes(reg.hora)) {
+                    displayDataHora += ` às ${reg.hora}`;
+                }
+
                 item.innerHTML = `
                     <strong>Área:</strong> ${reg.area} <br>
                     ${localTxt}
-                    <strong>Problema:</strong> ${reg.descricao} <br>
-                    <strong>Data/Hora:</strong> ${reg.data} <br>
+                    ${ocorrenciaTxt}
+                    ${descTxt}
+                    <strong>Registrado em:</strong> ${displayDataHora} <br>
                     ${htmlImg}
                     <div class="acoes-item">
                         <button class="btn-warning" onclick="editarRegistro(${index})">✏️ Editar</button>
@@ -396,12 +407,31 @@
         function exportarCSV() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             let csvContent = "\uFEFF"; 
-            csvContent += "Data;Area;Local;Descricao\n";
-            registros.forEach(r => {
+            
+            // CABEÇALHO NA ORDEM EXATA SOLICITADA
+            csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
+            
+            registros.forEach((r, index) => {
+                let numItem = index + 1;
+                
+                // Trata dados antigos (se houver) que estavam no formato "DD/MM/AAAA HH:MM"
+                let rData = r.data || "";
+                let rHora = r.hora || "";
+                if (rData.includes(' ')) {
+                    let parts = rData.split(' ');
+                    rData = parts[0];
+                    rHora = parts[1] || "";
+                }
+
                 let area = r.area ? r.area.replace(/;/g, ",") : "";
                 let local = r.local ? r.local.replace(/;/g, ",") : "";
+                let ocorrencia = r.ocorrencia ? r.ocorrencia.replace(/;/g, ",") : "";
                 let desc = r.descricao ? r.descricao.replace(/;/g, ",") : "";
-                csvContent += `${r.data};${area};${local};${desc}\n`;
+                
+                // Classificação da Mídia
+                let midia = r.foto ? "Foto" : "Não tem";
+
+                csvContent += `${numItem};${rData};${rHora};${area};${local};${ocorrencia};${desc};${midia}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -422,10 +452,15 @@
                 let slide = pptx.addSlide();
                 let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
                 
-                slide.addText(titulo, { x: 0.5, y: 0.5, w: '90%', fontSize: 24, bold: true, color: '333333' });
-                slide.addText("Problema: " + reg.descricao, { x: 0.5, y: 1.2, w: '90%', fontSize: 18, color: '666666' });
+                slide.addText(titulo, { x: 0.5, y: 0.3, w: '90%', fontSize: 24, bold: true, color: '333333' });
+                slide.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: 0.5, y: 1.0, w: '90%', fontSize: 18, bold: true, color: '0056b3' });
+                
+                if (reg.descricao) {
+                    slide.addText("Detalhe: " + reg.descricao, { x: 0.5, y: 1.5, w: '90%', fontSize: 16, color: '666666' });
+                }
+                
                 if (reg.foto) {
-                    slide.addImage({ data: reg.foto, x: 0.5, y: 2.0, w: 6, h: 3.3 }); 
+                    slide.addImage({ data: reg.foto, x: 0.5, y: 2.2, w: 6, h: 3.3 }); 
                 }
             });
             pptx.writeFile({ fileName: "Relatorio_Desperdicios.pptx" });
@@ -441,14 +476,11 @@
             link.click();
         }
 
-        function acionarImportarJSON() {
-            document.getElementById('input-json').click();
-        }
+        function acionarImportarJSON() { document.getElementById('input-json').click(); }
 
         function importarJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = async function(e) {
                 try {
@@ -459,11 +491,9 @@
                         atualizarLista();
                         alert("Dados importados com sucesso!");
                     } else {
-                        alert("Formato de arquivo inválido. O arquivo JSON deve conter uma lista de registros.");
+                        alert("Formato inválido. O arquivo JSON deve ser uma lista.");
                     }
-                } catch (erro) {
-                    alert("Erro ao ler o arquivo JSON: " + erro);
-                }
+                } catch (erro) { alert("Erro ao ler o arquivo JSON: " + erro); }
             };
             reader.readAsText(file);
             event.target.value = ''; 
