@@ -430,6 +430,12 @@
         
         function exportarCSV() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+            
+            // Permite ao usuário escolher o nome do arquivo CSV
+            let nomeArquivo = prompt("Digite o nome do arquivo CSV:", "auditoria_desperdicios");
+            if (nomeArquivo === null || nomeArquivo.trim() === "") return;
+            if (!nomeArquivo.endsWith('.csv')) nomeArquivo += '.csv';
+
             let csvContent = "\uFEFF"; 
             
             csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
@@ -462,14 +468,20 @@
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "auditoria_desperdicios.csv";
+            link.download = nomeArquivo;
             link.click();
         }
 
-        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE
+        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE EM LINHAS (LISTA)
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-            alert("Gerando PPTX (Formato Grade: 4 por página), aguarde um instante...");
+            
+            // Permite ao usuário escolher o nome do arquivo PPTX
+            let nomeArquivo = prompt("Digite o nome do arquivo PPTX:", "Relatorio_Desperdicios");
+            if (nomeArquivo === null || nomeArquivo.trim() === "") return;
+            if (!nomeArquivo.endsWith('.pptx')) nomeArquivo += '.pptx';
+
+            alert("Gerando PPTX (Formato de Lista: 4 por página), aguarde um instante...");
             let pptx = new PptxGenJS();
             
             // Capa
@@ -494,48 +506,42 @@
                     slideAtual = pptx.addSlide();
                 }
                 
-                // Define a posição X e Y (Quadrante)
-                // Esquerda (0.3) ou Direita (5.2)
-                let xBase = (posicaoNoSlide % 2 === 0) ? 0.3 : 5.2; 
-                // Topo (0.2) ou Base (2.9)
-                let yBase = (posicaoNoSlide < 2) ? 0.2 : 2.9;       
-
-                let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
+                // O Y base desce 1.3 polegadas a cada nova linha
+                let yBase = 0.2 + (posicaoNoSlide * 1.35); 
                 
-                // Textos menores para caberem bem nos quadrantes
-                slideAtual.addText(titulo, { x: xBase, y: yBase, w: 4.5, h: 0.3, fontSize: 14, bold: true, color: '333333' });
-                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: xBase, y: yBase + 0.3, w: 4.5, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
-                
-                if (reg.descricao) {
-                    slideAtual.addText("Detalhe: " + reg.descricao, { x: xBase, y: yBase + 0.5, w: 4.5, h: 0.2, fontSize: 11, color: '666666' });
-                }
-                
+                // Foto à esquerda
                 if (reg.foto) {
-                    // Utilizando sizing do tipo 'contain' para não deformar a foto do celular
                     slideAtual.addImage({ 
                         data: reg.foto, 
-                        x: xBase, 
-                        y: yBase + 0.75, 
-                        w: 4.5, 
-                        h: 1.8, 
-                        sizing: { type: 'contain', w: 4.5, h: 1.8 } 
+                        x: 0.2, 
+                        y: yBase, 
+                        w: 2.2, 
+                        h: 1.25, 
+                        sizing: { type: 'contain', w: 2.2, h: 1.25 } 
                     }); 
+                }
+
+                // Textos à direita da foto (posição X = 2.6)
+                let textX = 2.6;
+                let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
+                
+                slideAtual.addText(titulo, { x: textX, y: yBase, w: 7, h: 0.3, fontSize: 16, bold: true, color: '333333' });
+                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: textX, y: yBase + 0.35, w: 7, h: 0.2, fontSize: 13, bold: true, color: '0056b3' });
+                
+                if (reg.descricao) {
+                    slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.65, w: 7, h: 0.2, fontSize: 12, color: '666666' });
                 }
             });
             
-            pptx.writeFile({ fileName: "Relatorio_Desperdicios.pptx" });
+            pptx.writeFile({ fileName: nomeArquivo });
         }
 
         function exportarJSON() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             
-            let nomeArquivo = prompt("Digite o nome do arquivo para salvar (sem a extensão .json):", "dados_auditoria");
-            if (nomeArquivo === null || nomeArquivo.trim() === "") {
-                return; 
-            }
-            if (!nomeArquivo.endsWith('.json')) {
-                nomeArquivo += '.json';
-            }
+            let nomeArquivo = prompt("Digite o nome do arquivo JSON:", "dados_auditoria");
+            if (nomeArquivo === null || nomeArquivo.trim() === "") return; 
+            if (!nomeArquivo.endsWith('.json')) nomeArquivo += '.json';
 
             const jsonString = JSON.stringify(registros, null, 2);
             const blob = new Blob([jsonString], { type: "application/json" });
