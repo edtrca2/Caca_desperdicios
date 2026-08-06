@@ -154,6 +154,21 @@
 
         .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; margin: 10px auto; }
         .modal-botoes button { margin-top: 0; width: 100%; }
+        
+        /* Layout do Cabeçalho da Lista */
+        .header-lista {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .header-lista h3 {
+            margin: 0;
+            border: none;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
@@ -210,14 +225,16 @@
             <input type="hidden" id="foto_base64">
             <input type="hidden" id="video_base64">
 
-            <!-- Botão renomeado para "Adicionar Item" -->
             <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()">➕ Adicionar Item</button>
             <button class="btn-secondary" id="btn-cancelar-edicao" style="display: none; margin-top: 10px;" onclick="cancelarEdicao()">❌ Cancelar Edição</button>
         </div>
 
         <!-- Lista de Registros -->
         <div style="padding-bottom: 20px;">
-            <h3 style="margin-top: 0;">Registros Salvos (<span id="contador">0</span>)</h3>
+            <div class="header-lista">
+                <h3>Registros (<span id="contador">0</span>)</h3>
+                <button class="btn-danger" style="width: auto; padding: 6px 12px; margin: 0; font-size: 13px;" onclick="limparTudo()">🗑 Limpar Tudo</button>
+            </div>
             <div id="lista-registros"></div>
         </div>
         
@@ -495,7 +512,6 @@
             
             atualizarLista();
             
-            // Rola a tela para o final para mostrar o novo item inserido
             const mainContainer = document.querySelector('.main-container');
             mainContainer.scrollTop = mainContainer.scrollHeight;
         }
@@ -554,7 +570,6 @@
             btnSalvar.classList.add('btn-warning');
             document.getElementById('btn-cancelar-edicao').style.display = 'block';
 
-            // Rola para o topo do formulário
             document.querySelector('.main-container').scrollTop = 0;
         }
 
@@ -584,6 +599,25 @@
                 await localforage.setItem('registros_caca_desperdicios', registros);
                 if (indiceEdicao === index) cancelarEdicao();
                 else if (indiceEdicao !== null && index < indiceEdicao) indiceEdicao--;
+                atualizarLista();
+            }
+        }
+
+        // ====== LIMPAR TUDO ======
+        async function limparTudo() {
+            if (registros.length === 0) {
+                alert("A lista já está vazia.");
+                return;
+            }
+            
+            const confirmacao = confirm("⚠️ ATENÇÃO!\n\nTem certeza que deseja apagar TODOS os registros da lista?\n\nCertifique-se de já ter exportado o arquivo JSON antes, pois esta ação NÃO poderá ser desfeita.");
+            
+            if (confirmacao) {
+                registros = [];
+                await localforage.setItem('registros_caca_desperdicios', registros);
+                if (indiceEdicao !== null) {
+                    cancelarEdicao();
+                }
                 atualizarLista();
             }
         }
@@ -638,7 +672,8 @@
             if (nomeArquivo === null || nomeArquivo.trim() === "") return;
             if (!nomeArquivo.endsWith('.csv')) nomeArquivo += '.csv';
 
-            let csvContent = "\uFEFF"; 
+            // Força a codificação UTF-8 para o Excel reconhecer os acentos
+            let csvContent = ""; 
             csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             
             let registrosOrdenados = [...registros].sort((a, b) => {
@@ -665,7 +700,8 @@
 
                 csvContent += `${numItem};${rData};${rHora};${area};${local};${ocorrencia};${desc};${midia}\n`;
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = nomeArquivo;
