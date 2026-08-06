@@ -580,7 +580,7 @@
             link.click();
         }
 
-        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE EM LINHAS (NA ESQUERDA) E FOTO (NA DIREITA)
+        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE EM LINHAS (NA ESQUERDA) E FOTO (NA DIREITA) + NÚMERO DO ITEM
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             
@@ -616,7 +616,10 @@
                 // Organização dos textos (NA ESQUERDA)
                 let textX = 0.3; // Distância da margem esquerda
                 let textW = 7.0; // Largura para o texto
-                let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
+                
+                // Adicionando o número sequencial ao título
+                let numeroItem = index + 1;
+                let titulo = reg.local ? `${numeroItem}. ${reg.area} - ${reg.local}` : `${numeroItem}. ${reg.area}`;
                 
                 let displayDataHora = reg.data || '';
                 if (reg.hora && !displayDataHora.includes(reg.hora)) {
