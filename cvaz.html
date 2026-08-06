@@ -14,7 +14,7 @@
     <style>
         :root {
             --primary: #0056b3;
-            --bg: #f4f7f6;
+            --bg: #e9ecef;
             --card: #ffffff;
             --text: #333333;
             --danger: #dc3545;
@@ -24,24 +24,58 @@
             --info: #17a2b8;
         }
 
+        /* Estrutura Flexível de App (Não rola a tela inteira, apenas as partes internas) */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 15px;
-            padding-bottom: 120px; 
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100dvh; /* Adapta perfeito ao Safari do iOS */
+            overflow: hidden;
         }
 
-        h2 { text-align: center; color: var(--primary); }
-
-        .card {
+        /* 1. PARTE DE CIMA: Formulário */
+        .top-section {
+            flex-shrink: 0;
+            max-height: 45vh; /* Ocupa no máximo 45% da tela */
+            overflow-y: auto;
             background-color: var(--card);
-            border-radius: 8px;
             padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
         }
+
+        /* 2. PARTE DO CENTRO: Lista Rolante */
+        .center-section {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: var(--bg);
+        }
+
+        /* 3. PARTE DE BAIXO: Botões Fixos */
+        .bottom-section {
+            flex-shrink: 0;
+            background-color: var(--card);
+            padding: 10px 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            z-index: 10;
+        }
+        .bottom-section button {
+            flex: 1 1 calc(50% - 10px);
+            margin: 0;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        h2 { text-align: center; color: var(--primary); margin: 0 0 15px 0; font-size: 22px;}
+        h3 { margin-top: 0; font-size: 18px; color: #444; border-bottom: 2px solid #eee; padding-bottom: 5px;}
 
         label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
 
@@ -75,45 +109,61 @@
         .btn-warning { background-color: var(--warning); color: var(--warning-text); }
         .btn-info { background-color: var(--info); }
 
-        #camera-modal {
+        /* Estilo da Lista no Centro */
+        .registro-item { 
+            background: white; 
+            border-radius: 8px; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .registro-conteudo { display: flex; justify-content: space-between; align-items: center; }
+        .registro-texto { flex: 1; font-size: 14px; }
+        .registro-miniatura {
+            width: 50px; height: 50px; 
+            object-fit: cover; 
+            border-radius: 5px; 
+            cursor: pointer;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+        }
+        .acoes-item { display: flex; gap: 8px; margin-top: 10px; }
+        .acoes-item button { margin-top: 0; padding: 8px; font-size: 13px; }
+
+        /* Modais (Câmera e Visualizador de Mídia) */
+        #camera-modal, #media-viewer-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            z-index: 1000;
+            background-color: rgba(0,0,0,0.95);
+            z-index: 2000;
             text-align: center;
             padding-top: 20px;
         }
+        
+        /* Viewer de Midia */
+        #media-viewer-modal .fechar-btn {
+            position: absolute; top: 15px; right: 20px; font-size: 35px; color: white; cursor: pointer;
+        }
+        #viewer-img, #viewer-video {
+            max-width: 95%; max-height: 80vh; margin-top: 50px; border-radius: 8px;
+        }
 
         #video-preview { width: 100%; max-height: 60vh; background-color: black; }
-        .media-preview { display: none; width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; border: 1px solid #ccc; }
+        .media-preview { display: none; width: 100%; max-height: 150px; object-fit: contain; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px;}
 
-        .registro-item { border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px; }
-        .registro-item:last-child { border-bottom: none; }
-        .registro-img { max-width: 100px; border-radius: 5px; display: block; margin-top: 10px; }
-        .registro-video { max-width: 150px; border-radius: 5px; display: block; margin-top: 10px; }
-
-        .acoes-export { display: flex; flex-wrap: wrap; gap: 10px; }
-        .acoes-export button { flex: 1 1 calc(50% - 10px); margin-top: 5px; }
-        .acoes-item { display: flex; gap: 10px; margin-top: 10px; }
-        .acoes-item button { margin-top: 0; padding: 8px; font-size: 14px; }
-        
-        .modal-botoes {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-            width: 90%;
-            margin: 0 auto;
-        }
+        .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; margin: 10px auto; }
         .modal-botoes button { margin-top: 0; width: 100%; }
     </style>
 </head>
 <body>
 
-    <h2>Caça Desperdícios</h2>
-
-    <div class="card">
+    <!-- 1. PARTE DE CIMA: FORMULÁRIO -->
+    <div class="top-section">
+        <h2>Caça Desperdícios</h2>
         <h3 id="titulo-form">Novo Registro</h3>
         
         <label>Área / Setor:</label>
@@ -156,7 +206,7 @@
         <img id="photo-preview" class="media-preview" src="" alt="Preview Foto">
         <video id="video-file-preview" class="media-preview" controls></video>
         
-        <button class="btn-secondary" onclick="abrirCamera()">📷 Tirar Foto / Gravar Vídeo</button>
+        <button class="btn-secondary" onclick="abrirCamera()">📷 Capturar Mídia</button>
         <input type="hidden" id="foto_base64">
         <input type="hidden" id="video_base64">
 
@@ -164,22 +214,22 @@
         <button class="btn-secondary" id="btn-cancelar-edicao" style="display: none; margin-top: 10px;" onclick="cancelarEdicao()">❌ Cancelar Edição</button>
     </div>
 
-    <div class="card">
+    <!-- 2. PARTE DO CENTRO: LISTA ROLANTE -->
+    <div class="center-section">
         <h3>Registros Salvos (<span id="contador">0</span>)</h3>
         <div id="lista-registros"></div>
     </div>
 
-    <div class="card">
-        <h3 style="margin-top: 0;">Exportação / Importação</h3>
-        <div class="acoes-export">
-            <button class="btn-success" onclick="exportarCSV()">📊 Exportar CSV</button>
-            <button class="btn-primary" onclick="exportarPPTX()">📺 Exportar PPTX</button>
-            <button class="btn-info" onclick="exportarJSON()">💾 Exportar JSON</button>
-            <button class="btn-warning" style="color: var(--warning-text);" onclick="acionarImportarJSON()">📂 Importar JSON</button>
-        </div>
+    <!-- 3. PARTE DE BAIXO: BOTÕES FIXOS -->
+    <div class="bottom-section">
+        <button class="btn-success" onclick="exportarCSV()">📊 CSV</button>
+        <button class="btn-primary" onclick="exportarPPTX()">📺 PPTX</button>
+        <button class="btn-info" onclick="exportarJSON()">💾 JSON</button>
+        <button class="btn-warning" style="color: var(--warning-text);" onclick="acionarImportarJSON()">📂 Importar</button>
         <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
     </div>
 
+    <!-- MODAL DA CÂMERA -->
     <div id="camera-modal">
         <video id="video-preview" autoplay playsinline></video>
         <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 Gravando vídeo...</p>
@@ -187,9 +237,16 @@
             <button id="btn-tirar-foto" class="btn-success" onclick="capturarFoto()">📷 Capturar Foto</button>
             <button id="btn-iniciar-gravacao" class="btn-warning" style="color: var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 Gravar Vídeo</button>
             <button id="btn-parar-gravacao" class="btn-danger" style="display: none;" onclick="pararGravacaoVideo()">⏹️ Parar e Salvar Vídeo</button>
-            <button class="btn-danger" onclick="fecharCamera()">❌ Fechar / Cancelar</button>
+            <button class="btn-danger" onclick="fecharCamera()">❌ Cancelar</button>
         </div>
         <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <!-- MODAL VISUALIZADOR DE MÍDIA (Novo) -->
+    <div id="media-viewer-modal">
+        <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
+        <img id="viewer-img" style="display:none;" />
+        <video id="viewer-video" controls style="display:none;"></video>
     </div>
 
     <script>
@@ -349,6 +406,34 @@
             fecharCamera();
         }
 
+        // ====== VISUALIZADOR DE MÍDIA (NOVO) ======
+        function abrirViewerMidia(index) {
+            const reg = registros[index];
+            const modal = document.getElementById('media-viewer-modal');
+            const img = document.getElementById('viewer-img');
+            const video = document.getElementById('viewer-video');
+
+            if (reg.foto) {
+                img.src = reg.foto;
+                img.style.display = 'inline-block';
+                video.style.display = 'none';
+                video.src = '';
+            } else if (reg.video) {
+                video.src = reg.video;
+                video.style.display = 'inline-block';
+                img.style.display = 'none';
+                img.src = '';
+            }
+            modal.style.display = 'block';
+        }
+
+        function fecharViewerMidia() {
+            document.getElementById('media-viewer-modal').style.display = 'none';
+            const video = document.getElementById('viewer-video');
+            video.pause();
+            video.src = '';
+        }
+
         // ====== SALVAR (INSERIR OU EDITAR) ======
         async function salvarRegistro() {
             let areaVal = document.getElementById('area').value;
@@ -391,7 +476,7 @@
             } else {
                 const novoRegistro = { data: dataAtual, hora: horaAtual, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto, video };
                 registros.push(novoRegistro);
-                alert("Registro inserido com sucesso!");
+                // Não precisa alertar ao inserir para manter a fluidez
                 
                 document.getElementById('local').value = '';
                 document.getElementById('ocorrencia').value = '';
@@ -407,6 +492,10 @@
             localStorage.setItem('ultima_area_selecionada', areaVal);
             
             atualizarLista();
+            
+            // Rola a tela da lista para o final para mostrar o novo item
+            const centerSection = document.querySelector('.center-section');
+            centerSection.scrollTop = centerSection.scrollHeight;
         }
 
         // ====== EDITAR E CANCELAR ======
@@ -463,7 +552,8 @@
             btnSalvar.classList.add('btn-warning');
             document.getElementById('btn-cancelar-edicao').style.display = 'block';
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Rola para o topo (formulário)
+            document.querySelector('.top-section').scrollTop = 0;
         }
 
         function cancelarEdicao() {
@@ -505,29 +595,31 @@
                 const item = document.createElement('div');
                 item.className = 'registro-item';
                 
-                let htmlMidia = '';
+                let numFormat = index + 1;
+                let htmlMidiaIcon = '';
+                
                 if (reg.foto) {
-                    htmlMidia = `<img src="${reg.foto}" class="registro-img">`;
+                    // Clica na miniatura para abrir a foto cheia
+                    htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="Ver Foto">`;
                 } else if (reg.video) {
-                    htmlMidia = `<video src="${reg.video}" class="registro-video" controls></video>`;
+                    // Botão para abrir vídeo
+                    htmlMidiaIcon = `<button class="btn-info" style="margin:0 0 0 10px; width:auto; padding: 10px;" onclick="abrirViewerMidia(${index})">🎥 Ver</button>`;
                 }
 
-                let localTxt = reg.local ? `<strong>Local:</strong> ${reg.local} <br>` : '';
-                let ocorrenciaTxt = reg.ocorrencia ? `<strong>Ocorrência:</strong> ${reg.ocorrencia} <br>` : '';
-                let descTxt = reg.descricao ? `<strong>Descrição:</strong> ${reg.descricao} <br>` : '';
-                
                 let displayDataHora = reg.data || '';
                 if (reg.hora && !displayDataHora.includes(reg.hora)) {
                     displayDataHora += ` às ${reg.hora}`;
                 }
 
                 item.innerHTML = `
-                    <strong>Área:</strong> ${reg.area} <br>
-                    ${localTxt}
-                    ${ocorrenciaTxt}
-                    ${descTxt}
-                    <strong>Registrado em:</strong> ${displayDataHora} <br>
-                    ${htmlMidia}
+                    <div class="registro-conteudo">
+                        <div class="registro-texto">
+                            <strong>${numFormat}. ${reg.area}</strong> ${reg.local ? '- ' + reg.local : ''} <br>
+                            <span style="color: var(--primary); font-size: 13px;">${reg.ocorrencia || ''}</span> <br>
+                            <span style="font-size: 12px; color: #666;">${displayDataHora}</span>
+                        </div>
+                        ${htmlMidiaIcon}
+                    </div>
                     <div class="acoes-item">
                         <button class="btn-warning" onclick="editarRegistro(${index})">✏️ Editar</button>
                         <button class="btn-danger" onclick="excluirRegistro(${index})">🗑 Excluir</button>
@@ -580,7 +672,7 @@
             link.click();
         }
 
-        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE EM LINHAS (NA ESQUERDA) E FOTO (NA DIREITA) + NÚMERO DO ITEM
+        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE EM LINHAS COM TEXTOS NA ESQUERDA E FOTO NA DIREITA
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             
@@ -604,7 +696,7 @@
             let slideAtual;
             
             registrosOrdenados.forEach((reg, index) => {
-                let posicaoNoSlide = index % 4; // 0, 1, 2 ou 3 (as 4 linhas)
+                let posicaoNoSlide = index % 4; // 0, 1, 2 ou 3
                 
                 if (posicaoNoSlide === 0) {
                     slideAtual = pptx.addSlide();
@@ -613,7 +705,6 @@
                 // O Y base desce 1.35 polegadas a cada nova linha
                 let yBase = 0.15 + (posicaoNoSlide * 1.35); 
                 
-                // Organização dos textos (NA ESQUERDA)
                 let textX = 0.3; // Distância da margem esquerda
                 let textW = 7.0; // Largura para o texto
                 
@@ -713,6 +804,10 @@
                 } else {
                     alert(`Importação parcial. ${totalImportados} registros adicionados, mas houve erros em alguns arquivos.`);
                 }
+                
+                // Rola a lista para ver os novos arquivos importados
+                const centerSection = document.querySelector('.center-section');
+                centerSection.scrollTop = centerSection.scrollHeight;
             } else if (!temErro) {
                 alert("Nenhum dado válido encontrado para importar.");
             }
