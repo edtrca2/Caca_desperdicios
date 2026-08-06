@@ -283,7 +283,6 @@
 
             const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
             
-            // Limpa o vídeo anterior se houver e seta a foto
             document.getElementById('foto_base64').value = fotoBase64;
             document.getElementById('video_base64').value = '';
             
@@ -304,7 +303,7 @@
                 mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' });
             } catch (e) {
                 try {
-                    mediaRecorder = new MediaRecorder(streamDeVideo); // fallback padrão
+                    mediaRecorder = new MediaRecorder(streamDeVideo); 
                 } catch (err) {
                     alert("Seu navegador não suporta gravação de vídeo integrada.");
                     return;
@@ -324,7 +323,7 @@
                 reader.onloadend = function() {
                     const videoBase64 = reader.result;
                     document.getElementById('video_base64').value = videoBase64;
-                    document.getElementById('foto_base64').value = ''; // Limpa foto
+                    document.getElementById('foto_base64').value = '';
 
                     const previewFoto = document.getElementById('photo-preview');
                     const previewVideo = document.getElementById('video-file-preview');
@@ -581,6 +580,7 @@
             link.click();
         }
 
+        // LÓGICA ATUALIZADA: 4 REGISTROS POR SLIDE EM LINHAS (NA ESQUERDA) E FOTO (NA DIREITA)
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             
@@ -588,7 +588,7 @@
             if (nomeArquivo === null || nomeArquivo.trim() === "") return;
             if (!nomeArquivo.endsWith('.pptx')) nomeArquivo += '.pptx';
 
-            alert("Gerando PPTX (Formato de Lista: 4 por página), aguarde um instante...");
+            alert("Gerando PPTX (Formato de Lista: 4 linhas por página)...");
             let pptx = new PptxGenJS();
             
             let slideCapa = pptx.addSlide();
@@ -604,14 +604,18 @@
             let slideAtual;
             
             registrosOrdenados.forEach((reg, index) => {
-                let posicaoNoSlide = index % 4;
+                let posicaoNoSlide = index % 4; // 0, 1, 2 ou 3 (as 4 linhas)
+                
                 if (posicaoNoSlide === 0) {
                     slideAtual = pptx.addSlide();
                 }
                 
-                let yBase = 0.2 + (posicaoNoSlide * 1.35); 
-                let textX = 0.3; 
-                let textW = 7.0; 
+                // O Y base desce 1.35 polegadas a cada nova linha
+                let yBase = 0.15 + (posicaoNoSlide * 1.35); 
+                
+                // Organização dos textos (NA ESQUERDA)
+                let textX = 0.3; // Distância da margem esquerda
+                let textW = 7.0; // Largura para o texto
                 let titulo = reg.local ? `${reg.area} - ${reg.local}` : reg.area;
                 
                 let displayDataHora = reg.data || '';
@@ -628,13 +632,14 @@
                     yDetalhe += 0.25; 
                 }
                 
+                // Data e Hora
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 11, color: '888888', italic: true });
 
-                // No PPTX, como vídeos não são imagens estáticas, se for foto coloca no slide. Se for vídeo, avisa no slide ou pula para não quebrar.
+                // Foto ou Aviso de Vídeo (NA DIREITA)
                 if (reg.foto) {
                     slideAtual.addImage({ 
                         data: reg.foto, 
-                        x: 7.5, 
+                        x: 7.5, // Posição fixa na direita
                         y: yBase, 
                         w: 2.2, 
                         h: 1.25, 
@@ -718,7 +723,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('./sw.js').then(function(registration) {
-                    console.log('ServiceWorker registrado com sucesso com o escopo: ', registration.scope);
+                    console.log('ServiceWorker registrado com sucesso.');
                 }, function(err) {
                     console.log('Falha ao registrar o ServiceWorker: ', err);
                 });
