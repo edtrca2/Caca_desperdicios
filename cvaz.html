@@ -36,16 +36,18 @@
             overflow: hidden; 
         }
 
+        /* 1. TOPO FIXO (Formulário) COM LINHA PRETA NA BASE */
         .top-section {
             flex: none;
             background-color: var(--card);
             padding: 12px 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-bottom: 2px solid black; 
             z-index: 10;
             max-height: 55vh; 
             overflow-y: auto;
         }
 
+        /* 2. CENTRO ROLANTE (Lista) */
         .center-section {
             flex: 1;
             overflow-y: auto;
@@ -53,16 +55,18 @@
             background-color: var(--bg);
         }
 
+        /* 3. RODAPÉ FIXO (Botões Exportar) COM LINHA PRETA NO TOPO */
         .bottom-section {
             flex: none;
             background-color: var(--card);
             padding: 10px 15px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            border-top: 2px solid black; 
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             z-index: 10;
         }
+        
         .bottom-section button {
             flex: 1 1 calc(50% - 10px);
             margin: 0;
@@ -392,10 +396,10 @@
             
             if (textarea.value.trim() !== '') {
                 display.innerText = textarea.value;
-                display.style.color = '#333'; // Cor de texto normal
+                display.style.color = '#333'; 
             } else {
                 display.innerText = 'Toque para digitar...';
-                display.style.color = '#6c757d'; // Cor de placeholder
+                display.style.color = '#6c757d'; 
             }
             
             fecharModalDescricao();
