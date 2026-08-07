@@ -36,7 +36,6 @@
             overflow: hidden; 
         }
 
-        /* 1. TOPO FIXO (Formulário) COM LINHA PRETA NA BASE */
         .top-section {
             flex: none;
             background-color: var(--card);
@@ -47,7 +46,6 @@
             overflow-y: auto;
         }
 
-        /* 2. CENTRO ROLANTE (Lista) */
         .center-section {
             flex: 1;
             overflow-y: auto;
@@ -55,7 +53,6 @@
             background-color: var(--bg);
         }
 
-        /* 3. RODAPÉ FIXO (Botões Exportar) COM LINHA PRETA NO TOPO */
         .bottom-section {
             flex: none;
             background-color: var(--card);
@@ -95,7 +92,6 @@
             height: 38px;
         }
 
-        /* O Falso Input para a Descrição */
         .fake-input {
             width: 100%;
             padding: 8px;
@@ -222,12 +218,10 @@
 </head>
 <body>
 
-    <!-- 1. TOPO FIXO (Formulário) -->
     <div class="top-section">
         <h2>Caça Desperdícios</h2>
         
         <div class="form-grid">
-            <!-- Coluna 1 -->
             <div>
                 <label>Área / Setor:</label>
                 <select id="area" onchange="verificarAreaOutros()">
@@ -248,13 +242,11 @@
                 <input type="text" id="area_outros" placeholder="Nome da Área..." style="display: none; margin-top: 5px; border-color: var(--primary);">
             </div>
             
-            <!-- Coluna 2 -->
             <div>
                 <label>Local Específico:</label>
                 <input type="text" id="local" placeholder="Ex: F40, Coluna">
             </div>
 
-            <!-- Coluna 1 -->
             <div>
                 <label>Ocorrência:</label>
                 <select id="ocorrencia" onchange="verificarOcorrenciaOutros()">
@@ -269,7 +261,6 @@
                 <input type="text" id="ocorrencia_outros" placeholder="Especifique..." style="display: none; margin-top: 5px; border-color: var(--primary);">
             </div>
 
-            <!-- Coluna 2 (DESCRIÇÃO COM FALSO INPUT) -->
             <div>
                 <label>Descrição:</label>
                 <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">Toque para digitar...</div>
@@ -277,13 +268,11 @@
             </div>
         </div>
 
-        <!-- Preview centralizado -->
         <div style="display: flex; justify-content: center;">
             <img id="photo-preview" class="media-preview" src="" alt="Preview">
             <video id="video-file-preview" class="media-preview" controls></video>
         </div>
         
-        <!-- Botões de Ação do Form -->
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="btn-secondary" onclick="abrirCamera()" style="margin: 0; flex: 1;">📷 Câmera</button>
             <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin: 0; flex: 1;">➕ Adicionar</button>
@@ -294,7 +283,6 @@
         <input type="hidden" id="video_base64">
     </div>
 
-    <!-- 2. CENTRO ROLANTE (Lista de Itens) -->
     <div class="center-section">
         <div class="header-lista">
             <h3>Registros (<span id="contador">0</span>)</h3>
@@ -303,7 +291,6 @@
         <div id="lista-registros"></div>
     </div>
 
-    <!-- 3. RODAPÉ FIXO (Exportação / Importação) -->
     <div class="bottom-section">
         <button class="btn-success" onclick="exportarCSV()">📊 CSV</button>
         <button class="btn-primary" onclick="exportarPPTX()">📺 PPTX</button>
@@ -312,7 +299,6 @@
         <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
     </div>
 
-    <!-- MODAL DA DESCRIÇÃO (TEXTAREA) -->
     <div id="descricao-modal">
         <div class="modal-box">
             <h3 style="margin-top: 0; color: var(--primary);">Descrição do Problema</h3>
@@ -325,7 +311,6 @@
         </div>
     </div>
 
-    <!-- MODAL DA CÂMERA -->
     <div id="camera-modal">
         <video id="video-preview" autoplay playsinline></video>
         <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 Gravando vídeo...</p>
@@ -338,7 +323,6 @@
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
-    <!-- MODAL VISUALIZADOR DE MÍDIA -->
     <div id="media-viewer-modal">
         <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
         <img id="viewer-img" style="display:none;" />
@@ -372,7 +356,6 @@
             }
         };
 
-        // ====== FUNÇÕES DA DESCRIÇÃO (TEXTAREA) ======
         function abrirModalDescricao() {
             const modal = document.getElementById('descricao-modal');
             const textarea = document.getElementById('descricao-texto');
@@ -446,7 +429,6 @@
             }
         }
 
-        // ====== CÂMERA E MÍDIA ======
         async function abrirCamera() {
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('video-preview');
@@ -554,7 +536,6 @@
             fecharCamera();
         }
 
-        // ====== VISUALIZADOR DE MÍDIA ======
         function abrirViewerMidia(index) {
             const reg = registros[index];
             const modal = document.getElementById('media-viewer-modal');
@@ -582,7 +563,6 @@
             video.src = '';
         }
 
-        // ====== SALVAR (INSERIR OU EDITAR) ======
         async function salvarRegistro() {
             let areaVal = document.getElementById('area').value;
             if (areaVal === 'Outros') {
@@ -644,7 +624,6 @@
             centerSection.scrollTop = centerSection.scrollHeight;
         }
 
-        // ====== EDITAR E CANCELAR ======
         function editarRegistro(index) {
             const reg = registros[index];
             indiceEdicao = index;
@@ -728,7 +707,6 @@
             }
         }
 
-        // ====== LIMPAR TUDO ======
         async function limparTudo() {
             if (registros.length === 0) {
                 alert("A lista já está vazia.");
@@ -788,8 +766,6 @@
             });
         }
 
-        // ====== EXPORTAÇÃO E IMPORTAÇÃO ======
-        
         function exportarCSV() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             
@@ -832,6 +808,7 @@
             link.click();
         }
 
+        // LÓGICA ATUALIZADA: Novo Layout PPTX (KW, Cabeçalhos Dinâmicos e "Ocorrência #")
         function exportarPPTX() {
             if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
             
@@ -839,12 +816,18 @@
             if (nomeArquivo === null || nomeArquivo.trim() === "") return;
             if (!nomeArquivo.endsWith('.pptx')) nomeArquivo += '.pptx';
 
-            alert("Gerando PPTX (Formato de Lista: 4 linhas por página)...");
+            alert("Gerando PPTX (Formato de Lista: 4 linhas por página com cabeçalho)...");
             let pptx = new PptxGenJS();
             
-            let slideCapa = pptx.addSlide();
-            slideCapa.addText("Relatório - Caça Desperdícios", { x: 1, y: 2, w: '80%', fontSize: 36, bold: true, color: '0056b3', align: 'center' });
-            slideCapa.addText("Gerado em: " + new Date().toLocaleDateString('pt-BR'), { x: 1, y: 3, w: '80%', fontSize: 18, align: 'center' });
+            // Função para pegar a semana ISO (KW)
+            function getISOWeek(date) {
+                const dt = new Date(date);
+                dt.setHours(0, 0, 0, 0);
+                dt.setDate(dt.getDate() + 3 - (dt.getDay() + 6) % 7);
+                const week1 = new Date(dt.getFullYear(), 0, 4);
+                return 1 + Math.round(((dt.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            }
+            let kw = getISOWeek(new Date());
             
             let registrosOrdenados = [...registros].sort((a, b) => {
                 let areaA = a.area ? a.area.toLowerCase() : "";
@@ -859,42 +842,54 @@
                 
                 if (posicaoNoSlide === 0) {
                     slideAtual = pptx.addSlide();
+                    
+                    // NOVO CABEÇALHO NA PÁGINA
+                    slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9.0, h: 0.4, fontSize: 24, bold: true, color: '333333' });
+                    // Nome da Área (pega a área do primeiro item deste slide)
+                    slideAtual.addText(reg.area || "Geral", { x: 0.3, y: 0.6, w: 9.0, h: 0.3, fontSize: 18, bold: true, color: '444444' });
                 }
                 
-                let yBase = 0.15 + (posicaoNoSlide * 1.35); 
+                // Ajuste do yBase porque agora temos cabeçalho no topo
+                let yBase = 1.05 + (posicaoNoSlide * 1.12); 
                 let textX = 0.3; 
                 let textW = 7.0; 
                 
                 let numeroItem = index + 1;
-                let titulo = reg.local ? `${numeroItem}. ${reg.area} - ${reg.local}` : `${numeroItem}. ${reg.area}`;
+                // NOVO TÍTULO DO ITEM COM PREFIXO "Ocorrência #"
+                let titulo = reg.local ? `Ocorrência #${numeroItem} - ${reg.area} - ${reg.local}` : `Ocorrência #${numeroItem} - ${reg.area}`;
                 
                 let displayDataHora = reg.data || '';
                 if (reg.hora && !displayDataHora.includes(reg.hora)) {
                     displayDataHora += ` às ${reg.hora}`;
                 }
 
-                slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.3, fontSize: 16, bold: true, color: '333333' });
-                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: textX, y: yBase + 0.30, w: textW, h: 0.2, fontSize: 13, bold: true, color: '0056b3' });
+                slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true, color: '333333' });
+                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: textX, y: yBase + 0.25, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
                 
-                let yDetalhe = yBase + 0.55;
+                let yDetalhe = yBase + 0.45;
                 if (reg.descricao) {
-                    slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 12, color: '666666' });
-                    yDetalhe += 0.25; 
+                    slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 11, color: '666666' });
+                    yDetalhe += 0.20; 
                 }
                 
-                slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 11, color: '888888', italic: true });
+                slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 10, color: '888888', italic: true });
 
                 if (reg.foto) {
                     slideAtual.addImage({ 
                         data: reg.foto, 
                         x: 7.5, 
                         y: yBase, 
-                        w: 2.2, 
-                        h: 1.25, 
-                        sizing: { type: 'contain', w: 2.2, h: 1.25 } 
+                        w: 1.8, 
+                        h: 1.0, 
+                        sizing: { type: 'contain', w: 1.8, h: 1.0 } 
                     }); 
                 } else if (reg.video) {
-                    slideAtual.addText("[ARQUIVO DE VÍDEO NO JSON]", { x: 7.5, y: yBase + 0.4, w: 2.2, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
+                    slideAtual.addText("[ARQUIVO DE VÍDEO NO JSON]", { x: 7.5, y: yBase + 0.3, w: 1.8, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
+                }
+                
+                // Linha divisória sutil para organizar os blocos (menos embaixo do último da página)
+                if (posicaoNoSlide < 3) {
+                    slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9.0, h: 0, line: { color: 'E0E0E0', width: 1 } });
                 }
             });
             
@@ -969,7 +964,6 @@
         }
     </script>
 
-    <!-- REGISTRO DO SERVICE WORKER (OFFLINE) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
