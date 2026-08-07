@@ -24,7 +24,6 @@
             --info: #17a2b8;
         }
 
-        /* Estrutura de App: 3 blocos bem divididos */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
@@ -34,21 +33,19 @@
             display: flex;
             flex-direction: column;
             height: 100dvh; 
-            overflow: hidden; /* Remove rolagem global */
+            overflow: hidden; 
         }
 
-        /* 1. TOPO FIXO (Formulário) */
         .top-section {
             flex: none;
             background-color: var(--card);
             padding: 12px 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 10;
-            max-height: 55vh; /* Limite de segurança para telas deitadas */
+            max-height: 55vh; 
             overflow-y: auto;
         }
 
-        /* 2. CENTRO ROLANTE (Lista) */
         .center-section {
             flex: 1;
             overflow-y: auto;
@@ -56,7 +53,6 @@
             background-color: var(--bg);
         }
 
-        /* 3. RODAPÉ FIXO (Botões Exportar) */
         .bottom-section {
             flex: none;
             background-color: var(--card);
@@ -74,7 +70,6 @@
             font-size: 14px;
         }
 
-        /* Formulário Compacto em Grid (2 colunas) */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -94,6 +89,25 @@
             font-size: 14px;
             background-color: white;
             height: 38px;
+        }
+
+        /* O Falso Input para a Descrição */
+        .fake-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            height: 38px;
+            cursor: pointer;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
         button {
@@ -118,7 +132,6 @@
         .btn-warning { background-color: var(--warning); color: var(--warning-text); }
         .btn-info { background-color: var(--info); }
 
-        /* Estilo da Lista de Itens */
         .header-lista {
             display: flex;
             justify-content: space-between;
@@ -152,7 +165,6 @@
         .acoes-item { display: flex; gap: 8px; margin-top: 10px; }
         .acoes-item button { margin-top: 0; padding: 8px; font-size: 13px; height: 35px; }
 
-        /* Modais */
         #camera-modal, #media-viewer-modal, #descricao-modal {
             display: none;
             position: fixed;
@@ -176,7 +188,6 @@
         .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; margin: 10px auto; }
         .modal-botoes button { margin-top: 0; width: 100%; height: 45px;}
 
-        /* Modal Específico para Descrição */
         #descricao-modal {
             padding-top: 0;
             justify-content: center;
@@ -254,10 +265,11 @@
                 <input type="text" id="ocorrencia_outros" placeholder="Especifique..." style="display: none; margin-top: 5px; border-color: var(--primary);">
             </div>
 
-            <!-- Coluna 2 (DESCRIÇÃO COM MODAL) -->
+            <!-- Coluna 2 (DESCRIÇÃO COM FALSO INPUT) -->
             <div>
                 <label>Descrição:</label>
-                <input type="text" id="descricao" placeholder="Toque para digitar..." readonly onclick="abrirModalDescricao()" style="cursor: pointer; background-color: #f8f9fa;">
+                <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">Toque para digitar...</div>
+                <input type="hidden" id="descricao">
             </div>
         </div>
 
@@ -360,9 +372,9 @@
         function abrirModalDescricao() {
             const modal = document.getElementById('descricao-modal');
             const textarea = document.getElementById('descricao-texto');
-            const input = document.getElementById('descricao');
+            const inputHidden = document.getElementById('descricao');
             
-            textarea.value = input.value;
+            textarea.value = inputHidden.value;
             modal.style.display = 'flex';
             textarea.focus();
         }
@@ -373,10 +385,39 @@
 
         function salvarDescricao() {
             const textarea = document.getElementById('descricao-texto');
-            const input = document.getElementById('descricao');
+            const inputHidden = document.getElementById('descricao');
+            const display = document.getElementById('descricao-display');
             
-            input.value = textarea.value;
+            inputHidden.value = textarea.value;
+            
+            if (textarea.value.trim() !== '') {
+                display.innerText = textarea.value;
+                display.style.color = '#333'; // Cor de texto normal
+            } else {
+                display.innerText = 'Toque para digitar...';
+                display.style.color = '#6c757d'; // Cor de placeholder
+            }
+            
             fecharModalDescricao();
+        }
+
+        function limparCampoDescricao() {
+            document.getElementById('descricao').value = '';
+            const display = document.getElementById('descricao-display');
+            display.innerText = 'Toque para digitar...';
+            display.style.color = '#6c757d';
+        }
+
+        function preencherCampoDescricao(texto) {
+            document.getElementById('descricao').value = texto || '';
+            const display = document.getElementById('descricao-display');
+            if (texto && texto.trim() !== '') {
+                display.innerText = texto;
+                display.style.color = '#333';
+            } else {
+                display.innerText = 'Toque para digitar...';
+                display.style.color = '#6c757d';
+            }
         }
 
         function verificarAreaOutros() {
@@ -582,7 +623,8 @@
                 document.getElementById('local').value = '';
                 document.getElementById('ocorrencia').value = '';
                 verificarOcorrenciaOutros();
-                document.getElementById('descricao').value = '';
+                limparCampoDescricao();
+                
                 document.getElementById('foto_base64').value = '';
                 document.getElementById('video_base64').value = '';
                 document.getElementById('photo-preview').style.display = 'none';
@@ -624,7 +666,7 @@
             verificarOcorrenciaOutros();
 
             document.getElementById('local').value = reg.local || '';
-            document.getElementById('descricao').value = reg.descricao || '';
+            preencherCampoDescricao(reg.descricao);
             
             document.getElementById('foto_base64').value = reg.foto || '';
             document.getElementById('video_base64').value = reg.video || '';
@@ -658,7 +700,8 @@
             document.getElementById('local').value = '';
             document.getElementById('ocorrencia').value = '';
             verificarOcorrenciaOutros();
-            document.getElementById('descricao').value = '';
+            limparCampoDescricao();
+            
             document.getElementById('foto_base64').value = '';
             document.getElementById('video_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
