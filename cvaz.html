@@ -154,6 +154,7 @@
         }
         .registro-conteudo { display: flex; justify-content: space-between; align-items: center; }
         .registro-texto { flex: 1; font-size: 14px; }
+        
         .registro-miniatura {
             width: 50px; height: 50px; 
             object-fit: cover; 
@@ -163,6 +164,29 @@
             margin-left: 10px;
             flex-shrink: 0;
         }
+
+        .video-thumbnail-container {
+            position: relative;
+            width: 50px; height: 50px;
+            margin-left: 10px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .video-thumbnail-container img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .video-thumbnail-container .play-icon {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 20px;
+        }
+
         .acoes-item { display: flex; gap: 8px; margin-top: 10px; }
         .acoes-item button { margin-top: 0; padding: 8px; font-size: 13px; height: 35px; }
 
@@ -270,8 +294,9 @@
         </div>
 
         <div style="display: flex; justify-content: center;">
+            <!-- Apenas um elemento de preview que serve para Foto e Thumb de Vídeo -->
             <img id="photo-preview" class="media-preview" src="" alt="Preview">
-            <video id="video-file-preview" class="media-preview" controls></video>
+            <!-- Removi o player do form pra ficar mais compacto -->
         </div>
         
         <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -361,7 +386,6 @@
             const modal = document.getElementById('descricao-modal');
             const textarea = document.getElementById('descricao-texto');
             const inputHidden = document.getElementById('descricao');
-            
             textarea.value = inputHidden.value;
             modal.style.display = 'flex';
             textarea.focus();
@@ -373,11 +397,9 @@
             const textarea = document.getElementById('descricao-texto');
             const inputHidden = document.getElementById('descricao');
             const display = document.getElementById('descricao-display');
-            
             inputHidden.value = textarea.value;
             display.innerText = textarea.value.trim() !== '' ? textarea.value : 'Toque para digitar...';
             display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
-            
             fecharModalDescricao();
         }
 
@@ -442,11 +464,12 @@
             canvas.height = video.videoHeight || 720;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+            
             document.getElementById('foto_base64').value = fotoBase64;
             document.getElementById('video_base64').value = '';
+            
             document.getElementById('photo-preview').src = fotoBase64;
             document.getElementById('photo-preview').style.display = 'block';
-            document.getElementById('video-file-preview').style.display = 'none';
             fecharCamera();
         }
 
@@ -466,10 +489,10 @@
                 reader.readAsDataURL(blob);
                 reader.onloadend = () => {
                     document.getElementById('video_base64').value = reader.result;
-                    document.getElementById('foto_base64').value = '';
-                    document.getElementById('video-file-preview').src = reader.result;
-                    document.getElementById('video-file-preview').style.display = 'block';
-                    document.getElementById('photo-preview').style.display = 'none';
+                    
+                    // Exibe a thumbnail no preview do form
+                    document.getElementById('photo-preview').src = document.getElementById('foto_base64').value;
+                    document.getElementById('photo-preview').style.display = 'block';
                 };
             };
             mediaRecorder.start();
@@ -483,7 +506,20 @@
         }
 
         function pararGravacaoVideo() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                // Tira uma foto escondida do frame do vídeo para usar como miniatura (Thumbnail)
+                try {
+                    const video = document.getElementById('video-preview');
+                    const canvas = document.getElementById('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = video.videoWidth || 1280;
+                    canvas.height = video.videoHeight || 720;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
+                } catch(e) {}
+                
+                mediaRecorder.stop();
+            }
             fecharCamera();
         }
 
@@ -492,8 +528,19 @@
             const modal = document.getElementById('media-viewer-modal');
             const img = document.getElementById('viewer-img');
             const video = document.getElementById('viewer-video');
-            if (reg.foto) { img.src = reg.foto; img.style.display = 'inline-block'; video.style.display = 'none'; }
-            else if (reg.video) { video.src = reg.video; video.style.display = 'inline-block'; img.style.display = 'none'; }
+            
+            if (reg.video) { 
+                video.src = reg.video; 
+                video.style.display = 'inline-block'; 
+                img.style.display = 'none'; 
+                img.src = '';
+                setTimeout(() => video.play(), 200); // Dá auto-play no vídeo
+            } else if (reg.foto) { 
+                img.src = reg.foto; 
+                img.style.display = 'inline-block'; 
+                video.style.display = 'none'; 
+                video.src = ''; 
+            }
             modal.style.display = 'block';
         }
 
@@ -516,7 +563,8 @@
                 hora: new Date().toLocaleTimeString('pt-BR'), 
                 area: areaVal, local: document.getElementById('local').value, 
                 ocorrencia: ocorrenciaVal, descricao: document.getElementById('descricao').value, 
-                foto: document.getElementById('foto_base64').value, video: document.getElementById('video_base64').value 
+                foto: document.getElementById('foto_base64').value, // No caso de vídeo, salva a miniatura
+                video: document.getElementById('video_base64').value 
             };
 
             if (indiceEdicao !== null) { registros[indiceEdicao] = novoReg; cancelarEdicao(); }
@@ -528,7 +576,6 @@
             document.getElementById('foto_base64').value = '';
             document.getElementById('video_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
-            document.getElementById('video-file-preview').style.display = 'none';
             
             await localforage.setItem('registros_caca_desperdicios', registros);
             atualizarLista();
@@ -546,9 +593,13 @@
             document.getElementById('video_base64').value = reg.video || '';
             
             const previewFoto = document.getElementById('photo-preview');
-            const previewVideo = document.getElementById('video-file-preview');
-            if (reg.foto) { previewFoto.src = reg.foto; previewFoto.style.display = 'block'; }
-            if (reg.video) { previewVideo.src = reg.video; previewVideo.style.display = 'block'; }
+            // Se for vídeo com miniatura, ou apenas foto, ambos usam "foto" para o preview
+            if (reg.foto) { 
+                previewFoto.src = reg.foto; 
+                previewFoto.style.display = 'block'; 
+            } else {
+                previewFoto.style.display = 'none';
+            }
             
             const btnSalvar = document.getElementById('btn-salvar');
             btnSalvar.innerText = "💾 Atualizar";
@@ -564,7 +615,6 @@
             document.getElementById('foto_base64').value = '';
             document.getElementById('video_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
-            document.getElementById('video-file-preview').style.display = 'none';
             const btnSalvar = document.getElementById('btn-salvar');
             btnSalvar.innerText = "➕ Adicionar";
             document.getElementById('btn-cancelar-edicao').style.display = 'none';
@@ -598,11 +648,17 @@
                 let numFormat = index + 1;
                 let htmlMidiaIcon = '';
                 
-                if (reg.foto) {
+                if (reg.video) {
+                    // SE FOR VÍDEO: Mostra a miniatura com o PLAY transparente por cima
+                    let thumb = reg.foto || ''; 
+                    htmlMidiaIcon = `
+                    <div class="video-thumbnail-container" onclick="abrirViewerMidia(${index})" title="Ver Vídeo">
+                        <img src="${thumb}">
+                        <div class="play-icon">▶</div>
+                    </div>`;
+                } else if (reg.foto) {
+                    // SE FOR FOTO: Mostra só a foto
                     htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="Ver Foto">`;
-                } else if (reg.video) {
-                    // BOTÃO PEQUENO FIXO PARA O VÍDEO
-                    htmlMidiaIcon = `<button class="btn-info" style="width: 60px; height: 50px; margin: 0 0 0 10px; padding: 0; flex-shrink: 0; font-size: 14px;" onclick="abrirViewerMidia(${index})">🎥 Ver</button>`;
                 }
 
                 item.innerHTML = `
@@ -630,7 +686,9 @@
 
             let csvContent = "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             registros.forEach((r, i) => {
-                csvContent += `${i + 1};${r.data || ""};${r.hora || ""};${(r.area||"").replace(/;/g,",")};${(r.local||"").replace(/;/g,",")};${(r.ocorrencia||"").replace(/;/g,",")};${(r.descricao||"").replace(/;/g,",")};${r.foto?"Foto":(r.video?"Vídeo":"Não tem")}\n`;
+                // Checa se tem vídeo primeiro, se não, foto
+                let tipoMidia = r.video ? "Vídeo" : (r.foto ? "Foto" : "Não tem");
+                csvContent += `${i + 1};${r.data || ""};${r.hora || ""};${(r.area||"").replace(/;/g,",")};${(r.local||"").replace(/;/g,",")};${(r.ocorrencia||"").replace(/;/g,",")};${(r.descricao||"").replace(/;/g,",")};${tipoMidia}\n`;
             });
             const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -673,8 +731,13 @@
                 if (reg.descricao) slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.45, w: textW, h: 0.2, fontSize: 11, color: '666666' });
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yBase + 0.65, w: textW, h: 0.2, fontSize: 10, italic: true });
 
+                // Lógica da Mídia no PPTX (Foto ou Thumbnail do Vídeo com Ícone)
                 if (reg.foto) {
                     slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
+                    // Se além da foto tiver vídeo, desenha o icone de PLAY em cima no PPTX
+                    if (reg.video) {
+                        slideAtual.addText("▶", { x: 7.5, y: yBase, w: 1.8, h: 1.0, fontSize: 32, color: 'FFFFFF', align: 'center', valign: 'middle' });
+                    }
                 } else if (reg.video) {
                     slideAtual.addText("[VÍDEO]", { x: 7.5, y: yBase + 0.3, w: 1.8, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
                 }
