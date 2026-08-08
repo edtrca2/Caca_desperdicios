@@ -313,7 +313,7 @@
 
     <div id="camera-modal">
         <video id="video-preview" autoplay playsinline></video>
-        <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 Gravando vídeo...</p>
+        <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 Gravando vídeo (Máx 5s)...</p>
         <div class="modal-botoes">
             <button id="btn-tirar-foto" class="btn-success" onclick="capturarFoto()">📷 Capturar Foto</button>
             <button id="btn-iniciar-gravacao" class="btn-warning" style="color: var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 Gravar Vídeo</button>
@@ -526,7 +526,16 @@
             document.getElementById('btn-tirar-foto').style.display = 'none';
             document.getElementById('btn-iniciar-gravacao').style.display = 'none';
             document.getElementById('btn-parar-gravacao').style.display = 'block';
+            document.getElementById('status-gravacao').innerText = '🔴 Gravando vídeo (Máx 5s)...';
             document.getElementById('status-gravacao').style.display = 'block';
+
+            // Limite de 5 segundos para a gravação
+            setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    pararGravacaoVideo();
+                    alert("Tempo máximo de 5 segundos atingido.");
+                }
+            }, 5000);
         }
 
         function pararGravacaoVideo() {
@@ -819,7 +828,6 @@
             alert("Gerando PPTX (Formato de Lista: 4 linhas por página com cabeçalho)...");
             let pptx = new PptxGenJS();
             
-            // Função para pegar a semana ISO (KW)
             function getISOWeek(date) {
                 const dt = new Date(date);
                 dt.setHours(0, 0, 0, 0);
@@ -843,19 +851,15 @@
                 if (posicaoNoSlide === 0) {
                     slideAtual = pptx.addSlide();
                     
-                    // NOVO CABEÇALHO NA PÁGINA
                     slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9.0, h: 0.4, fontSize: 24, bold: true, color: '333333' });
-                    // Nome da Área (pega a área do primeiro item deste slide)
                     slideAtual.addText(reg.area || "Geral", { x: 0.3, y: 0.6, w: 9.0, h: 0.3, fontSize: 18, bold: true, color: '444444' });
                 }
                 
-                // Ajuste do yBase porque agora temos cabeçalho no topo
                 let yBase = 1.05 + (posicaoNoSlide * 1.12); 
                 let textX = 0.3; 
                 let textW = 7.0; 
                 
                 let numeroItem = index + 1;
-                // NOVO TÍTULO DO ITEM COM PREFIXO "Ocorrência #"
                 let titulo = reg.local ? `Ocorrência #${numeroItem} - ${reg.area} - ${reg.local}` : `Ocorrência #${numeroItem} - ${reg.area}`;
                 
                 let displayDataHora = reg.data || '';
@@ -887,7 +891,6 @@
                     slideAtual.addText("[ARQUIVO DE VÍDEO NO JSON]", { x: 7.5, y: yBase + 0.3, w: 1.8, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
                 }
                 
-                // Linha divisória sutil para organizar os blocos (menos embaixo do último da página)
                 if (posicaoNoSlide < 3) {
                     slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9.0, h: 0, line: { color: 'E0E0E0', width: 1 } });
                 }
