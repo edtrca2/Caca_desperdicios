@@ -647,7 +647,6 @@
                 let htmlMidiaIcon = '';
                 
                 if (reg.video) {
-                    // SE FOR VÍDEO: Usa a foto como thumbnail, ou um quadrado escuro se for um registro importado sem foto
                     let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+'; 
                     htmlMidiaIcon = `
                     <div class="video-thumbnail-container" onclick="abrirViewerMidia(${index})" title="Ver Vídeo">
@@ -727,18 +726,32 @@
                 if (reg.descricao) slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.45, w: textW, h: 0.2, fontSize: 11, color: '666666' });
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yBase + 0.65, w: textW, h: 0.2, fontSize: 10, italic: true });
 
-                // Embutir Mídia Real no PPTX
+                // Embutir Mídia Real no PPTX com "Capa" e ícone de play sobreposto
                 if (reg.video) {
                     let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 1.0 };
-                    // Se tiver foto de capa, define como Poster Frame do PPTX
                     if (reg.foto) mediaOpts.cover = reg.foto;
                     
                     try {
                         slideAtual.addMedia(mediaOpts);
                     } catch(e) {
-                        // Caso a engine falhe com vídeos antigos
                         if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
                     }
+                    
+                    // Adiciona o Botão de Play circular translúcido no PPTX
+                    slideAtual.addText("▶", { 
+                        shape: pptx.ShapeType.oval,
+                        x: 7.5 + 0.9 - 0.25,  
+                        y: yBase + 0.5 - 0.25, 
+                        w: 0.5, 
+                        h: 0.5, 
+                        fontSize: 18, 
+                        color: 'FFFFFF', 
+                        fill: { color: '000000', transparency: 40 }, 
+                        line: { color: 'FFFFFF', width: 1.5 },
+                        align: 'center', 
+                        valign: 'middle'
+                    });
+
                 } else if (reg.foto) {
                     slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
                 }
