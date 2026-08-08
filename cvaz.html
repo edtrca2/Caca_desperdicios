@@ -161,6 +161,7 @@
             cursor: pointer;
             border: 1px solid #ccc;
             margin-left: 10px;
+            flex-shrink: 0;
         }
         .acoes-item { display: flex; gap: 8px; margin-top: 10px; }
         .acoes-item button { margin-top: 0; padding: 8px; font-size: 13px; height: 35px; }
@@ -360,6 +361,7 @@
             const modal = document.getElementById('descricao-modal');
             const textarea = document.getElementById('descricao-texto');
             const inputHidden = document.getElementById('descricao');
+            
             textarea.value = inputHidden.value;
             modal.style.display = 'flex';
             textarea.focus();
@@ -371,9 +373,11 @@
             const textarea = document.getElementById('descricao-texto');
             const inputHidden = document.getElementById('descricao');
             const display = document.getElementById('descricao-display');
+            
             inputHidden.value = textarea.value;
             display.innerText = textarea.value.trim() !== '' ? textarea.value : 'Toque para digitar...';
             display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
+            
             fecharModalDescricao();
         }
 
@@ -416,9 +420,9 @@
             try {
                 streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
                 video.srcObject = streamDeVideo;
-                video.muted = true; // <--- CORREÇÃO: SILENCIA O AÚDIO NO PREVIEW
+                video.muted = true;
             } catch (erro) {
-                alert("Erro ao acessar câmera: " + erro);
+                alert("Erro ao acessar câmera/microfone: " + erro);
                 fecharCamera();
             }
         }
@@ -448,7 +452,13 @@
 
         function iniciarGravacaoVideo() {
             pedacosGravados = [];
-            mediaRecorder = new MediaRecorder(streamDeVideo);
+            try {
+                mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' });
+            } catch (e) {
+                try { mediaRecorder = new MediaRecorder(streamDeVideo); } 
+                catch (err) { alert("Seu navegador não suporta gravação."); return; }
+            }
+
             mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
             mediaRecorder.onstop = () => {
                 const blob = new Blob(pedacosGravados, { type: 'video/webm' });
@@ -466,6 +476,7 @@
             document.getElementById('btn-tirar-foto').style.display = 'none';
             document.getElementById('btn-iniciar-gravacao').style.display = 'none';
             document.getElementById('btn-parar-gravacao').style.display = 'block';
+            document.getElementById('status-gravacao').innerText = '🔴 Gravando vídeo (Máx 5s)...';
             document.getElementById('status-gravacao').style.display = 'block';
             
             setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') pararGravacaoVideo(); }, 5000);
@@ -533,10 +544,12 @@
             preencherCampoDescricao(reg.descricao);
             document.getElementById('foto_base64').value = reg.foto || '';
             document.getElementById('video_base64').value = reg.video || '';
+            
             const previewFoto = document.getElementById('photo-preview');
             const previewVideo = document.getElementById('video-file-preview');
             if (reg.foto) { previewFoto.src = reg.foto; previewFoto.style.display = 'block'; }
             if (reg.video) { previewVideo.src = reg.video; previewVideo.style.display = 'block'; }
+            
             const btnSalvar = document.getElementById('btn-salvar');
             btnSalvar.innerText = "💾 Atualizar";
             document.getElementById('btn-cancelar-edicao').style.display = 'block';
@@ -581,14 +594,24 @@
             registros.forEach((reg, index) => {
                 const item = document.createElement('div');
                 item.className = 'registro-item';
-                let midia = reg.foto ? `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})">` : (reg.video ? `<button class="btn-info" onclick="abrirViewerMidia(${index})">🎥 Ver</button>` : '');
+                
+                let numFormat = index + 1;
+                let htmlMidiaIcon = '';
+                
+                if (reg.foto) {
+                    htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="Ver Foto">`;
+                } else if (reg.video) {
+                    // BOTÃO PEQUENO FIXO PARA O VÍDEO
+                    htmlMidiaIcon = `<button class="btn-info" style="width: 60px; height: 50px; margin: 0 0 0 10px; padding: 0; flex-shrink: 0; font-size: 14px;" onclick="abrirViewerMidia(${index})">🎥 Ver</button>`;
+                }
+
                 item.innerHTML = `
                     <div class="registro-conteudo">
                         <div class="registro-texto">
-                            <strong>${index + 1}. ${reg.area}</strong> - ${reg.local} <br>
-                            <span style="color:var(--primary); font-size:13px;">${reg.ocorrencia}</span>
+                            <strong>${numFormat}. ${reg.area}</strong> ${reg.local ? '- ' + reg.local : ''} <br>
+                            <span style="color:var(--primary); font-size:13px; font-weight:bold;">${reg.ocorrencia || ''}</span>
                         </div>
-                        ${midia}
+                        ${htmlMidiaIcon}
                     </div>
                     <div class="acoes-item">
                         <button class="btn-warning" onclick="editarRegistro(${index})">✏️ Editar</button>
@@ -600,18 +623,28 @@
         }
 
         function exportarCSV() {
-            let csvContent = "\uFEFFItem;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
+            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+            let nomeArquivo = prompt("Digite o nome do arquivo CSV:", "auditoria_desperdicios");
+            if (!nomeArquivo) return;
+            if (!nomeArquivo.endsWith('.csv')) nomeArquivo += '.csv';
+
+            let csvContent = "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             registros.forEach((r, i) => {
-                csvContent += `${i + 1};${r.data};${r.hora};${r.area.replace(/;/g,",")};${r.local.replace(/;/g,",")};${r.ocorrencia.replace(/;/g,",")};${r.descricao.replace(/;/g,",")};${r.foto?"Foto":"Vídeo"}\n`;
+                csvContent += `${i + 1};${r.data || ""};${r.hora || ""};${(r.area||"").replace(/;/g,",")};${(r.local||"").replace(/;/g,",")};${(r.ocorrencia||"").replace(/;/g,",")};${(r.descricao||"").replace(/;/g,",")};${r.foto?"Foto":(r.video?"Vídeo":"Não tem")}\n`;
             });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "auditoria.csv";
+            link.download = nomeArquivo;
             link.click();
         }
 
         function exportarPPTX() {
+            if (registros.length === 0) return;
+            let nomeArquivo = prompt("Digite o nome do arquivo PPTX:", "Relatorio_Desperdicios");
+            if (!nomeArquivo) return;
+            if (!nomeArquivo.endsWith('.pptx')) nomeArquivo += '.pptx';
+
             let pptx = new PptxGenJS();
             function getISOWeek(d) {
                 let t = new Date(d);
@@ -620,42 +653,82 @@
                 return Math.ceil((((t-new Date(t.getFullYear(),0,1))/8.64e7)+1)/7);
             }
             let kw = getISOWeek(new Date());
+            
             let slideAtual;
             registros.forEach((reg, index) => {
                 if (index % 4 === 0) {
                     slideAtual = pptx.addSlide();
                     slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9, h: 0.4, fontSize: 24, bold: true });
-                    slideAtual.addText(reg.area, { x: 0.3, y: 0.6, w: 9, h: 0.3, fontSize: 18, bold: true });
+                    slideAtual.addText(reg.area || "Geral", { x: 0.3, y: 0.6, w: 9, h: 0.3, fontSize: 18, bold: true, color: '444444' });
                 }
+                
                 let yBase = 1.05 + ((index % 4) * 1.12);
-                slideAtual.addText(`Ocorrência #${index + 1} - ${reg.area} - ${reg.local}`, { x: 0.3, y: yBase, w: 7, h: 0.25, fontSize: 14, bold: true });
-                slideAtual.addText("Ocorrência: " + reg.ocorrencia, { x: 0.3, y: yBase + 0.25, w: 7, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
-                slideAtual.addText("Detalhe: " + reg.descricao, { x: 0.3, y: yBase + 0.45, w: 7, h: 0.2, fontSize: 11 });
-                slideAtual.addText("Data: " + reg.data + " " + reg.hora, { x: 0.3, y: yBase + 0.65, w: 7, h: 0.2, fontSize: 10, italic: true });
-                if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
+                let textX = 0.3; let textW = 7.0; 
+                let titulo = reg.local ? `Ocorrência #${index + 1} - ${reg.area} - ${reg.local}` : `Ocorrência #${index + 1} - ${reg.area}`;
+                let displayDataHora = reg.data || '';
+                if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` às ${reg.hora}`;
+
+                slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true });
+                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: textX, y: yBase + 0.25, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
+                if (reg.descricao) slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.45, w: textW, h: 0.2, fontSize: 11, color: '666666' });
+                slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yBase + 0.65, w: textW, h: 0.2, fontSize: 10, italic: true });
+
+                if (reg.foto) {
+                    slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
+                } else if (reg.video) {
+                    slideAtual.addText("[VÍDEO]", { x: 7.5, y: yBase + 0.3, w: 1.8, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
+                }
+                
+                if (index % 4 < 3) slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9, h: 0, line: { color: 'E0E0E0', width: 1 } });
             });
-            pptx.writeFile({ fileName: "Relatorio_Desperdicios.pptx" });
+            pptx.writeFile({ fileName: nomeArquivo });
         }
 
         function exportarJSON() {
-            const blob = new Blob([JSON.stringify(registros)], { type: "application/json" });
+            if (registros.length === 0) return;
+            let nomeArquivo = prompt("Digite o nome do arquivo JSON:", "dados_auditoria");
+            if (!nomeArquivo) return; 
+            if (!nomeArquivo.endsWith('.json')) nomeArquivo += '.json';
+            const blob = new Blob([JSON.stringify(registros, null, 2)], { type: "application/json" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "dados.json";
+            link.download = nomeArquivo;
             link.click();
         }
 
         function acionarImportarJSON() { document.getElementById('input-json').click(); }
 
         async function importarJSON(e) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                registros = registros.concat(JSON.parse(event.target.result));
-                await localforage.setItem('registros_caca_desperdicios', registros);
-                atualizarLista();
-            };
-            reader.readAsText(file);
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const dados = JSON.parse(event.target.result);
+                            if (Array.isArray(dados)) registros = registros.concat(dados);
+                        } catch (err) { alert("Erro arquivo: " + file.name); }
+                        resolve();
+                    };
+                    reader.readAsText(file);
+                });
+            }
+            await localforage.setItem('registros_caca_desperdicios', registros);
+            atualizarLista();
+            e.target.value = ''; 
+        }
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js').then(function(registration) {
+                    console.log('ServiceWorker registrado com sucesso.');
+                }, function(err) {
+                    console.log('Falha ao registrar o ServiceWorker: ', err);
+                });
+            });
         }
     </script>
 </body>
