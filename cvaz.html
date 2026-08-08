@@ -506,7 +506,6 @@
 
         function pararGravacaoVideo() {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
-                // Tira uma foto escondida do frame do vídeo para usar como miniatura (Thumbnail)
                 try {
                     const video = document.getElementById('video-preview');
                     const canvas = document.getElementById('canvas');
@@ -562,7 +561,7 @@
                 hora: new Date().toLocaleTimeString('pt-BR'), 
                 area: areaVal, local: document.getElementById('local').value, 
                 ocorrencia: ocorrenciaVal, descricao: document.getElementById('descricao').value, 
-                foto: document.getElementById('foto_base64').value, // Capa do vídeo
+                foto: document.getElementById('foto_base64').value, 
                 video: document.getElementById('video_base64').value 
             };
 
@@ -726,32 +725,30 @@
                 if (reg.descricao) slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.45, w: textW, h: 0.2, fontSize: 11, color: '666666' });
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yBase + 0.65, w: textW, h: 0.2, fontSize: 10, italic: true });
 
-                // Embutir Mídia Real no PPTX com "Capa" e ícone de play sobreposto
+                // Embutir Mídia Real no PPTX 
                 if (reg.video) {
-                    let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 1.0 };
+                    // Para dar espaço para a legenda, o vídeo fica levemente mais curto em altura (h: 0.85)
+                    let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
                     if (reg.foto) mediaOpts.cover = reg.foto;
                     
                     try {
                         slideAtual.addMedia(mediaOpts);
                     } catch(e) {
-                        if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
+                        if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain' } });
                     }
-                    
-                    // Adiciona o Botão de Play circular translúcido no PPTX
-                    slideAtual.addText("▶", { 
-                        shape: pptx.ShapeType.oval,
-                        x: 7.5 + 0.9 - 0.25,  
-                        y: yBase + 0.5 - 0.25, 
-                        w: 0.5, 
-                        h: 0.5, 
-                        fontSize: 18, 
-                        color: 'FFFFFF', 
-                        fill: { color: '000000', transparency: 40 }, 
-                        line: { color: 'FFFFFF', width: 1.5 },
-                        align: 'center', 
-                        valign: 'middle'
-                    });
 
+                    // ADICIONA A LEGENDA DO VÍDEO NO RODAPÉ DA MINIATURA PARA NÃO SOBREPOR O PLAYER
+                    slideAtual.addText("▶ VÍDEO ANEXADO", { 
+                        x: 7.5, 
+                        y: yBase + 0.85, 
+                        w: 1.8, 
+                        h: 0.15, 
+                        fontSize: 9, 
+                        bold: true, 
+                        color: 'dc3545', 
+                        align: 'center' 
+                    });
+                    
                 } else if (reg.foto) {
                     slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
                 }
