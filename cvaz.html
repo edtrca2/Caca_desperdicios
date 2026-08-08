@@ -360,31 +360,20 @@
             const modal = document.getElementById('descricao-modal');
             const textarea = document.getElementById('descricao-texto');
             const inputHidden = document.getElementById('descricao');
-            
             textarea.value = inputHidden.value;
             modal.style.display = 'flex';
             textarea.focus();
         }
 
-        function fecharModalDescricao() {
-            document.getElementById('descricao-modal').style.display = 'none';
-        }
+        function fecharModalDescricao() { document.getElementById('descricao-modal').style.display = 'none'; }
 
         function salvarDescricao() {
             const textarea = document.getElementById('descricao-texto');
             const inputHidden = document.getElementById('descricao');
             const display = document.getElementById('descricao-display');
-            
             inputHidden.value = textarea.value;
-            
-            if (textarea.value.trim() !== '') {
-                display.innerText = textarea.value;
-                display.style.color = '#333'; 
-            } else {
-                display.innerText = 'Toque para digitar...';
-                display.style.color = '#6c757d'; 
-            }
-            
+            display.innerText = textarea.value.trim() !== '' ? textarea.value : 'Toque para digitar...';
+            display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
             fecharModalDescricao();
         }
 
@@ -398,35 +387,20 @@
         function preencherCampoDescricao(texto) {
             document.getElementById('descricao').value = texto || '';
             const display = document.getElementById('descricao-display');
-            if (texto && texto.trim() !== '') {
-                display.innerText = texto;
-                display.style.color = '#333';
-            } else {
-                display.innerText = 'Toque para digitar...';
-                display.style.color = '#6c757d';
-            }
+            display.innerText = (texto && texto.trim() !== '') ? texto : 'Toque para digitar...';
+            display.style.color = (texto && texto.trim() !== '') ? '#333' : '#6c757d';
         }
 
         function verificarAreaOutros() {
             const area = document.getElementById('area').value;
             const campoOutros = document.getElementById('area_outros');
-            if (area === 'Outros') {
-                campoOutros.style.display = 'block';
-            } else {
-                campoOutros.style.display = 'none';
-                campoOutros.value = '';
-            }
+            campoOutros.style.display = (area === 'Outros') ? 'block' : 'none';
         }
 
         function verificarOcorrenciaOutros() {
             const ocorrencia = document.getElementById('ocorrencia').value;
             const campoOutros = document.getElementById('ocorrencia_outros');
-            if (ocorrencia === 'Outros') {
-                campoOutros.style.display = 'block';
-            } else {
-                campoOutros.style.display = 'none';
-                campoOutros.value = '';
-            }
+            campoOutros.style.display = (ocorrencia === 'Outros') ? 'block' : 'none';
         }
 
         async function abrirCamera() {
@@ -442,8 +416,9 @@
             try {
                 streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
                 video.srcObject = streamDeVideo;
+                video.muted = true; // <--- CORREÇÃO: SILENCIA O AÚDIO NO PREVIEW
             } catch (erro) {
-                alert("Erro ao acessar câmera/microfone: " + erro);
+                alert("Erro ao acessar câmera: " + erro);
                 fecharCamera();
             }
         }
@@ -451,97 +426,53 @@
         function fecharCamera() {
             const modal = document.getElementById('camera-modal');
             modal.style.display = 'none';
-            if (streamDeVideo) {
-                streamDeVideo.getTracks().forEach(track => track.stop());
-            }
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
+            if (streamDeVideo) streamDeVideo.getTracks().forEach(track => track.stop());
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
         }
 
         function capturarFoto() {
             const video = document.getElementById('video-preview');
             const canvas = document.getElementById('canvas');
             const context = canvas.getContext('2d');
-
             canvas.width = video.videoWidth || 1280;
             canvas.height = video.videoHeight || 720;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
             const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
-            
             document.getElementById('foto_base64').value = fotoBase64;
             document.getElementById('video_base64').value = '';
-            
-            const previewFoto = document.getElementById('photo-preview');
-            const previewVideo = document.getElementById('video-file-preview');
-            
-            previewFoto.src = fotoBase64;
-            previewFoto.style.display = 'block';
-            previewVideo.style.display = 'none';
-            previewVideo.src = '';
-
+            document.getElementById('photo-preview').src = fotoBase64;
+            document.getElementById('photo-preview').style.display = 'block';
+            document.getElementById('video-file-preview').style.display = 'none';
             fecharCamera();
         }
 
         function iniciarGravacaoVideo() {
             pedacosGravados = [];
-            try {
-                mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' });
-            } catch (e) {
-                try {
-                    mediaRecorder = new MediaRecorder(streamDeVideo); 
-                } catch (err) {
-                    alert("Seu navegador não suporta gravação de vídeo integrada.");
-                    return;
-                }
-            }
-
-            mediaRecorder.ondataavailable = function(event) {
-                if (event.data && event.data.size > 0) {
-                    pedacosGravados.push(event.data);
-                }
-            };
-
-            mediaRecorder.onstop = function() {
+            mediaRecorder = new MediaRecorder(streamDeVideo);
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
+            mediaRecorder.onstop = () => {
                 const blob = new Blob(pedacosGravados, { type: 'video/webm' });
                 const reader = new FileReader();
                 reader.readAsDataURL(blob);
-                reader.onloadend = function() {
-                    const videoBase64 = reader.result;
-                    document.getElementById('video_base64').value = videoBase64;
+                reader.onloadend = () => {
+                    document.getElementById('video_base64').value = reader.result;
                     document.getElementById('foto_base64').value = '';
-
-                    const previewFoto = document.getElementById('photo-preview');
-                    const previewVideo = document.getElementById('video-file-preview');
-                    
-                    previewFoto.style.display = 'none';
-                    previewFoto.src = '';
-                    previewVideo.src = videoBase64;
-                    previewVideo.style.display = 'block';
+                    document.getElementById('video-file-preview').src = reader.result;
+                    document.getElementById('video-file-preview').style.display = 'block';
+                    document.getElementById('photo-preview').style.display = 'none';
                 };
             };
-
             mediaRecorder.start();
             document.getElementById('btn-tirar-foto').style.display = 'none';
             document.getElementById('btn-iniciar-gravacao').style.display = 'none';
             document.getElementById('btn-parar-gravacao').style.display = 'block';
-            document.getElementById('status-gravacao').innerText = '🔴 Gravando vídeo (Máx 5s)...';
             document.getElementById('status-gravacao').style.display = 'block';
-
-            // Limite de 5 segundos para a gravação
-            setTimeout(() => {
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    pararGravacaoVideo();
-                    alert("Tempo máximo de 5 segundos atingido.");
-                }
-            }, 5000);
+            
+            setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') pararGravacaoVideo(); }, 5000);
         }
 
         function pararGravacaoVideo() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
             fecharCamera();
         }
 
@@ -550,186 +481,95 @@
             const modal = document.getElementById('media-viewer-modal');
             const img = document.getElementById('viewer-img');
             const video = document.getElementById('viewer-video');
-
-            if (reg.foto) {
-                img.src = reg.foto;
-                img.style.display = 'inline-block';
-                video.style.display = 'none';
-                video.src = '';
-            } else if (reg.video) {
-                video.src = reg.video;
-                video.style.display = 'inline-block';
-                img.style.display = 'none';
-                img.src = '';
-            }
+            if (reg.foto) { img.src = reg.foto; img.style.display = 'inline-block'; video.style.display = 'none'; }
+            else if (reg.video) { video.src = reg.video; video.style.display = 'inline-block'; img.style.display = 'none'; }
             modal.style.display = 'block';
         }
 
         function fecharViewerMidia() {
             document.getElementById('media-viewer-modal').style.display = 'none';
-            const video = document.getElementById('viewer-video');
-            video.pause();
-            video.src = '';
+            document.getElementById('viewer-video').pause();
+            document.getElementById('viewer-video').src = '';
         }
 
         async function salvarRegistro() {
             let areaVal = document.getElementById('area').value;
-            if (areaVal === 'Outros') {
-                areaVal = document.getElementById('area_outros').value;
-                if (!areaVal) { alert("Você marcou 'Outros', por favor digite o nome da área!"); return; }
-            }
-
+            if (areaVal === 'Outros') areaVal = document.getElementById('area_outros').value;
             let ocorrenciaVal = document.getElementById('ocorrencia').value;
-            if (ocorrenciaVal === 'Outros') {
-                ocorrenciaVal = document.getElementById('ocorrencia_outros').value;
-                if (!ocorrenciaVal) { alert("Você marcou 'Outros', por favor especifique a ocorrência!"); return; }
-            }
-
-            const local = document.getElementById('local').value;
-            const descricao = document.getElementById('descricao').value;
-            const foto = document.getElementById('foto_base64').value;
-            const video = document.getElementById('video_base64').value;
+            if (ocorrenciaVal === 'Outros') ocorrenciaVal = document.getElementById('ocorrencia_outros').value;
             
-            let dataAtual = new Date().toLocaleDateString('pt-BR');
-            let horaAtual = new Date().toLocaleTimeString('pt-BR');
+            if (!areaVal || !ocorrenciaVal) { alert("Selecione Área e Ocorrência!"); return; }
 
-            if (!areaVal) { alert("Selecione a Área!"); return; }
-            if (!ocorrenciaVal) { alert("Selecione a Ocorrência!"); return; }
+            const novoReg = { 
+                data: new Date().toLocaleDateString('pt-BR'), 
+                hora: new Date().toLocaleTimeString('pt-BR'), 
+                area: areaVal, local: document.getElementById('local').value, 
+                ocorrencia: ocorrenciaVal, descricao: document.getElementById('descricao').value, 
+                foto: document.getElementById('foto_base64').value, video: document.getElementById('video_base64').value 
+            };
 
-            if (indiceEdicao !== null) {
-                let regAntigo = registros[indiceEdicao];
-                let dataSalva = regAntigo.data || dataAtual;
-                let horaSalva = regAntigo.hora || horaAtual;
-                
-                if (dataSalva.includes(' ')) {
-                    let parts = dataSalva.split(' ');
-                    dataSalva = parts[0];
-                    horaSalva = parts[1] || horaAtual;
-                }
-
-                registros[indiceEdicao] = { data: dataSalva, hora: horaSalva, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto, video };
-                cancelarEdicao();
-            } else {
-                const novoRegistro = { data: dataAtual, hora: horaAtual, area: areaVal, local, ocorrencia: ocorrenciaVal, descricao, foto, video };
-                registros.push(novoRegistro);
-                
-                document.getElementById('local').value = '';
-                document.getElementById('ocorrencia').value = '';
-                verificarOcorrenciaOutros();
-                limparCampoDescricao();
-                
-                document.getElementById('foto_base64').value = '';
-                document.getElementById('video_base64').value = '';
-                document.getElementById('photo-preview').style.display = 'none';
-                document.getElementById('video-file-preview').style.display = 'none';
-            }
+            if (indiceEdicao !== null) { registros[indiceEdicao] = novoReg; cancelarEdicao(); }
+            else { registros.push(novoReg); }
+            
+            document.getElementById('local').value = '';
+            document.getElementById('ocorrencia').value = '';
+            limparCampoDescricao();
+            document.getElementById('foto_base64').value = '';
+            document.getElementById('video_base64').value = '';
+            document.getElementById('photo-preview').style.display = 'none';
+            document.getElementById('video-file-preview').style.display = 'none';
             
             await localforage.setItem('registros_caca_desperdicios', registros);
-            localStorage.setItem('ultima_area_selecionada', areaVal);
-            
             atualizarLista();
-            
-            const centerSection = document.querySelector('.center-section');
-            centerSection.scrollTop = centerSection.scrollHeight;
+            document.querySelector('.center-section').scrollTop = document.querySelector('.center-section').scrollHeight;
         }
 
         function editarRegistro(index) {
             const reg = registros[index];
             indiceEdicao = index;
-
-            const opcoesArea = Array.from(document.getElementById('area').options).map(o => o.value);
-            if (opcoesArea.includes(reg.area)) {
-                document.getElementById('area').value = reg.area;
-            } else {
-                document.getElementById('area').value = 'Outros';
-                document.getElementById('area_outros').value = reg.area;
-            }
-            verificarAreaOutros();
-
-            const opcoesOcorrencia = Array.from(document.getElementById('ocorrencia').options).map(o => o.value);
-            if (opcoesOcorrencia.includes(reg.ocorrencia)) {
-                document.getElementById('ocorrencia').value = reg.ocorrencia;
-            } else if (reg.ocorrencia) {
-                document.getElementById('ocorrencia').value = 'Outros';
-                document.getElementById('ocorrencia_outros').value = reg.ocorrencia;
-            } else {
-                document.getElementById('ocorrencia').value = '';
-            }
-            verificarOcorrenciaOutros();
-
-            document.getElementById('local').value = reg.local || '';
+            document.getElementById('area').value = reg.area;
+            document.getElementById('local').value = reg.local;
+            document.getElementById('ocorrencia').value = reg.ocorrencia;
             preencherCampoDescricao(reg.descricao);
-            
             document.getElementById('foto_base64').value = reg.foto || '';
             document.getElementById('video_base64').value = reg.video || '';
-            
             const previewFoto = document.getElementById('photo-preview');
             const previewVideo = document.getElementById('video-file-preview');
-
-            if (reg.foto) {
-                previewFoto.src = reg.foto;
-                previewFoto.style.display = 'block';
-                previewVideo.style.display = 'none';
-            } else if (reg.video) {
-                previewVideo.src = reg.video;
-                previewVideo.style.display = 'block';
-                previewFoto.style.display = 'none';
-            } else {
-                previewFoto.style.display = 'none';
-                previewVideo.style.display = 'none';
-            }
-
+            if (reg.foto) { previewFoto.src = reg.foto; previewFoto.style.display = 'block'; }
+            if (reg.video) { previewVideo.src = reg.video; previewVideo.style.display = 'block'; }
             const btnSalvar = document.getElementById('btn-salvar');
-            btnSalvar.innerText = "💾 Atualizar Registro";
-            btnSalvar.classList.remove('btn-primary');
-            btnSalvar.classList.add('btn-warning');
+            btnSalvar.innerText = "💾 Atualizar";
             document.getElementById('btn-cancelar-edicao').style.display = 'block';
+            document.querySelector('.main-container').scrollTop = 0;
         }
 
         function cancelarEdicao() {
             indiceEdicao = null;
-            
             document.getElementById('local').value = '';
             document.getElementById('ocorrencia').value = '';
-            verificarOcorrenciaOutros();
             limparCampoDescricao();
-            
             document.getElementById('foto_base64').value = '';
             document.getElementById('video_base64').value = '';
             document.getElementById('photo-preview').style.display = 'none';
             document.getElementById('video-file-preview').style.display = 'none';
-
             const btnSalvar = document.getElementById('btn-salvar');
-            btnSalvar.innerText = "➕ Adicionar Item";
-            btnSalvar.classList.remove('btn-warning');
-            btnSalvar.classList.add('btn-primary');
+            btnSalvar.innerText = "➕ Adicionar";
             document.getElementById('btn-cancelar-edicao').style.display = 'none';
         }
 
         async function excluirRegistro(index) {
-            if (confirm("Tem certeza que deseja excluir este registro?")) {
+            if (confirm("Excluir item?")) {
                 registros.splice(index, 1);
                 await localforage.setItem('registros_caca_desperdicios', registros);
-                if (indiceEdicao === index) cancelarEdicao();
-                else if (indiceEdicao !== null && index < indiceEdicao) indiceEdicao--;
                 atualizarLista();
             }
         }
 
         async function limparTudo() {
-            if (registros.length === 0) {
-                alert("A lista já está vazia.");
-                return;
-            }
-            
-            const confirmacao = confirm("⚠️ ATENÇÃO!\n\nTem certeza que deseja apagar TODOS os registros da lista?\n\nCertifique-se de já ter exportado o arquivo JSON antes, pois esta ação NÃO poderá ser desfeita.");
-            
-            if (confirmacao) {
+            if (confirm("Apagar tudo?")) {
                 registros = [];
                 await localforage.setItem('registros_caca_desperdicios', registros);
-                if (indiceEdicao !== null) {
-                    cancelarEdicao();
-                }
+                cancelarEdicao();
                 atualizarLista();
             }
         }
@@ -738,33 +578,17 @@
             const lista = document.getElementById('lista-registros');
             document.getElementById('contador').innerText = registros.length;
             lista.innerHTML = '';
-
             registros.forEach((reg, index) => {
                 const item = document.createElement('div');
                 item.className = 'registro-item';
-                
-                let numFormat = index + 1;
-                let htmlMidiaIcon = '';
-                
-                if (reg.foto) {
-                    htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="Ver Foto">`;
-                } else if (reg.video) {
-                    htmlMidiaIcon = `<button class="btn-info" style="margin:0 0 0 10px; width:auto; padding: 10px;" onclick="abrirViewerMidia(${index})">🎥 Ver</button>`;
-                }
-
-                let displayDataHora = reg.data || '';
-                if (reg.hora && !displayDataHora.includes(reg.hora)) {
-                    displayDataHora += ` às ${reg.hora}`;
-                }
-
+                let midia = reg.foto ? `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})">` : (reg.video ? `<button class="btn-info" onclick="abrirViewerMidia(${index})">🎥 Ver</button>` : '');
                 item.innerHTML = `
                     <div class="registro-conteudo">
                         <div class="registro-texto">
-                            <strong>${numFormat}. ${reg.area}</strong> ${reg.local ? '- ' + reg.local : ''} <br>
-                            <span style="color: var(--primary); font-size: 13px; font-weight:bold;">${reg.ocorrencia || ''}</span> <br>
-                            <span style="font-size: 12px; color: #666;">${displayDataHora}</span>
+                            <strong>${index + 1}. ${reg.area}</strong> - ${reg.local} <br>
+                            <span style="color:var(--primary); font-size:13px;">${reg.ocorrencia}</span>
                         </div>
-                        ${htmlMidiaIcon}
+                        ${midia}
                     </div>
                     <div class="acoes-item">
                         <button class="btn-warning" onclick="editarRegistro(${index})">✏️ Editar</button>
@@ -776,206 +600,62 @@
         }
 
         function exportarCSV() {
-            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-            
-            let nomeArquivo = prompt("Digite o nome do arquivo CSV:", "auditoria_desperdicios");
-            if (nomeArquivo === null || nomeArquivo.trim() === "") return;
-            if (!nomeArquivo.endsWith('.csv')) nomeArquivo += '.csv';
-
-            let csvContent = ""; 
-            csvContent += "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
-            
-            let registrosOrdenados = [...registros].sort((a, b) => {
-                let areaA = a.area ? a.area.toLowerCase() : "";
-                let areaB = b.area ? b.area.toLowerCase() : "";
-                return areaA.localeCompare(areaB);
+            let csvContent = "\uFEFFItem;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
+            registros.forEach((r, i) => {
+                csvContent += `${i + 1};${r.data};${r.hora};${r.area.replace(/;/g,",")};${r.local.replace(/;/g,",")};${r.ocorrencia.replace(/;/g,",")};${r.descricao.replace(/;/g,",")};${r.foto?"Foto":"Vídeo"}\n`;
             });
-
-            registrosOrdenados.forEach((r, index) => {
-                let numItem = index + 1;
-                let rData = r.data || "";
-                let rHora = r.hora || "";
-                if (rData.includes(' ')) {
-                    let parts = rData.split(' ');
-                    rData = parts[0];
-                    rHora = parts[1] || "";
-                }
-
-                let area = r.area ? r.area.replace(/;/g, ",") : "";
-                let local = r.local ? r.local.replace(/;/g, ",") : "";
-                let ocorrencia = r.ocorrencia ? r.ocorrencia.replace(/;/g, ",") : "";
-                let desc = r.descricao ? r.descricao.replace(/;/g, ",") : "";
-                let midia = r.foto ? "Foto" : (r.video ? "Vídeo" : "Não tem");
-
-                csvContent += `${numItem};${rData};${rHora};${area};${local};${ocorrencia};${desc};${midia}\n`;
-            });
-            
-            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = nomeArquivo;
+            link.download = "auditoria.csv";
             link.click();
         }
 
-        // LÓGICA ATUALIZADA: Novo Layout PPTX (KW, Cabeçalhos Dinâmicos e "Ocorrência #")
         function exportarPPTX() {
-            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-            
-            let nomeArquivo = prompt("Digite o nome do arquivo PPTX:", "Relatorio_Desperdicios");
-            if (nomeArquivo === null || nomeArquivo.trim() === "") return;
-            if (!nomeArquivo.endsWith('.pptx')) nomeArquivo += '.pptx';
-
-            alert("Gerando PPTX (Formato de Lista: 4 linhas por página com cabeçalho)...");
             let pptx = new PptxGenJS();
-            
-            function getISOWeek(date) {
-                const dt = new Date(date);
-                dt.setHours(0, 0, 0, 0);
-                dt.setDate(dt.getDate() + 3 - (dt.getDay() + 6) % 7);
-                const week1 = new Date(dt.getFullYear(), 0, 4);
-                return 1 + Math.round(((dt.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            function getISOWeek(d) {
+                let t = new Date(d);
+                t.setHours(0,0,0,0);
+                t.setDate(t.getDate()+4-(t.getDay()||7));
+                return Math.ceil((((t-new Date(t.getFullYear(),0,1))/8.64e7)+1)/7);
             }
             let kw = getISOWeek(new Date());
-            
-            let registrosOrdenados = [...registros].sort((a, b) => {
-                let areaA = a.area ? a.area.toLowerCase() : "";
-                let areaB = b.area ? b.area.toLowerCase() : "";
-                return areaA.localeCompare(areaB);
-            });
-
             let slideAtual;
-            
-            registrosOrdenados.forEach((reg, index) => {
-                let posicaoNoSlide = index % 4;
-                
-                if (posicaoNoSlide === 0) {
+            registros.forEach((reg, index) => {
+                if (index % 4 === 0) {
                     slideAtual = pptx.addSlide();
-                    
-                    slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9.0, h: 0.4, fontSize: 24, bold: true, color: '333333' });
-                    slideAtual.addText(reg.area || "Geral", { x: 0.3, y: 0.6, w: 9.0, h: 0.3, fontSize: 18, bold: true, color: '444444' });
+                    slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9, h: 0.4, fontSize: 24, bold: true });
+                    slideAtual.addText(reg.area, { x: 0.3, y: 0.6, w: 9, h: 0.3, fontSize: 18, bold: true });
                 }
-                
-                let yBase = 1.05 + (posicaoNoSlide * 1.12); 
-                let textX = 0.3; 
-                let textW = 7.0; 
-                
-                let numeroItem = index + 1;
-                let titulo = reg.local ? `Ocorrência #${numeroItem} - ${reg.area} - ${reg.local}` : `Ocorrência #${numeroItem} - ${reg.area}`;
-                
-                let displayDataHora = reg.data || '';
-                if (reg.hora && !displayDataHora.includes(reg.hora)) {
-                    displayDataHora += ` às ${reg.hora}`;
-                }
-
-                slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true, color: '333333' });
-                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: textX, y: yBase + 0.25, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
-                
-                let yDetalhe = yBase + 0.45;
-                if (reg.descricao) {
-                    slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 11, color: '666666' });
-                    yDetalhe += 0.20; 
-                }
-                
-                slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yDetalhe, w: textW, h: 0.2, fontSize: 10, color: '888888', italic: true });
-
-                if (reg.foto) {
-                    slideAtual.addImage({ 
-                        data: reg.foto, 
-                        x: 7.5, 
-                        y: yBase, 
-                        w: 1.8, 
-                        h: 1.0, 
-                        sizing: { type: 'contain', w: 1.8, h: 1.0 } 
-                    }); 
-                } else if (reg.video) {
-                    slideAtual.addText("[ARQUIVO DE VÍDEO NO JSON]", { x: 7.5, y: yBase + 0.3, w: 1.8, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
-                }
-                
-                if (posicaoNoSlide < 3) {
-                    slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9.0, h: 0, line: { color: 'E0E0E0', width: 1 } });
-                }
+                let yBase = 1.05 + ((index % 4) * 1.12);
+                slideAtual.addText(`Ocorrência #${index + 1} - ${reg.area} - ${reg.local}`, { x: 0.3, y: yBase, w: 7, h: 0.25, fontSize: 14, bold: true });
+                slideAtual.addText("Ocorrência: " + reg.ocorrencia, { x: 0.3, y: yBase + 0.25, w: 7, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
+                slideAtual.addText("Detalhe: " + reg.descricao, { x: 0.3, y: yBase + 0.45, w: 7, h: 0.2, fontSize: 11 });
+                slideAtual.addText("Data: " + reg.data + " " + reg.hora, { x: 0.3, y: yBase + 0.65, w: 7, h: 0.2, fontSize: 10, italic: true });
+                if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
             });
-            
-            pptx.writeFile({ fileName: nomeArquivo });
+            pptx.writeFile({ fileName: "Relatorio_Desperdicios.pptx" });
         }
 
         function exportarJSON() {
-            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-            
-            let nomeArquivo = prompt("Digite o nome do arquivo JSON:", "dados_auditoria");
-            if (nomeArquivo === null || nomeArquivo.trim() === "") return; 
-            if (!nomeArquivo.endsWith('.json')) nomeArquivo += '.json';
-
-            const jsonString = JSON.stringify(registros, null, 2);
-            const blob = new Blob([jsonString], { type: "application/json" });
+            const blob = new Blob([JSON.stringify(registros)], { type: "application/json" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = nomeArquivo;
+            link.download = "dados.json";
             link.click();
         }
 
         function acionarImportarJSON() { document.getElementById('input-json').click(); }
 
-        async function importarJSON(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
-            
-            let totalImportados = 0;
-            let temErro = false;
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                
-                await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            const dadosImportados = JSON.parse(e.target.result);
-                            if (Array.isArray(dadosImportados)) {
-                                registros = registros.concat(dadosImportados);
-                                totalImportados += dadosImportados.length;
-                            } else {
-                                alert(`O arquivo ${file.name} não possui o formato correto de lista.`);
-                                temErro = true;
-                            }
-                        } catch (erro) { 
-                            alert(`Erro ao ler o arquivo ${file.name}: ` + erro); 
-                            temErro = true;
-                        }
-                        resolve();
-                    };
-                    reader.readAsText(file);
-                });
-            }
-
-            if (totalImportados > 0) {
+        async function importarJSON(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                registros = registros.concat(JSON.parse(event.target.result));
                 await localforage.setItem('registros_caca_desperdicios', registros);
                 atualizarLista();
-                if (!temErro) {
-                    alert(`Sucesso! ${totalImportados} registros foram somados à sua lista.`);
-                } else {
-                    alert(`Importação parcial. ${totalImportados} registros adicionados, mas houve erros em alguns arquivos.`);
-                }
-                
-                const centerSection = document.querySelector('.center-section');
-                centerSection.scrollTop = centerSection.scrollHeight;
-            } else if (!temErro) {
-                alert("Nenhum dado válido encontrado para importar.");
-            }
-
-            event.target.value = ''; 
-        }
-    </script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js').then(function(registration) {
-                    console.log('ServiceWorker registrado com sucesso.');
-                }, function(err) {
-                    console.log('Falha ao registrar o ServiceWorker: ', err);
-                });
-            });
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>
