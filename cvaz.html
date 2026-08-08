@@ -294,9 +294,8 @@
         </div>
 
         <div style="display: flex; justify-content: center;">
-            <!-- Apenas um elemento de preview que serve para Foto e Thumb de Vídeo -->
             <img id="photo-preview" class="media-preview" src="" alt="Preview">
-            <!-- Removi o player do form pra ficar mais compacto -->
+            <video id="video-file-preview" class="media-preview" controls></video>
         </div>
         
         <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -534,7 +533,7 @@
                 video.style.display = 'inline-block'; 
                 img.style.display = 'none'; 
                 img.src = '';
-                setTimeout(() => video.play(), 200); // Dá auto-play no vídeo
+                setTimeout(() => video.play(), 200);
             } else if (reg.foto) { 
                 img.src = reg.foto; 
                 img.style.display = 'inline-block'; 
@@ -563,7 +562,7 @@
                 hora: new Date().toLocaleTimeString('pt-BR'), 
                 area: areaVal, local: document.getElementById('local').value, 
                 ocorrencia: ocorrenciaVal, descricao: document.getElementById('descricao').value, 
-                foto: document.getElementById('foto_base64').value, // No caso de vídeo, salva a miniatura
+                foto: document.getElementById('foto_base64').value, // Capa do vídeo
                 video: document.getElementById('video_base64').value 
             };
 
@@ -593,7 +592,6 @@
             document.getElementById('video_base64').value = reg.video || '';
             
             const previewFoto = document.getElementById('photo-preview');
-            // Se for vídeo com miniatura, ou apenas foto, ambos usam "foto" para o preview
             if (reg.foto) { 
                 previewFoto.src = reg.foto; 
                 previewFoto.style.display = 'block'; 
@@ -649,15 +647,14 @@
                 let htmlMidiaIcon = '';
                 
                 if (reg.video) {
-                    // SE FOR VÍDEO: Mostra a miniatura com o PLAY transparente por cima
-                    let thumb = reg.foto || ''; 
+                    // SE FOR VÍDEO: Usa a foto como thumbnail, ou um quadrado escuro se for um registro importado sem foto
+                    let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+'; 
                     htmlMidiaIcon = `
                     <div class="video-thumbnail-container" onclick="abrirViewerMidia(${index})" title="Ver Vídeo">
                         <img src="${thumb}">
                         <div class="play-icon">▶</div>
                     </div>`;
                 } else if (reg.foto) {
-                    // SE FOR FOTO: Mostra só a foto
                     htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="Ver Foto">`;
                 }
 
@@ -686,7 +683,6 @@
 
             let csvContent = "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             registros.forEach((r, i) => {
-                // Checa se tem vídeo primeiro, se não, foto
                 let tipoMidia = r.video ? "Vídeo" : (r.foto ? "Foto" : "Não tem");
                 csvContent += `${i + 1};${r.data || ""};${r.hora || ""};${(r.area||"").replace(/;/g,",")};${(r.local||"").replace(/;/g,",")};${(r.ocorrencia||"").replace(/;/g,",")};${(r.descricao||"").replace(/;/g,",")};${tipoMidia}\n`;
             });
@@ -731,15 +727,20 @@
                 if (reg.descricao) slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.45, w: textW, h: 0.2, fontSize: 11, color: '666666' });
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yBase + 0.65, w: textW, h: 0.2, fontSize: 10, italic: true });
 
-                // Lógica da Mídia no PPTX (Foto ou Thumbnail do Vídeo com Ícone)
-                if (reg.foto) {
-                    slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
-                    // Se além da foto tiver vídeo, desenha o icone de PLAY em cima no PPTX
-                    if (reg.video) {
-                        slideAtual.addText("▶", { x: 7.5, y: yBase, w: 1.8, h: 1.0, fontSize: 32, color: 'FFFFFF', align: 'center', valign: 'middle' });
+                // Embutir Mídia Real no PPTX
+                if (reg.video) {
+                    let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 1.0 };
+                    // Se tiver foto de capa, define como Poster Frame do PPTX
+                    if (reg.foto) mediaOpts.cover = reg.foto;
+                    
+                    try {
+                        slideAtual.addMedia(mediaOpts);
+                    } catch(e) {
+                        // Caso a engine falhe com vídeos antigos
+                        if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
                     }
-                } else if (reg.video) {
-                    slideAtual.addText("[VÍDEO]", { x: 7.5, y: yBase + 0.3, w: 1.8, h: 0.4, fontSize: 10, bold: true, color: 'dc3545', align: 'center' });
+                } else if (reg.foto) {
+                    slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
                 }
                 
                 if (index % 4 < 3) slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9, h: 0, line: { color: 'E0E0E0', width: 1 } });
