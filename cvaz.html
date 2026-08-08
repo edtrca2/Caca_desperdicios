@@ -190,7 +190,8 @@
         .acoes-item { display: flex; gap: 8px; margin-top: 10px; }
         .acoes-item button { margin-top: 0; padding: 8px; font-size: 13px; height: 35px; }
 
-        #camera-modal, #media-viewer-modal, #descricao-modal {
+        /* Estilo unificado dos Modais */
+        #camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -213,13 +214,15 @@
         .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; margin: 10px auto; }
         .modal-botoes button { margin-top: 0; width: 100%; height: 45px;}
 
-        #descricao-modal {
+        /* Modais centralizados */
+        #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal {
             padding-top: 0;
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
             padding: 15px;
         }
+        
         .modal-box {
             background: white;
             width: 100%;
@@ -239,6 +242,7 @@
             resize: none; 
             margin-top: 10px;
         }
+        .botoes-menu-modal { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -316,14 +320,16 @@
         <div id="lista-registros"></div>
     </div>
 
+    <!-- RODAPÉ COMPACTO: Apenas 4 botões -->
     <div class="bottom-section">
         <button class="btn-success" onclick="exportarCSV()">📊 CSV</button>
         <button class="btn-primary" onclick="exportarPPTX()">📺 PPTX</button>
-        <button class="btn-info" onclick="exportarJSON()">💾 JSON</button>
-        <button class="btn-warning" style="color: var(--warning-text);" onclick="acionarImportarJSON()">📂 Importar</button>
+        <button class="btn-info" onclick="abrirModalExportarJSON()">💾 JSON</button>
+        <button class="btn-warning" style="color: var(--warning-text);" onclick="abrirModalImportar()">📂 Importar</button>
         <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
     </div>
 
+    <!-- MODAL DE DESCRIÇÃO -->
     <div id="descricao-modal">
         <div class="modal-box">
             <h3 style="margin-top: 0; color: var(--primary);">Descrição do Problema</h3>
@@ -336,6 +342,46 @@
         </div>
     </div>
 
+    <!-- NOVO MODAL: OPÇÕES DE EXPORTAR JSON -->
+    <div id="exportar-json-modal">
+        <div class="modal-box" style="text-align: center;">
+            <h3 style="margin-top: 0; color: var(--info);">Exportar em JSON</h3>
+            <p style="margin: 0; font-size: 13px; color: #666;">Escolha como deseja exportar os dados:</p>
+            <div class="botoes-menu-modal">
+                <button class="btn-info" onclick="exportarJSON()">💾 Salvar Arquivo (.json)</button>
+                <button class="btn-info" onclick="copiarJSON()">📋 Copiar Texto (Sem Rastro)</button>
+                <button class="btn-danger" onclick="fecharModalExportarJSON()">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO MODAL: OPÇÕES DE IMPORTAR -->
+    <div id="importar-modal">
+        <div class="modal-box" style="text-align: center;">
+            <h3 style="margin-top: 0; color: #d39e00;">Importar Dados</h3>
+            <p style="margin: 0; font-size: 13px; color: #666;">Escolha como deseja importar os dados para a sua lista:</p>
+            <div class="botoes-menu-modal">
+                <button class="btn-warning" onclick="acionarImportarJSON()">📂 Carregar Arquivo</button>
+                <button class="btn-warning" onclick="abrirModalColar()">📥 Colar Texto (Sem Rastro)</button>
+                <button class="btn-danger" onclick="fecharModalImportar()">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA COLAR O JSON DO WHATSAPP -->
+    <div id="colar-modal">
+        <div class="modal-box">
+            <h3 style="margin-top: 0; color: #d39e00;">Colar Texto JSON</h3>
+            <p style="margin: 0; font-size: 13px; color: #666;">Cole aqui o código que você copiou do WhatsApp:</p>
+            <textarea id="texto-colar" rows="8"></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-danger" style="margin: 0;" onclick="fecharModalColar()">Cancelar</button>
+                <button class="btn-success" style="margin: 0;" onclick="processarColarJSON()">Importar Dados</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DA CÂMERA -->
     <div id="camera-modal">
         <video id="video-preview" autoplay playsinline></video>
         <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 Gravando vídeo (Máx 5s)...</p>
@@ -348,6 +394,7 @@
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
+    <!-- MODAL VISUALIZADOR -->
     <div id="media-viewer-modal">
         <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
         <img id="viewer-img" style="display:none;" />
@@ -381,6 +428,8 @@
             }
         };
 
+        // ====== FUNÇÕES DOS MODAIS ======
+
         function abrirModalDescricao() {
             const modal = document.getElementById('descricao-modal');
             const textarea = document.getElementById('descricao-texto');
@@ -391,6 +440,24 @@
         }
 
         function fecharModalDescricao() { document.getElementById('descricao-modal').style.display = 'none'; }
+
+        // NOVOS MODAIS DE MENU
+        function abrirModalExportarJSON() { document.getElementById('exportar-json-modal').style.display = 'flex'; }
+        function fecharModalExportarJSON() { document.getElementById('exportar-json-modal').style.display = 'none'; }
+
+        function abrirModalImportar() { document.getElementById('importar-modal').style.display = 'flex'; }
+        function fecharModalImportar() { document.getElementById('importar-modal').style.display = 'none'; }
+
+        function abrirModalColar() {
+            fecharModalImportar(); // Fecha o menu principal de importar
+            document.getElementById('texto-colar').value = '';
+            document.getElementById('colar-modal').style.display = 'flex';
+            setTimeout(() => document.getElementById('texto-colar').focus(), 100);
+        }
+
+        function fecharModalColar() { document.getElementById('colar-modal').style.display = 'none'; }
+
+        // ================================
 
         function salvarDescricao() {
             const textarea = document.getElementById('descricao-texto');
@@ -488,8 +555,6 @@
                 reader.readAsDataURL(blob);
                 reader.onloadend = () => {
                     document.getElementById('video_base64').value = reader.result;
-                    
-                    // Exibe a thumbnail no preview do form
                     document.getElementById('photo-preview').src = document.getElementById('foto_base64').value;
                     document.getElementById('photo-preview').style.display = 'block';
                 };
@@ -515,7 +580,6 @@
                     context.drawImage(video, 0, 0, canvas.width, canvas.height);
                     document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
                 } catch(e) {}
-                
                 mediaRecorder.stop();
             }
             fecharCamera();
@@ -679,12 +743,17 @@
             if (!nomeArquivo) return;
             if (!nomeArquivo.endsWith('.csv')) nomeArquivo += '.csv';
 
-            let csvContent = "Item;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
+            let csvContent = "\uFEFFItem;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             registros.forEach((r, i) => {
                 let tipoMidia = r.video ? "Vídeo" : (r.foto ? "Foto" : "Não tem");
-                csvContent += `${i + 1};${r.data || ""};${r.hora || ""};${(r.area||"").replace(/;/g,",")};${(r.local||"").replace(/;/g,",")};${(r.ocorrencia||"").replace(/;/g,",")};${(r.descricao||"").replace(/;/g,",")};${tipoMidia}\n`;
+                let descLimpa = (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " ").replace(/;/g, ",");
+                let areaLimpa = (r.area || "").replace(/;/g, ",");
+                let localLimpo = (r.local || "").replace(/;/g, ",");
+                let ocorrenciaLimpa = (r.ocorrencia || "").replace(/;/g, ",");
+
+                csvContent += `${i + 1};${r.data || ""};${r.hora || ""};${areaLimpa};${localLimpo};${ocorrenciaLimpa};${descLimpa};${tipoMidia}\n`;
             });
-            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = nomeArquivo;
@@ -725,9 +794,7 @@
                 if (reg.descricao) slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.45, w: textW, h: 0.2, fontSize: 11, color: '666666' });
                 slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yBase + 0.65, w: textW, h: 0.2, fontSize: 10, italic: true });
 
-                // Embutir Mídia Real no PPTX 
                 if (reg.video) {
-                    // Para dar espaço para a legenda, o vídeo fica levemente mais curto em altura (h: 0.85)
                     let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
                     if (reg.foto) mediaOpts.cover = reg.foto;
                     
@@ -737,7 +804,6 @@
                         if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain' } });
                     }
 
-                    // ADICIONA A LEGENDA DO VÍDEO NO RODAPÉ DA MINIATURA PARA NÃO SOBREPOR O PLAYER
                     slideAtual.addText("▶ VÍDEO ANEXADO", { 
                         x: 7.5, 
                         y: yBase + 0.85, 
@@ -758,6 +824,10 @@
             pptx.writeFile({ fileName: nomeArquivo });
         }
 
+        // ==========================================
+        // NOVAS FUNÇÕES PARA EXPORTAR E IMPORTAR JSON
+        // ==========================================
+
         function exportarJSON() {
             if (registros.length === 0) return;
             let nomeArquivo = prompt("Digite o nome do arquivo JSON:", "dados_auditoria");
@@ -768,9 +838,24 @@
             link.href = URL.createObjectURL(blob);
             link.download = nomeArquivo;
             link.click();
+            fecharModalExportarJSON();
         }
 
-        function acionarImportarJSON() { document.getElementById('input-json').click(); }
+        function copiarJSON() {
+            if (registros.length === 0) { alert("Nenhum dado para copiar."); return; }
+            const jsonString = JSON.stringify(registros, null, 2);
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert("✅ Dados copiados com sucesso!\n\nAgora é só abrir o WhatsApp e dar Ctrl+V (Colar). Nenhum arquivo foi salvo no seu computador.");
+            }).catch(err => {
+                alert("Erro ao copiar. Seu navegador pode estar bloqueando. Erro: " + err);
+            });
+            fecharModalExportarJSON();
+        }
+
+        function acionarImportarJSON() { 
+            fecharModalImportar();
+            document.getElementById('input-json').click(); 
+        }
 
         async function importarJSON(e) {
             const files = e.target.files;
@@ -792,6 +877,28 @@
             await localforage.setItem('registros_caca_desperdicios', registros);
             atualizarLista();
             e.target.value = ''; 
+        }
+
+        async function processarColarJSON() {
+            const texto = document.getElementById('texto-colar').value;
+            if (!texto || texto.trim() === '') {
+                alert("Cole o texto antes de importar.");
+                return;
+            }
+            try {
+                const dadosImportados = JSON.parse(texto);
+                if (Array.isArray(dadosImportados)) {
+                    registros = registros.concat(dadosImportados);
+                    await localforage.setItem('registros_caca_desperdicios', registros);
+                    atualizarLista();
+                    alert(`Sucesso! ${dadosImportados.length} registros foram importados sem deixar rastros.`);
+                    fecharModalColar();
+                } else {
+                    alert("O texto colado não possui o formato correto de lista.");
+                }
+            } catch (erro) {
+                alert("Erro ao ler o texto. Verifique se copiou o JSON inteiro.\nDetalhe: " + erro);
+            }
         }
     </script>
     <script>
