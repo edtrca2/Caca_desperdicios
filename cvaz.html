@@ -772,10 +772,10 @@
             
             let slideAtual;
             registros.forEach((reg, index) => {
+                // Cria um slide novo a cada 4 registros
                 if (index % 4 === 0) {
                     slideAtual = pptx.addSlide();
                     slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9, h: 0.4, fontSize: 24, bold: true });
-                    slideAtual.addText(reg.area || "Geral", { x: 0.3, y: 0.6, w: 9, h: 0.3, fontSize: 18, bold: true, color: '444444' });
                 }
                 
                 let yBase = 1.05 + ((index % 4) * 1.12);
