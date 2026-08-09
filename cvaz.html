@@ -191,7 +191,7 @@
         .acoes-item button { margin-top: 0; padding: 8px; font-size: 13px; height: 35px; }
 
         /* Estilo unificado dos Modais */
-        #camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal {
+        #camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal, #midia-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -215,7 +215,7 @@
         .modal-botoes button { margin-top: 0; width: 100%; height: 45px;}
 
         /* Modais centralizados */
-        #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal {
+        #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal, #midia-modal {
             padding-top: 0;
             justify-content: center;
             align-items: center;
@@ -268,12 +268,14 @@
                     <option value="Canal estreito">Canal estreito</option>
                     <option value="Outros">Outros</option>
                 </select>
-                <input type="text" id="area_outros" placeholder="Nome da Área..." style="display: none; margin-top: 5px; border-color: var(--primary);">
+                <!-- Força maiúsculo ao digitar -->
+                <input type="text" id="area_outros" placeholder="NOME DA ÁREA..." style="display: none; margin-top: 5px; border-color: var(--primary);" oninput="this.value = this.value.toUpperCase()">
             </div>
             
             <div>
                 <label>Local Específico:</label>
-                <input type="text" id="local" placeholder="Ex: F40, Coluna">
+                <!-- Força maiúsculo ao digitar -->
+                <input type="text" id="local" placeholder="EX: F40, COLUNA" oninput="this.value = this.value.toUpperCase()">
             </div>
 
             <div>
@@ -287,23 +289,23 @@
                     <option value="TV Ligada">TV Ligada</option>
                     <option value="Outros">Outros</option>
                 </select>
-                <input type="text" id="ocorrencia_outros" placeholder="Especifique..." style="display: none; margin-top: 5px; border-color: var(--primary);">
+                <!-- Força maiúsculo ao digitar -->
+                <input type="text" id="ocorrencia_outros" placeholder="ESPECIFIQUE..." style="display: none; margin-top: 5px; border-color: var(--primary);" oninput="this.value = this.value.toUpperCase()">
             </div>
 
             <div>
                 <label>Descrição:</label>
-                <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">Toque para digitar...</div>
+                <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">TOQUE PARA DIGITAR...</div>
                 <input type="hidden" id="descricao">
             </div>
         </div>
 
         <div style="display: flex; justify-content: center;">
             <img id="photo-preview" class="media-preview" src="" alt="Preview">
-            <video id="video-file-preview" class="media-preview" controls></video>
         </div>
         
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="btn-secondary" onclick="abrirCamera()" style="margin: 0; flex: 1;">📷 Câmera</button>
+            <button class="btn-secondary" onclick="abrirModalMidia()" style="margin: 0; flex: 1;">📷 Mídia</button>
             <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin: 0; flex: 1;">➕ Adicionar</button>
         </div>
         <button class="btn-secondary" id="btn-cancelar-edicao" style="display: none; margin-top: 10px; width: 100%;" onclick="cancelarEdicao()">❌ Cancelar Edição</button>
@@ -321,8 +323,8 @@
     </div>
 
     <div class="bottom-section">
-        <button class="btn-success" onclick="exportarCSV()">📊 CSV</button>
-        <button class="btn-primary" onclick="exportarPPTX()">📺 PPTX</button>
+        <button class="btn-success" onclick="acionarExportar('CSV')">📊 CSV</button>
+        <button class="btn-primary" onclick="acionarExportar('PPTX')">📺 PPTX</button>
         <button class="btn-info" onclick="abrirModalExportarJSON()">💾 JSON</button>
         <button class="btn-warning" style="color: var(--warning-text);" onclick="abrirModalImportar()">📂 Importar</button>
         <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
@@ -333,11 +335,27 @@
         <div class="modal-box">
             <h3 style="margin-top: 0; color: var(--primary);">Descrição do Problema</h3>
             <p style="margin: 0; font-size: 13px; color: #666;">Digite os detalhes adicionais abaixo:</p>
-            <textarea id="descricao-texto" rows="5"></textarea>
+            <!-- Força maiúsculo ao digitar -->
+            <textarea id="descricao-texto" rows="5" oninput="this.value = this.value.toUpperCase()"></textarea>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="btn-danger" style="margin: 0;" onclick="fecharModalDescricao()">Cancelar</button>
                 <button class="btn-success" style="margin: 0;" onclick="salvarDescricao()">Confirmar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: OPÇÕES DE MÍDIA -->
+    <div id="midia-modal">
+        <div class="modal-box" style="text-align: center;">
+            <h3 style="margin-top: 0; color: var(--primary);">Adicionar Mídia</h3>
+            <p style="margin: 0; font-size: 13px; color: #666;">Escolha a origem da foto ou vídeo:</p>
+            <div class="botoes-menu-modal">
+                <button class="btn-success" onclick="iniciarCamera('foto')">📷 Tirar Foto</button>
+                <button class="btn-warning" style="color: var(--warning-text);" onclick="iniciarCamera('video')">🎥 Gravar Vídeo</button>
+                <button class="btn-info" onclick="acionarGaleria()">📂 Carregar da Galeria</button>
+                <button class="btn-danger" onclick="fecharModalMidia()">❌ Cancelar</button>
+            </div>
+            <input type="file" id="input-galeria" accept="image/*,video/*" style="display:none;" onchange="processarMidiaGaleria(event)">
         </div>
     </div>
 
@@ -347,7 +365,7 @@
             <h3 style="margin-top: 0; color: var(--info);">Exportar em JSON</h3>
             <p style="margin: 0; font-size: 13px; color: #666;">Escolha como deseja exportar os dados:</p>
             <div class="botoes-menu-modal">
-                <button class="btn-info" onclick="exportarJSON()">💾 Salvar Arquivo (.json)</button>
+                <button class="btn-info" onclick="acionarExportar('JSON')">💾 Salvar Arquivo (.json)</button>
                 <button class="btn-info" onclick="copiarJSON()">📋 Copiar Texto</button>
                 <button class="btn-danger" onclick="fecharModalExportarJSON()">❌ Cancelar</button>
             </div>
@@ -427,6 +445,8 @@
             }
         };
 
+        // ======= CONTROLE DOS MODAIS =======
+
         function abrirModalDescricao() {
             const modal = document.getElementById('descricao-modal');
             const textarea = document.getElementById('descricao-texto');
@@ -435,8 +455,10 @@
             modal.style.display = 'flex';
             textarea.focus();
         }
-
         function fecharModalDescricao() { document.getElementById('descricao-modal').style.display = 'none'; }
+
+        function abrirModalMidia() { document.getElementById('midia-modal').style.display = 'flex'; }
+        function fecharModalMidia() { document.getElementById('midia-modal').style.display = 'none'; }
 
         function abrirModalExportarJSON() { document.getElementById('exportar-json-modal').style.display = 'flex'; }
         function fecharModalExportarJSON() { document.getElementById('exportar-json-modal').style.display = 'none'; }
@@ -450,15 +472,16 @@
             document.getElementById('colar-modal').style.display = 'flex';
             setTimeout(() => document.getElementById('texto-colar').focus(), 100);
         }
-
         function fecharModalColar() { document.getElementById('colar-modal').style.display = 'none'; }
+
+        // ===================================
 
         function salvarDescricao() {
             const textarea = document.getElementById('descricao-texto');
             const inputHidden = document.getElementById('descricao');
             const display = document.getElementById('descricao-display');
             inputHidden.value = textarea.value;
-            display.innerText = textarea.value.trim() !== '' ? textarea.value : 'Toque para digitar...';
+            display.innerText = textarea.value.trim() !== '' ? textarea.value : 'TOQUE PARA DIGITAR...';
             display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
             fecharModalDescricao();
         }
@@ -466,14 +489,14 @@
         function limparCampoDescricao() {
             document.getElementById('descricao').value = '';
             const display = document.getElementById('descricao-display');
-            display.innerText = 'Toque para digitar...';
+            display.innerText = 'TOQUE PARA DIGITAR...';
             display.style.color = '#6c757d';
         }
 
         function preencherCampoDescricao(texto) {
             document.getElementById('descricao').value = texto || '';
             const display = document.getElementById('descricao-display');
-            display.innerText = (texto && texto.trim() !== '') ? texto : 'Toque para digitar...';
+            display.innerText = (texto && texto.trim() !== '') ? texto : 'TOQUE PARA DIGITAR...';
             display.style.color = (texto && texto.trim() !== '') ? '#333' : '#6c757d';
         }
 
@@ -489,13 +512,22 @@
             campoOutros.style.display = (ocorrencia === 'Outros') ? 'block' : 'none';
         }
 
-        async function abrirCamera() {
+        // ======= CÂMERA E GALERIA =======
+
+        async function iniciarCamera(modo) {
+            fecharModalMidia();
             const modal = document.getElementById('camera-modal');
             const video = document.getElementById('video-preview');
             modal.style.display = 'block';
 
-            document.getElementById('btn-tirar-foto').style.display = 'block';
-            document.getElementById('btn-iniciar-gravacao').style.display = 'block';
+            if (modo === 'foto') {
+                document.getElementById('btn-tirar-foto').style.display = 'block';
+                document.getElementById('btn-iniciar-gravacao').style.display = 'none';
+            } else {
+                document.getElementById('btn-tirar-foto').style.display = 'none';
+                document.getElementById('btn-iniciar-gravacao').style.display = 'block';
+            }
+            
             document.getElementById('btn-parar-gravacao').style.display = 'none';
             document.getElementById('status-gravacao').style.display = 'none';
 
@@ -549,7 +581,6 @@
                 reader.readAsDataURL(blob);
                 reader.onloadend = () => {
                     document.getElementById('video_base64').value = reader.result;
-                    
                     document.getElementById('photo-preview').src = document.getElementById('foto_base64').value;
                     document.getElementById('photo-preview').style.display = 'block';
                 };
@@ -579,6 +610,66 @@
             }
             fecharCamera();
         }
+
+        function acionarGaleria() {
+            fecharModalMidia();
+            document.getElementById('input-galeria').click();
+        }
+
+        function processarMidiaGaleria(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const result = e.target.result;
+
+                if (file.type.startsWith('image/')) {
+                    document.getElementById('foto_base64').value = result;
+                    document.getElementById('video_base64').value = '';
+                    document.getElementById('photo-preview').src = result;
+                    document.getElementById('photo-preview').style.display = 'block';
+                } else if (file.type.startsWith('video/')) {
+                    document.getElementById('video_base64').value = result;
+                    extrairFrameVideo(result);
+                }
+            };
+            reader.readAsDataURL(file);
+            event.target.value = ''; 
+        }
+
+        function extrairFrameVideo(videoDataUrl) {
+            const video = document.createElement('video');
+            video.src = videoDataUrl;
+            video.muted = true;
+            video.playsInline = true;
+            
+            video.onloadeddata = () => {
+                video.currentTime = 1;
+            };
+            
+            video.onseeked = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const frameBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                document.getElementById('foto_base64').value = frameBase64;
+                document.getElementById('photo-preview').src = frameBase64;
+                document.getElementById('photo-preview').style.display = 'block';
+            };
+            
+            video.onerror = () => {
+                let thumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+                document.getElementById('foto_base64').value = thumb;
+                document.getElementById('photo-preview').src = thumb;
+                document.getElementById('photo-preview').style.display = 'block';
+            }
+        }
+
+        // ================================
 
         function abrirViewerMidia(index) {
             const reg = registros[index];
@@ -615,17 +706,32 @@
             
             if (!areaVal || !ocorrenciaVal) { alert("Selecione Área e Ocorrência!"); return; }
 
+            // Lógica para manter a data/hora original na edição
+            let dataRegistro = new Date().toLocaleDateString('pt-BR');
+            let horaRegistro = new Date().toLocaleTimeString('pt-BR');
+
+            if (indiceEdicao !== null) {
+                dataRegistro = registros[indiceEdicao].data || dataRegistro;
+                horaRegistro = registros[indiceEdicao].hora || horaRegistro;
+            }
+
             const novoReg = { 
-                data: new Date().toLocaleDateString('pt-BR'), 
-                hora: new Date().toLocaleTimeString('pt-BR'), 
-                area: areaVal, local: document.getElementById('local').value, 
-                ocorrencia: ocorrenciaVal, descricao: document.getElementById('descricao').value, 
+                data: dataRegistro, 
+                hora: horaRegistro, 
+                area: areaVal, 
+                local: document.getElementById('local').value, 
+                ocorrencia: ocorrenciaVal, 
+                descricao: document.getElementById('descricao').value, 
                 foto: document.getElementById('foto_base64').value, 
                 video: document.getElementById('video_base64').value 
             };
 
-            if (indiceEdicao !== null) { registros[indiceEdicao] = novoReg; cancelarEdicao(); }
-            else { registros.push(novoReg); }
+            if (indiceEdicao !== null) { 
+                registros[indiceEdicao] = novoReg; 
+                cancelarEdicao(); 
+            } else { 
+                registros.push(novoReg); 
+            }
             
             document.getElementById('local').value = '';
             document.getElementById('ocorrencia').value = '';
@@ -732,12 +838,46 @@
             });
         }
 
-        function exportarCSV() {
-            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
-            let nomeArquivo = prompt("Digite o nome do arquivo CSV:", "auditoria_desperdicios");
-            if (!nomeArquivo) return;
-            if (!nomeArquivo.endsWith('.csv')) nomeArquivo += '.csv';
+        // ===================================
+        // FUNÇÕES DE EXPORTAÇÃO COM NOME OBRIGATÓRIO
+        // ===================================
 
+        function solicitarNomeArquivo(extensao) {
+            let nome = "";
+            while (!nome || nome.trim() === "") {
+                nome = prompt(`Digite O SEU NOME para exportar o arquivo ${extensao}\n(Exemplo: EDSON):`, "");
+                if (nome === null) return null; 
+                
+                if (nome.trim() === "") {
+                    alert("⚠️ Você PRECISA digitar um nome para continuar!");
+                }
+            }
+            
+            nome = nome.toUpperCase(); // Força o nome para maiúsculo
+            
+            const data = new Date();
+            const dd = String(data.getDate()).padStart(2, '0');
+            const mm = String(data.getMonth() + 1).padStart(2, '0');
+            const aa = String(data.getFullYear()).slice(-2); 
+            const hh = String(data.getHours()).padStart(2, '0');
+            const min = String(data.getMinutes()).padStart(2, '0');
+            
+            return `${nome.trim()}_${dd}${mm}${aa}_${hh}${min}`;
+        }
+
+        function acionarExportar(tipo) {
+            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+
+            const nomeBase = solicitarNomeArquivo(tipo);
+            if (!nomeBase) return; 
+
+            if (tipo === 'CSV') exportarCSV(nomeBase);
+            else if (tipo === 'PPTX') exportarPPTX(nomeBase);
+            else if (tipo === 'JSON') exportarJSON(nomeBase);
+        }
+
+        function exportarCSV(nomeBase) {
+            let nomeArquivo = nomeBase + '.csv';
             let csvContent = "\uFEFFItem;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
             registros.forEach((r, i) => {
                 let tipoMidia = r.video ? "Vídeo" : (r.foto ? "Foto" : "Não tem");
@@ -755,12 +895,8 @@
             link.click();
         }
 
-        function exportarPPTX() {
-            if (registros.length === 0) return;
-            let nomeArquivo = prompt("Digite o nome do arquivo PPTX:", "Relatorio_Desperdicios");
-            if (!nomeArquivo) return;
-            if (!nomeArquivo.endsWith('.pptx')) nomeArquivo += '.pptx';
-
+        function exportarPPTX(nomeBase) {
+            let nomeArquivo = nomeBase + '.pptx';
             let pptx = new PptxGenJS();
             function getISOWeek(d) {
                 let t = new Date(d);
@@ -772,7 +908,6 @@
             
             let slideAtual;
             registros.forEach((reg, index) => {
-                // Cria um slide novo a cada 4 registros
                 if (index % 4 === 0) {
                     slideAtual = pptx.addSlide();
                     slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9, h: 0.4, fontSize: 24, bold: true });
@@ -819,11 +954,8 @@
             pptx.writeFile({ fileName: nomeArquivo });
         }
 
-        function exportarJSON() {
-            if (registros.length === 0) return;
-            let nomeArquivo = prompt("Digite o nome do arquivo JSON:", "dados_auditoria");
-            if (!nomeArquivo) return; 
-            if (!nomeArquivo.endsWith('.json')) nomeArquivo += '.json';
+        function exportarJSON(nomeBase) {
+            let nomeArquivo = nomeBase + '.json';
             const blob = new Blob([JSON.stringify(registros, null, 2)], { type: "application/json" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
@@ -836,9 +968,9 @@
             if (registros.length === 0) { alert("Nenhum dado para copiar."); return; }
             const jsonString = JSON.stringify(registros, null, 2);
             navigator.clipboard.writeText(jsonString).then(() => {
-                alert("✅ Dados copiados com sucesso!\n\nAgora é só dar Ctrl+V (Colar) onde desejar.");
+                alert("✅ DADOS COPIADOS COM SUCESSO!\n\nAGORA É SÓ DAR CTRL+V (COLAR) ONDE DESEJAR.");
             }).catch(err => {
-                alert("Erro ao copiar. Seu navegador pode estar bloqueando. Erro: " + err);
+                alert("ERRO AO COPIAR. SEU NAVEGADOR PODE ESTAR BLOQUEANDO. ERRO: " + err);
             });
             fecharModalExportarJSON();
         }
@@ -859,7 +991,7 @@
                         try {
                             const dados = JSON.parse(event.target.result);
                             if (Array.isArray(dados)) registros = registros.concat(dados);
-                        } catch (err) { alert("Erro arquivo: " + file.name); }
+                        } catch (err) { alert("ERRO ARQUIVO: " + file.name); }
                         resolve();
                     };
                     reader.readAsText(file);
@@ -873,7 +1005,7 @@
         async function processarColarJSON() {
             const texto = document.getElementById('texto-colar').value;
             if (!texto || texto.trim() === '') {
-                alert("Cole o texto antes de importar.");
+                alert("COLE O TEXTO ANTES DE IMPORTAR.");
                 return;
             }
             try {
@@ -882,13 +1014,13 @@
                     registros = registros.concat(dadosImportados);
                     await localforage.setItem('registros_caca_desperdicios', registros);
                     atualizarLista();
-                    alert(`Sucesso! ${dadosImportados.length} registros foram importados com sucesso.`);
+                    alert(`SUCESSO! ${dadosImportados.length} REGISTROS FORAM IMPORTADOS COM SUCESSO.`);
                     fecharModalColar();
                 } else {
-                    alert("O texto colado não possui o formato correto de lista.");
+                    alert("O TEXTO COLADO NÃO POSSUI O FORMATO CORRETO DE LISTA.");
                 }
             } catch (erro) {
-                alert("Erro ao ler o texto. Verifique se copiou o JSON inteiro.\nDetalhe: " + erro);
+                alert("ERRO AO LER O TEXTO. VERIFIQUE SE COPIOU O JSON INTEIRO.\nDETALHE: " + erro);
             }
         }
     </script>
