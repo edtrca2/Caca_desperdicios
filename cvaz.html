@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <title>Caça Desperdícios</title>
+
+    <title>CAÇA DESPERDÍCIOS</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <style>
         :root {
@@ -22,6 +24,7 @@
             --warning: #ffc107;
             --warning-text: #212529;
             --info: #17a2b8;
+            --purple: #6f42c1;
         }
 
         body {
@@ -32,38 +35,36 @@
             padding: 0;
             display: flex;
             flex-direction: column;
-            height: 100dvh; 
-            overflow: hidden; 
+            height: 100dvh;
+            overflow: hidden;
         }
 
         .top-section {
             flex: none;
             background-color: var(--card);
-            padding: 12px 15px;
-            border-bottom: 2px solid black; 
+            padding: 10px 12px;
+            border-bottom: 2px solid black;
             z-index: 10;
-            max-height: 55vh; 
-            overflow-y: auto;
         }
 
         .center-section {
             flex: 1;
             overflow-y: auto;
-            padding: 15px;
+            padding: 12px;
             background-color: var(--bg);
         }
 
         .bottom-section {
             flex: none;
             background-color: var(--card);
-            padding: 10px 15px;
-            border-top: 2px solid black; 
+            padding: 8px 12px;
+            border-top: 2px solid black;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             z-index: 10;
         }
-        
+
         .bottom-section button {
             flex: 1 1 calc(50% - 10px);
             margin: 0;
@@ -74,33 +75,45 @@
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
         }
 
-        h2 { text-align: center; color: var(--primary); margin: 0 0 10px 0; font-size: 20px;}
-        
-        label { display: block; margin-bottom: 2px; font-weight: bold; font-size: 12px; color: #444; }
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
 
-        input[type="text"], select {
+        label {
+            display: block;
+            margin-bottom: 2px;
+            font-weight: bold;
+            font-size: 11px;
+            color: #444;
+        }
+
+        input[type="text"],
+        select {
             width: 100%;
-            padding: 8px;
+            padding: 6px 8px;
             border: 1px solid #ccc;
             border-radius: 5px;
             box-sizing: border-box;
-            font-size: 14px;
+            font-size: 13px;
             background-color: white;
-            height: 38px;
+            height: 35px;
         }
 
         .fake-input {
             width: 100%;
-            padding: 8px;
+            padding: 6px 8px;
             border: 1px solid #ccc;
             border-radius: 5px;
             box-sizing: border-box;
-            font-size: 14px;
+            font-size: 13px;
             background-color: #f8f9fa;
-            height: 38px;
+            height: 35px;
             cursor: pointer;
             color: #6c757d;
             display: flex;
@@ -110,19 +123,56 @@
             text-overflow: ellipsis;
         }
 
-        button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 15px;
+        .radio-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .radio-group input[type="radio"] {
+            display: none;
+        }
+
+        .radio-group .radio-btn {
+            flex: 1 1 calc(50% - 6px);
+            padding: 8px 4px;
+            text-align: center;
+            background-color: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 10px;
             font-weight: bold;
-            color: white;
+            color: #666;
             cursor: pointer;
-            height: 42px;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
+            line-height: 1.1;
+            box-sizing: border-box;
+            min-height: 36px;
+        }
+
+        .radio-group input[type="radio"]:checked + .radio-btn {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
         }
 
         .btn-primary { background-color: var(--primary); }
@@ -131,34 +181,51 @@
         .btn-secondary { background-color: #6c757d; }
         .btn-warning { background-color: var(--warning); color: var(--warning-text); }
         .btn-info { background-color: var(--info); }
+        .btn-purple { background-color: var(--purple); }
 
         .header-lista {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid #ddd;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
-        .header-lista h3 { margin: 0; font-size: 18px; color: #444; }
 
-        .registro-item { 
-            background: white; 
-            border-radius: 8px; 
-            padding: 12px; 
-            margin-bottom: 12px; 
+        .header-lista h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #444;
+        }
+
+        .registro-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             gap: 5px;
         }
-        .registro-conteudo { display: flex; justify-content: space-between; align-items: center; }
-        .registro-texto { flex: 1; font-size: 14px; }
-        
+
+        .registro-conteudo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .registro-texto {
+            flex: 1;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
         .registro-miniatura {
-            width: 50px; height: 50px; 
-            object-fit: cover; 
-            border-radius: 5px; 
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 5px;
             cursor: pointer;
             border: 1px solid #ccc;
             margin-left: 10px;
@@ -167,62 +234,262 @@
 
         .video-thumbnail-container {
             position: relative;
-            width: 50px; height: 50px;
+            width: 45px;
+            height: 45px;
             margin-left: 10px;
             cursor: pointer;
             flex-shrink: 0;
         }
+
         .video-thumbnail-container img {
-            width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
             object-fit: cover;
             border-radius: 5px;
             border: 1px solid #ccc;
         }
+
         .video-thumbnail-container .play-icon {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(0,0,0,0.4);
             border-radius: 5px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
         }
 
-        .acoes-item { display: flex; gap: 8px; margin-top: 10px; }
-        .acoes-item button { margin-top: 0; padding: 8px; font-size: 13px; height: 35px; }
+        .acoes-item {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
 
-        /* Estilo unificado dos Modais */
-        #camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal, #midia-modal {
+        .acoes-item button {
+            margin-top: 0;
+            padding: 6px;
+            font-size: 12px;
+            height: 32px;
+        }
+
+        /* =========================================================
+           MODAIS
+           ========================================================= */
+
+        #camera-modal,
+        #qr-camera-modal,
+        #media-viewer-modal,
+        #descricao-modal,
+        #colar-modal,
+        #exportar-modal,
+        #importar-modal,
+        #midia-modal {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-color: rgba(0,0,0,0.95);
             z-index: 2000;
             text-align: center;
             padding-top: 20px;
         }
-        
+
+        /* =========================================================
+           NOVO LEITOR QR
+           ========================================================= */
+
+        #qr-camera-modal {
+            padding: 0;
+            background: #000;
+            z-index: 5000;
+        }
+
+        #qr-camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .qr-camera-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 10;
+            background: linear-gradient(
+                to bottom,
+                rgba(0,0,0,0.75),
+                rgba(0,0,0,0)
+            );
+        }
+
+        .qr-camera-titulo {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .qr-camera-status {
+            color: white;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        .qr-moldura {
+            position: absolute;
+            width: 65vw;
+            height: 65vw;
+            max-width: 300px;
+            max-height: 300px;
+            border: 3px solid #00ff66;
+            border-radius: 18px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-sizing: border-box;
+            z-index: 5;
+            box-shadow:
+                0 0 0 9999px rgba(0,0,0,0.25),
+                0 0 20px rgba(0,255,102,0.5);
+        }
+
+        .qr-moldura::before,
+        .qr-moldura::after {
+            content: "";
+            position: absolute;
+            background: #00ff66;
+        }
+
+        .qr-moldura::before {
+            width: 40%;
+            height: 3px;
+            left: 30%;
+            top: -3px;
+        }
+
+        .qr-moldura::after {
+            width: 3px;
+            height: 40%;
+            left: -3px;
+            top: 30%;
+        }
+
+        .qr-camera-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 15px 25px 15px;
+            box-sizing: border-box;
+            z-index: 10;
+            background: linear-gradient(
+                to top,
+                rgba(0,0,0,0.85),
+                rgba(0,0,0,0)
+            );
+        }
+
+        .qr-camera-bottom button {
+            max-width: 400px;
+            margin: 8px auto;
+            height: 48px;
+        }
+
+        .qr-linha-leitura {
+            position: absolute;
+            left: 8%;
+            width: 84%;
+            height: 2px;
+            background: #00ff66;
+            top: 50%;
+            z-index: 6;
+            animation: qrLinha 1.7s infinite ease-in-out;
+            box-shadow: 0 0 8px #00ff66;
+        }
+
+        @keyframes qrLinha {
+            0% { transform: translateY(-120px); opacity: 0.3; }
+            50% { transform: translateY(120px); opacity: 1; }
+            100% { transform: translateY(-120px); opacity: 0.3; }
+        }
+
+        #qr-canvas {
+            display: none;
+        }
+
+        /* ========================================================= */
+
         #media-viewer-modal .fechar-btn {
-            position: absolute; top: 15px; right: 20px; font-size: 35px; color: white; cursor: pointer;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 35px;
+            color: white;
+            cursor: pointer;
+            z-index: 10;
         }
-        #viewer-img, #viewer-video {
-            max-width: 95%; max-height: 80vh; margin-top: 50px; border-radius: 8px;
+
+        #viewer-img,
+        #viewer-video {
+            max-width: 95%;
+            max-height: 80vh;
+            margin-top: 50px;
+            border-radius: 8px;
         }
 
-        #video-preview { width: 100%; max-height: 60vh; background-color: black; }
-        .media-preview { display: none; width: auto; max-height: 60px; object-fit: contain; margin-top: 10px; border-radius: 5px;}
+        #video-preview {
+            width: 100%;
+            max-height: 60vh;
+            background-color: black;
+        }
 
-        .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; margin: 10px auto; }
-        .modal-botoes button { margin-top: 0; width: 100%; height: 45px;}
+        .media-preview {
+            display: none;
+            width: auto;
+            max-height: 60px;
+            object-fit: contain;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
 
-        /* Modais centralizados */
-        #descricao-modal, #colar-modal, #exportar-json-modal, #importar-modal, #midia-modal {
+        .modal-botoes {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 90%;
+            margin: 10px auto;
+        }
+
+        .modal-botoes button {
+            margin-top: 0;
+            width: 100%;
+            height: 45px;
+        }
+
+        #descricao-modal,
+        #colar-modal,
+        #exportar-modal,
+        #importar-modal,
+        #midia-modal {
             padding-top: 0;
             justify-content: center;
             align-items: center;
             box-sizing: border-box;
             padding: 15px;
         }
-        
+
         .modal-box {
             background: white;
             width: 100%;
@@ -232,6 +499,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             text-align: left;
         }
+
         .modal-box textarea {
             width: 100%;
             padding: 10px;
@@ -239,801 +507,4874 @@
             border-radius: 5px;
             font-size: 16px;
             box-sizing: border-box;
-            resize: none; 
+            resize: none;
             margin-top: 10px;
         }
-        .botoes-menu-modal { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+
+        .botoes-menu-modal {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="top-section">
-        <h2>Caça Desperdícios</h2>
-        
-        <div class="form-grid">
-            <div>
-                <label>Área / Setor:</label>
-                <select id="area" onchange="verificarAreaOutros()">
-                    <option value="" disabled selected>Selecione...</option>
-                    <option value="Montagem final">Montagem final</option>
-                    <option value="Armação">Armação</option>
-                    <option value="Estamparia">Estamparia</option>
-                    <option value="Pintura">Pintura</option>
-                    <option value="Canal 1">Canal 1</option>
-                    <option value="Canal 2">Canal 2</option>
-                    <option value="Canal 3">Canal 3</option>
-                    <option value="Canal 4">Canal 4</option>
-                    <option value="Canal 5">Canal 5</option>
-                    <option value="Canal 6">Canal 6</option>
-                    <option value="Canal estreito">Canal estreito</option>
-                    <option value="Outros">Outros</option>
-                </select>
-                <!-- Força maiúsculo ao digitar -->
-                <input type="text" id="area_outros" placeholder="NOME DA ÁREA..." style="display: none; margin-top: 5px; border-color: var(--primary);" oninput="this.value = this.value.toUpperCase()">
+<div class="top-section">
+
+    <h2>CAÇA DESPERDÍCIOS</h2>
+
+    <div class="form-grid">
+
+        <div style="grid-column: span 2;">
+            <label>NOME DO AUDITOR:</label>
+            <input
+                type="text"
+                id="auditor"
+                placeholder="QUEM ESTÁ FAZENDO A RONDA?"
+                oninput="this.value = this.value.toUpperCase(); localStorage.setItem('auditor_nome', this.value);"
+            >
+        </div>
+
+        <!-- =====================================================
+             QR CODE
+             ===================================================== -->
+
+        <div style="grid-column: span 2;">
+
+            <button
+                id="btn-qr"
+                class="btn-purple"
+                onclick="abrirLeitorQR()"
+            >
+                🔳 LER QR CODE DO LOCAL
+            </button>
+
+            <!-- LEITURA DE QR POR IMAGEM -->
+            <input
+                type="file"
+                id="input-qr"
+                accept="image/*"
+                capture="environment"
+                style="display:none;"
+                onchange="processarImagemQR(event)"
+            >
+
+        </div>
+
+        <!-- ===================================================== -->
+
+        <div>
+            <label>ÁREA / SETOR:</label>
+
+            <select id="area" onchange="verificarAreaOutros()">
+
+                <option value="" disabled selected>SELECIONE...</option>
+
+                <option value="ARMAÇÃO">ARMAÇÃO</option>
+                <option value="ESTAMPARIA">ESTAMPARIA</option>
+                <option value="MONTAGEM FINAL">MONTAGEM FINAL</option>
+                <option value="PINTURA">PINTURA</option>
+                <option value="LOGÍSTICA">LOGÍSTICA</option>
+                <option value="RH">RH</option>
+                <option value="MANUTENÇÃO SITE">MANUTENÇÃO SITE</option>
+                <option value="POWERCOAT/GESTAMP">POWERCOAT/GESTAMP</option>
+                <option value="GESTAMP/SM">GESTAMP/SM</option>
+                <option value="VUTEQ">VUTEQ</option>
+                <option value="OUTROS">OUTROS</option>
+
+            </select>
+
+            <input
+                type="text"
+                id="area_outros"
+                placeholder="NOME DA ÁREA..."
+                style="display:none; margin-top:5px; border-color:var(--primary);"
+            >
+        </div>
+
+        <div>
+            <label>LOCAL ESPECÍFICO:</label>
+
+            <input
+                type="text"
+                id="local"
+                placeholder="EX: F40, COLUNA"
+            >
+        </div>
+
+        <div>
+            <label>OCORRÊNCIA:</label>
+
+            <select id="ocorrencia" onchange="verificarOcorrenciaOutros()">
+
+                <option value="" disabled selected>SELECIONE...</option>
+
+                <option value="VAZAMENTOS DE AR">VAZAMENTOS DE AR</option>
+                <option value="VAZAMENTO DE ÁGUA">VAZAMENTO DE ÁGUA</option>
+                <option value="LUZ ACESA">LUZ ACESA</option>
+                <option value="VENTILADOR LIGADO">VENTILADOR LIGADO</option>
+                <option value="TV LIGADA">TV LIGADA</option>
+                <option value="OUTROS">OUTROS</option>
+
+            </select>
+
+            <input
+                type="text"
+                id="ocorrencia_outros"
+                placeholder="ESPECIFIQUE..."
+                style="display:none; margin-top:5px; border-color:var(--primary);"
+            >
+        </div>
+
+        <div>
+            <label>DESCRIÇÃO (Opcional):</label>
+
+            <div
+                id="descricao-display"
+                class="fake-input"
+                onclick="abrirModalDescricao()"
+            >
+                TOQUE PARA DIGITAR...
             </div>
-            
-            <div>
-                <label>Local Específico:</label>
-                <!-- Força maiúsculo ao digitar -->
-                <input type="text" id="local" placeholder="EX: F40, COLUNA" oninput="this.value = this.value.toUpperCase()">
-            </div>
 
-            <div>
-                <label>Ocorrência:</label>
-                <select id="ocorrencia" onchange="verificarOcorrenciaOutros()">
-                    <option value="" disabled selected>Selecione...</option>
-                    <option value="Vazamentos de Ar">Vazamentos de Ar</option>
-                    <option value="Vazamento de Agua">Vazamento de Agua</option>
-                    <option value="Luz acesa">Luz acesa</option>
-                    <option value="Ventilador Ligado">Ventilador Ligado</option>
-                    <option value="TV Ligada">TV Ligada</option>
-                    <option value="Outros">Outros</option>
-                </select>
-                <!-- Força maiúsculo ao digitar -->
-                <input type="text" id="ocorrencia_outros" placeholder="ESPECIFIQUE..." style="display: none; margin-top: 5px; border-color: var(--primary);" oninput="this.value = this.value.toUpperCase()">
-            </div>
-
-            <div>
-                <label>Descrição:</label>
-                <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">TOQUE PARA DIGITAR...</div>
-                <input type="hidden" id="descricao">
-            </div>
+            <input type="hidden" id="descricao">
         </div>
 
-        <div style="display: flex; justify-content: center;">
-            <img id="photo-preview" class="media-preview" src="" alt="Preview">
-        </div>
-        
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="btn-secondary" onclick="abrirModalMidia()" style="margin: 0; flex: 1;">📷 Mídia</button>
-            <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin: 0; flex: 1;">➕ Adicionar</button>
-        </div>
-        <button class="btn-secondary" id="btn-cancelar-edicao" style="display: none; margin-top: 10px; width: 100%;" onclick="cancelarEdicao()">❌ Cancelar Edição</button>
-        
-        <input type="hidden" id="foto_base64">
-        <input type="hidden" id="video_base64">
-    </div>
+        <div style="grid-column: span 2;">
 
-    <div class="center-section">
-        <div class="header-lista">
-            <h3>Registros (<span id="contador">0</span>)</h3>
-            <button class="btn-danger" style="width: auto; height: 35px; padding: 0 15px; margin: 0; font-size: 13px;" onclick="limparTudo()">🗑 Limpar Tudo</button>
-        </div>
-        <div id="lista-registros"></div>
-    </div>
+            <label>AÇÃO TOMADA:</label>
 
-    <div class="bottom-section">
-        <button class="btn-success" onclick="acionarExportar('CSV')">📊 CSV</button>
-        <button class="btn-primary" onclick="acionarExportar('PPTX')">📺 PPTX</button>
-        <button class="btn-info" onclick="abrirModalExportarJSON()">💾 JSON</button>
-        <button class="btn-warning" style="color: var(--warning-text);" onclick="abrirModalImportar()">📂 Importar</button>
-        <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
-    </div>
+            <div class="radio-group">
 
-    <!-- MODAL DE DESCRIÇÃO -->
-    <div id="descricao-modal">
-        <div class="modal-box">
-            <h3 style="margin-top: 0; color: var(--primary);">Descrição do Problema</h3>
-            <p style="margin: 0; font-size: 13px; color: #666;">Digite os detalhes adicionais abaixo:</p>
-            <!-- Força maiúsculo ao digitar -->
-            <textarea id="descricao-texto" rows="5" oninput="this.value = this.value.toUpperCase()"></textarea>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-danger" style="margin: 0;" onclick="fecharModalDescricao()">Cancelar</button>
-                <button class="btn-success" style="margin: 0;" onclick="salvarDescricao()">Confirmar</button>
+                <input
+                    type="radio"
+                    id="acao_sem_acao"
+                    name="acao"
+                    value="SEM AÇÃO"
+                >
+                <label for="acao_sem_acao" class="radio-btn">
+                    SEM AÇÃO
+                </label>
+
+                <input
+                    type="radio"
+                    id="acao_desligado"
+                    name="acao"
+                    value="DESLIGADO"
+                >
+                <label for="acao_desligado" class="radio-btn">
+                    DESLIGADO
+                </label>
+
+                <input
+                    type="radio"
+                    id="acao_informado_area"
+                    name="acao"
+                    value="INFORMADO À ÁREA"
+                >
+                <label for="acao_informado_area" class="radio-btn">
+                    INFORMADO À ÁREA
+                </label>
+
+                <input
+                    type="radio"
+                    id="acao_plantao_sb"
+                    name="acao"
+                    value="INFORMADO PLANTÃO SB"
+                >
+                <label for="acao_plantao_sb" class="radio-btn">
+                    PLANTÃO SB
+                </label>
+
             </div>
         </div>
+
     </div>
 
-    <!-- MODAL: OPÇÕES DE MÍDIA -->
-    <div id="midia-modal">
-        <div class="modal-box" style="text-align: center;">
-            <h3 style="margin-top: 0; color: var(--primary);">Adicionar Mídia</h3>
-            <p style="margin: 0; font-size: 13px; color: #666;">Escolha a origem da foto ou vídeo:</p>
-            <div class="botoes-menu-modal">
-                <button class="btn-success" onclick="iniciarCamera('foto')">📷 Tirar Foto</button>
-                <button class="btn-warning" style="color: var(--warning-text);" onclick="iniciarCamera('video')">🎥 Gravar Vídeo</button>
-                <button class="btn-info" onclick="acionarGaleria()">📂 Carregar da Galeria</button>
-                <button class="btn-danger" onclick="fecharModalMidia()">❌ Cancelar</button>
-            </div>
-            <input type="file" id="input-galeria" accept="image/*,video/*" style="display:none;" onchange="processarMidiaGaleria(event)">
+    <div style="display:flex; justify-content:center;">
+        <img
+            id="photo-preview"
+            class="media-preview"
+            src=""
+            alt="Preview"
+        >
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:10px;">
+
+        <button
+            class="btn-secondary"
+            onclick="abrirModalMidia()"
+            style="margin:0; flex:1;"
+        >
+            📷 MÍDIA
+        </button>
+
+        <button
+            class="btn-primary"
+            id="btn-salvar"
+            onclick="salvarRegistro()"
+            style="margin:0; flex:1;"
+        >
+            ➕ ADICIONAR
+        </button>
+
+    </div>
+
+    <button
+        class="btn-secondary"
+        id="btn-cancelar-edicao"
+        style="display:none; margin-top:8px; width:100%;"
+        onclick="cancelarEdicao()"
+    >
+        ❌ CANCELAR EDIÇÃO
+    </button>
+
+    <input type="hidden" id="foto_base64">
+    <input type="hidden" id="video_base64">
+
+</div>
+
+
+<div class="center-section">
+
+    <div class="header-lista">
+
+        <h3>
+            REGISTROS (<span id="contador">0</span>)
+        </h3>
+
+        <button
+            class="btn-danger"
+            style="width:auto; height:30px; padding:0 12px; margin:0; font-size:11px;"
+            onclick="limparTudo()"
+        >
+            🗑 LIMPAR TUDO
+        </button>
+
+    </div>
+
+    <div id="lista-registros"></div>
+
+</div>
+
+
+<div class="bottom-section">
+
+    <button
+        class="btn-primary"
+        onclick="abrirModalExportar()"
+    >
+        📤 EXPORTAR
+    </button>
+
+    <button
+        class="btn-warning"
+        style="color:var(--warning-text);"
+        onclick="abrirModalImportar()"
+    >
+        📂 IMPORTAR
+    </button>
+
+    <input
+        type="file"
+        id="input-json"
+        accept=".json"
+        multiple
+        style="display:none;"
+        onchange="importarJSON(event)"
+    >
+
+</div>
+
+
+<!-- =========================================================
+     NOVO MODAL DE LEITURA QR
+     ========================================================= -->
+
+<div id="qr-camera-modal">
+
+    <video
+        id="qr-camera-video"
+        autoplay
+        playsinline
+        muted
+    ></video>
+
+    <canvas id="qr-canvas"></canvas>
+
+    <div class="qr-camera-top">
+
+        <div
+            class="qr-camera-titulo"
+        >
+            🔳 LEITOR DE QR CODE
         </div>
-    </div>
 
-    <!-- MODAL: OPÇÕES DE EXPORTAR JSON -->
-    <div id="exportar-json-modal">
-        <div class="modal-box" style="text-align: center;">
-            <h3 style="margin-top: 0; color: var(--info);">Exportar em JSON</h3>
-            <p style="margin: 0; font-size: 13px; color: #666;">Escolha como deseja exportar os dados:</p>
-            <div class="botoes-menu-modal">
-                <button class="btn-info" onclick="acionarExportar('JSON')">💾 Salvar Arquivo (.json)</button>
-                <button class="btn-info" onclick="copiarJSON()">📋 Copiar Texto</button>
-                <button class="btn-danger" onclick="fecharModalExportarJSON()">❌ Cancelar</button>
-            </div>
+        <div
+            id="qr-camera-status"
+            class="qr-camera-status"
+        >
+            Aponte a câmera para o QR Code
         </div>
+
     </div>
 
-    <!-- MODAL: OPÇÕES DE IMPORTAR -->
-    <div id="importar-modal">
-        <div class="modal-box" style="text-align: center;">
-            <h3 style="margin-top: 0; color: #d39e00;">Importar Dados</h3>
-            <p style="margin: 0; font-size: 13px; color: #666;">Escolha como deseja importar os dados para a sua lista:</p>
-            <div class="botoes-menu-modal">
-                <button class="btn-warning" onclick="acionarImportarJSON()">📂 Carregar Arquivo</button>
-                <button class="btn-warning" onclick="abrirModalColar()">📥 Colar Texto</button>
-                <button class="btn-danger" onclick="fecharModalImportar()">❌ Cancelar</button>
-            </div>
+    <div class="qr-moldura">
+        <div class="qr-linha-leitura"></div>
+    </div>
+
+    <div class="qr-camera-bottom">
+
+        <button
+            id="btn-qr-galeria"
+            class="btn-info"
+            onclick="fecharLeitorQR(); document.getElementById('input-qr').click();"
+        >
+            🖼️ LER IMAGEM DA GALERIA
+        </button>
+
+        <button
+            class="btn-danger"
+            onclick="fecharLeitorQR()"
+        >
+            ❌ CANCELAR
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL DE DESCRIÇÃO
+     ========================================================= -->
+
+<div id="descricao-modal">
+
+    <div class="modal-box">
+
+        <h3 style="margin-top:0; color:var(--primary);">
+            DESCRIÇÃO DO PROBLEMA
+        </h3>
+
+        <p style="margin:0; font-size:13px; color:#666;">
+            DIGITE OS DETALHES ADICIONAIS ABAIXO:
+        </p>
+
+        <textarea
+            id="descricao-texto"
+            rows="5"
+        ></textarea>
+
+        <div style="display:flex; gap:10px; margin-top:15px;">
+
+            <button
+                class="btn-danger"
+                style="margin:0;"
+                onclick="fecharModalDescricao()"
+            >
+                CANCELAR
+            </button>
+
+            <button
+                class="btn-success"
+                style="margin:0;"
+                onclick="salvarDescricao()"
+            >
+                CONFIRMAR
+            </button>
+
         </div>
+
     </div>
 
-    <!-- MODAL PARA COLAR O JSON -->
-    <div id="colar-modal">
-        <div class="modal-box">
-            <h3 style="margin-top: 0; color: #d39e00;">Colar Texto JSON</h3>
-            <p style="margin: 0; font-size: 13px; color: #666;">Cole aqui o código que você copiou do WhatsApp:</p>
-            <textarea id="texto-colar" rows="8"></textarea>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-danger" style="margin: 0;" onclick="fecharModalColar()">Cancelar</button>
-                <button class="btn-success" style="margin: 0;" onclick="processarColarJSON()">Importar Dados</button>
-            </div>
+</div>
+
+
+<!-- =========================================================
+     MODAL MÍDIA
+     ========================================================= -->
+
+<div id="midia-modal">
+
+    <div
+        class="modal-box"
+        style="text-align:center;"
+    >
+
+        <h3 style="margin-top:0; color:var(--primary);">
+            ADICIONAR MÍDIA
+        </h3>
+
+        <p style="margin:0; font-size:13px; color:#666;">
+            ESCOLHA A ORIGEM DA FOTO OU VÍDEO:
+        </p>
+
+        <div class="botoes-menu-modal">
+
+            <button
+                class="btn-success"
+                onclick="iniciarCamera('foto')"
+            >
+                📷 TIRAR FOTO
+            </button>
+
+            <button
+                class="btn-warning"
+                style="color:var(--warning-text);"
+                onclick="iniciarCamera('video')"
+            >
+                🎥 GRAVAR VÍDEO
+            </button>
+
+            <button
+                class="btn-info"
+                onclick="acionarGaleria()"
+            >
+                📂 CARREGAR DA GALERIA
+            </button>
+
+            <button
+                class="btn-danger"
+                onclick="fecharModalMidia()"
+            >
+                ❌ CANCELAR
+            </button>
+
         </div>
+
+        <input
+            type="file"
+            id="input-galeria"
+            accept="image/*,video/*"
+            style="display:none;"
+            onchange="processarMidiaGaleria(event)"
+        >
+
     </div>
 
-    <!-- MODAL DA CÂMERA -->
-    <div id="camera-modal">
-        <video id="video-preview" autoplay playsinline></video>
-        <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 Gravando vídeo (Máx 5s)...</p>
-        <div class="modal-botoes">
-            <button id="btn-tirar-foto" class="btn-success" onclick="capturarFoto()">📷 Capturar Foto</button>
-            <button id="btn-iniciar-gravacao" class="btn-warning" style="color: var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 Gravar Vídeo</button>
-            <button id="btn-parar-gravacao" class="btn-danger" style="display: none;" onclick="pararGravacaoVideo()">⏹️ Parar e Salvar Vídeo</button>
-            <button class="btn-danger" onclick="fecharCamera()">❌ Cancelar</button>
+</div>
+
+
+<!-- =========================================================
+     EXPORTAR
+     ========================================================= -->
+
+<div id="exportar-modal">
+
+    <div
+        class="modal-box"
+        style="text-align:center;"
+    >
+
+        <h3 style="margin-top:0; color:var(--primary);">
+            EXPORTAR DADOS
+        </h3>
+
+        <p style="margin:0; font-size:13px; color:#666;">
+            ESCOLHA O FORMATO DO ARQUIVO:
+        </p>
+
+        <div class="botoes-menu-modal">
+
+            <button
+                class="btn-success"
+                onclick="acionarExportar('XLSX')"
+            >
+                📊 EXCEL (.XLSX)
+            </button>
+
+            <button
+                class="btn-primary"
+                onclick="acionarExportar('PPTX')"
+            >
+                📺 POWERPOINT (.PPTX)
+            </button>
+
+            <button
+                class="btn-info"
+                onclick="acionarExportar('JSON')"
+            >
+                💾 ARQUIVO (.JSON)
+            </button>
+
+            <button
+                class="btn-secondary"
+                onclick="copiarJSON()"
+            >
+                📋 COPIAR TEXTO (JSON)
+            </button>
+
+            <button
+                class="btn-danger"
+                onclick="fecharModalExportar()"
+            >
+                ❌ CANCELAR
+            </button>
+
         </div>
-        <canvas id="canvas" style="display:none;"></canvas>
+
     </div>
 
-    <!-- MODAL VISUALIZADOR -->
-    <div id="media-viewer-modal">
-        <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
-        <img id="viewer-img" style="display:none;" />
-        <video id="viewer-video" controls style="display:none;"></video>
+</div>
+
+
+<!-- =========================================================
+     IMPORTAR
+     ========================================================= -->
+
+<div id="importar-modal">
+
+    <div
+        class="modal-box"
+        style="text-align:center;"
+    >
+
+        <h3 style="margin-top:0; color:#d39e00;">
+            IMPORTAR DADOS
+        </h3>
+
+        <p style="margin:0; font-size:13px; color:#666;">
+            ESCOLHA COMO DESEJA IMPORTAR O JSON:
+        </p>
+
+        <div class="botoes-menu-modal">
+
+            <button
+                class="btn-warning"
+                onclick="acionarImportarJSON()"
+            >
+                📁 IMPORTAR JSON (.JSON)
+            </button>
+
+            <button
+                class="btn-warning"
+                onclick="abrirModalColar()"
+            >
+                📥 COLAR TEXTO JSON
+            </button>
+
+            <button
+                class="btn-danger"
+                onclick="fecharModalImportar()"
+            >
+                ❌ CANCELAR
+            </button>
+
+        </div>
+
     </div>
 
-    <script>
-        let streamDeVideo;
-        let mediaRecorder;
-        let pedacosGravados = [];
-        let registros = [];
-        let indiceEdicao = null; 
+</div>
 
-        window.onload = async function() {
-            let dadosSalvos = await localforage.getItem('registros_caca_desperdicios');
-            if (dadosSalvos) {
-                registros = dadosSalvos;
-                atualizarLista();
-            }
 
-            let ultimaArea = localStorage.getItem('ultima_area_selecionada');
-            if (ultimaArea) {
-                const opcoesArea = Array.from(document.getElementById('area').options).map(o => o.value);
-                if (opcoesArea.includes(ultimaArea)) {
-                    document.getElementById('area').value = ultimaArea;
-                } else {
-                    document.getElementById('area').value = 'Outros';
-                    document.getElementById('area_outros').value = ultimaArea;
-                    verificarAreaOutros();
-                }
-            }
-        };
+<!-- =========================================================
+     COLAR JSON
+     ========================================================= -->
 
-        // ======= CONTROLE DOS MODAIS =======
+<div id="colar-modal">
 
-        function abrirModalDescricao() {
-            const modal = document.getElementById('descricao-modal');
-            const textarea = document.getElementById('descricao-texto');
-            const inputHidden = document.getElementById('descricao');
-            textarea.value = inputHidden.value;
-            modal.style.display = 'flex';
-            textarea.focus();
-        }
-        function fecharModalDescricao() { document.getElementById('descricao-modal').style.display = 'none'; }
+    <div class="modal-box">
 
-        function abrirModalMidia() { document.getElementById('midia-modal').style.display = 'flex'; }
-        function fecharModalMidia() { document.getElementById('midia-modal').style.display = 'none'; }
+        <h3 style="margin-top:0; color:#d39e00;">
+            COLAR TEXTO JSON
+        </h3>
 
-        function abrirModalExportarJSON() { document.getElementById('exportar-json-modal').style.display = 'flex'; }
-        function fecharModalExportarJSON() { document.getElementById('exportar-json-modal').style.display = 'none'; }
+        <p style="margin:0; font-size:13px; color:#666;">
+            COLE AQUI O CÓDIGO QUE VOCÊ COPIOU DO WHATSAPP:
+        </p>
 
-        function abrirModalImportar() { document.getElementById('importar-modal').style.display = 'flex'; }
-        function fecharModalImportar() { document.getElementById('importar-modal').style.display = 'none'; }
+        <textarea
+            id="texto-colar"
+            rows="8"
+        ></textarea>
 
-        function abrirModalColar() {
-            fecharModalImportar(); 
-            document.getElementById('texto-colar').value = '';
-            document.getElementById('colar-modal').style.display = 'flex';
-            setTimeout(() => document.getElementById('texto-colar').focus(), 100);
-        }
-        function fecharModalColar() { document.getElementById('colar-modal').style.display = 'none'; }
+        <div style="display:flex; gap:10px; margin-top:15px;">
 
-        // ===================================
+            <button
+                class="btn-danger"
+                style="margin:0;"
+                onclick="fecharModalColar()"
+            >
+                CANCELAR
+            </button>
 
-        function salvarDescricao() {
-            const textarea = document.getElementById('descricao-texto');
-            const inputHidden = document.getElementById('descricao');
-            const display = document.getElementById('descricao-display');
-            inputHidden.value = textarea.value;
-            display.innerText = textarea.value.trim() !== '' ? textarea.value : 'TOQUE PARA DIGITAR...';
-            display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
-            fecharModalDescricao();
-        }
+            <button
+                class="btn-success"
+                style="margin:0;"
+                onclick="processarColarJSON()"
+            >
+                IMPORTAR DADOS
+            </button>
 
-        function limparCampoDescricao() {
-            document.getElementById('descricao').value = '';
-            const display = document.getElementById('descricao-display');
-            display.innerText = 'TOQUE PARA DIGITAR...';
-            display.style.color = '#6c757d';
-        }
+        </div>
 
-        function preencherCampoDescricao(texto) {
-            document.getElementById('descricao').value = texto || '';
-            const display = document.getElementById('descricao-display');
-            display.innerText = (texto && texto.trim() !== '') ? texto : 'TOQUE PARA DIGITAR...';
-            display.style.color = (texto && texto.trim() !== '') ? '#333' : '#6c757d';
-        }
+    </div>
 
-        function verificarAreaOutros() {
-            const area = document.getElementById('area').value;
-            const campoOutros = document.getElementById('area_outros');
-            campoOutros.style.display = (area === 'Outros') ? 'block' : 'none';
-        }
+</div>
 
-        function verificarOcorrenciaOutros() {
-            const ocorrencia = document.getElementById('ocorrencia').value;
-            const campoOutros = document.getElementById('ocorrencia_outros');
-            campoOutros.style.display = (ocorrencia === 'Outros') ? 'block' : 'none';
-        }
 
-        // ======= CÂMERA E GALERIA =======
+<!-- =========================================================
+     CÂMERA PARA FOTO/VÍDEO
+     ========================================================= -->
 
-        async function iniciarCamera(modo) {
-            fecharModalMidia();
-            const modal = document.getElementById('camera-modal');
-            const video = document.getElementById('video-preview');
-            modal.style.display = 'block';
+<div id="camera-modal">
 
-            if (modo === 'foto') {
-                document.getElementById('btn-tirar-foto').style.display = 'block';
-                document.getElementById('btn-iniciar-gravacao').style.display = 'none';
-            } else {
-                document.getElementById('btn-tirar-foto').style.display = 'none';
-                document.getElementById('btn-iniciar-gravacao').style.display = 'block';
-            }
-            
-            document.getElementById('btn-parar-gravacao').style.display = 'none';
-            document.getElementById('status-gravacao').style.display = 'none';
+    <video
+        id="video-preview"
+        autoplay
+        playsinline
+    ></video>
 
-            try {
-                streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
-                video.srcObject = streamDeVideo;
-                video.muted = true;
-            } catch (erro) {
-                alert("Erro ao acessar câmera/microfone: " + erro);
-                fecharCamera();
-            }
-        }
+    <p
+        id="status-gravacao"
+        style="color:red; font-weight:bold; display:none; margin:5px 0;"
+    >
+        🔴 GRAVANDO VÍDEO (MÁX 5S)...
+    </p>
 
-        function fecharCamera() {
-            const modal = document.getElementById('camera-modal');
-            modal.style.display = 'none';
-            if (streamDeVideo) streamDeVideo.getTracks().forEach(track => track.stop());
-            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-        }
+    <div class="modal-botoes">
 
-        function capturarFoto() {
-            const video = document.getElementById('video-preview');
-            const canvas = document.getElementById('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth || 1280;
-            canvas.height = video.videoHeight || 720;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
-            
-            document.getElementById('foto_base64').value = fotoBase64;
-            document.getElementById('video_base64').value = '';
-            
-            document.getElementById('photo-preview').src = fotoBase64;
-            document.getElementById('photo-preview').style.display = 'block';
-            fecharCamera();
-        }
+        <button
+            id="btn-tirar-foto"
+            class="btn-success"
+            onclick="capturarFoto()"
+        >
+            📷 CAPTURAR FOTO
+        </button>
 
-        function iniciarGravacaoVideo() {
-            pedacosGravados = [];
-            try {
-                mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' });
-            } catch (e) {
-                try { mediaRecorder = new MediaRecorder(streamDeVideo); } 
-                catch (err) { alert("Seu navegador não suporta gravação."); return; }
-            }
+        <button
+            id="btn-iniciar-gravacao"
+            class="btn-warning"
+            style="color:var(--warning-text);"
+            onclick="iniciarGravacaoVideo()"
+        >
+            🎥 GRAVAR VÍDEO
+        </button>
 
-            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(pedacosGravados, { type: 'video/webm' });
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                reader.onloadend = () => {
-                    document.getElementById('video_base64').value = reader.result;
-                    document.getElementById('photo-preview').src = document.getElementById('foto_base64').value;
-                    document.getElementById('photo-preview').style.display = 'block';
-                };
-            };
-            mediaRecorder.start();
-            document.getElementById('btn-tirar-foto').style.display = 'none';
-            document.getElementById('btn-iniciar-gravacao').style.display = 'none';
-            document.getElementById('btn-parar-gravacao').style.display = 'block';
-            document.getElementById('status-gravacao').innerText = '🔴 Gravando vídeo (Máx 5s)...';
-            document.getElementById('status-gravacao').style.display = 'block';
-            
-            setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') pararGravacaoVideo(); }, 5000);
-        }
+        <button
+            id="btn-parar-gravacao"
+            class="btn-danger"
+            style="display:none;"
+            onclick="pararGravacaoVideo()"
+        >
+            ⏹️ PARAR E SALVAR VÍDEO
+        </button>
 
-        function pararGravacaoVideo() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                try {
-                    const video = document.getElementById('video-preview');
-                    const canvas = document.getElementById('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = video.videoWidth || 1280;
-                    canvas.height = video.videoHeight || 720;
-                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
-                } catch(e) {}
-                mediaRecorder.stop();
-            }
-            fecharCamera();
-        }
+        <button
+            class="btn-danger"
+            onclick="fecharCamera()"
+        >
+            ❌ CANCELAR
+        </button>
 
-        function acionarGaleria() {
-            fecharModalMidia();
-            document.getElementById('input-galeria').click();
-        }
+    </div>
 
-        function processarMidiaGaleria(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+    <canvas
+        id="canvas"
+        style="display:none;"
+    ></canvas>
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const result = e.target.result;
+</div>
 
-                if (file.type.startsWith('image/')) {
-                    document.getElementById('foto_base64').value = result;
-                    document.getElementById('video_base64').value = '';
-                    document.getElementById('photo-preview').src = result;
-                    document.getElementById('photo-preview').style.display = 'block';
-                } else if (file.type.startsWith('video/')) {
-                    document.getElementById('video_base64').value = result;
-                    extrairFrameVideo(result);
-                }
-            };
-            reader.readAsDataURL(file);
-            event.target.value = ''; 
-        }
 
-        function extrairFrameVideo(videoDataUrl) {
-            const video = document.createElement('video');
-            video.src = videoDataUrl;
-            video.muted = true;
-            video.playsInline = true;
-            
-            video.onloadeddata = () => {
-                video.currentTime = 1;
-            };
-            
-            video.onseeked = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth || 640;
-                canvas.height = video.videoHeight || 480;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                const frameBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                document.getElementById('foto_base64').value = frameBase64;
-                document.getElementById('photo-preview').src = frameBase64;
-                document.getElementById('photo-preview').style.display = 'block';
-            };
-            
-            video.onerror = () => {
-                let thumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
-                document.getElementById('foto_base64').value = thumb;
-                document.getElementById('photo-preview').src = thumb;
-                document.getElementById('photo-preview').style.display = 'block';
-            }
+<!-- =========================================================
+     VISUALIZADOR
+     ========================================================= -->
+
+<div id="media-viewer-modal">
+
+    <span
+        class="fechar-btn"
+        onclick="fecharViewerMidia()"
+    >
+        &times;
+    </span>
+
+    <img
+        id="viewer-img"
+        style="display:none;"
+    >
+
+    <video
+        id="viewer-video"
+        controls
+        style="display:none;"
+    ></video>
+
+</div>
+
+
+<script>
+
+let streamDeVideo = null;
+let streamQR = null;
+
+let mediaRecorder = null;
+let pedacosGravados = [];
+
+let registros = [];
+let indiceEdicao = null;
+
+/* =========================================================
+   VARIÁVEIS DO LEITOR QR
+   ========================================================= */
+
+let qrScannerAtivo = false;
+let qrAnimationFrame = null;
+let qrUltimoTexto = "";
+let qrUltimaLeitura = 0;
+let qrDetectorNativo = null;
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
+
+window.onload = async function() {
+
+    let auditorSalvo =
+        localStorage.getItem('auditor_nome');
+
+    if (auditorSalvo) {
+        document.getElementById('auditor').value =
+            auditorSalvo;
+    }
+
+    let dadosSalvos =
+        await localforage.getItem(
+            'registros_caca_desperdicios'
+        );
+
+    if (dadosSalvos) {
+
+        registros = dadosSalvos;
+
+        atualizarLista();
+    }
+};
+
+
+/* =========================================================
+   LEITOR QR - ABRIR CÂMERA
+   ========================================================= */
+
+async function abrirLeitorQR() {
+
+    const modal =
+        document.getElementById('qr-camera-modal');
+
+    const video =
+        document.getElementById('qr-camera-video');
+
+    const status =
+        document.getElementById('qr-camera-status');
+
+    const btn =
+        document.getElementById('btn-qr');
+
+    qrUltimoTexto = "";
+    qrUltimaLeitura = 0;
+
+    status.innerText =
+        "Iniciando câmera...";
+
+    modal.style.display = 'block';
+
+    btn.innerText =
+        "⏳ ABRINDO LEITOR QR...";
+
+    try {
+
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+            throw new Error(
+                "Seu navegador não permite acesso à câmera."
+            );
         }
 
-        // ================================
+        /*
+         * Primeiro tenta câmera traseira.
+         */
 
-        function abrirViewerMidia(index) {
-            const reg = registros[index];
-            const modal = document.getElementById('media-viewer-modal');
-            const img = document.getElementById('viewer-img');
-            const video = document.getElementById('viewer-video');
-            
-            if (reg.video) { 
-                video.src = reg.video; 
-                video.style.display = 'inline-block'; 
-                img.style.display = 'none'; 
-                img.src = '';
-                setTimeout(() => video.play(), 200);
-            } else if (reg.foto) { 
-                img.src = reg.foto; 
-                img.style.display = 'inline-block'; 
-                video.style.display = 'none'; 
-                video.src = ''; 
-            }
-            modal.style.display = 'block';
-        }
+        streamQR =
+            await navigator.mediaDevices.getUserMedia({
 
-        function fecharViewerMidia() {
-            document.getElementById('media-viewer-modal').style.display = 'none';
-            document.getElementById('viewer-video').pause();
-            document.getElementById('viewer-video').src = '';
-        }
+                video: {
+                    facingMode: {
+                        ideal: "environment"
+                    },
 
-        async function salvarRegistro() {
-            let areaVal = document.getElementById('area').value;
-            if (areaVal === 'Outros') areaVal = document.getElementById('area_outros').value;
-            let ocorrenciaVal = document.getElementById('ocorrencia').value;
-            if (ocorrenciaVal === 'Outros') ocorrenciaVal = document.getElementById('ocorrencia_outros').value;
-            
-            if (!areaVal || !ocorrenciaVal) { alert("Selecione Área e Ocorrência!"); return; }
+                    width: {
+                        ideal: 1920
+                    },
 
-            // Lógica para manter a data/hora original na edição
-            let dataRegistro = new Date().toLocaleDateString('pt-BR');
-            let horaRegistro = new Date().toLocaleTimeString('pt-BR');
+                    height: {
+                        ideal: 1080
+                    }
+                },
 
-            if (indiceEdicao !== null) {
-                dataRegistro = registros[indiceEdicao].data || dataRegistro;
-                horaRegistro = registros[indiceEdicao].hora || horaRegistro;
-            }
-
-            const novoReg = { 
-                data: dataRegistro, 
-                hora: horaRegistro, 
-                area: areaVal, 
-                local: document.getElementById('local').value, 
-                ocorrencia: ocorrenciaVal, 
-                descricao: document.getElementById('descricao').value, 
-                foto: document.getElementById('foto_base64').value, 
-                video: document.getElementById('video_base64').value 
-            };
-
-            if (indiceEdicao !== null) { 
-                registros[indiceEdicao] = novoReg; 
-                cancelarEdicao(); 
-            } else { 
-                registros.push(novoReg); 
-            }
-            
-            document.getElementById('local').value = '';
-            document.getElementById('ocorrencia').value = '';
-            limparCampoDescricao();
-            document.getElementById('foto_base64').value = '';
-            document.getElementById('video_base64').value = '';
-            document.getElementById('photo-preview').style.display = 'none';
-            
-            await localforage.setItem('registros_caca_desperdicios', registros);
-            atualizarLista();
-            document.querySelector('.center-section').scrollTop = document.querySelector('.center-section').scrollHeight;
-        }
-
-        function editarRegistro(index) {
-            const reg = registros[index];
-            indiceEdicao = index;
-            document.getElementById('area').value = reg.area;
-            document.getElementById('local').value = reg.local;
-            document.getElementById('ocorrencia').value = reg.ocorrencia;
-            preencherCampoDescricao(reg.descricao);
-            document.getElementById('foto_base64').value = reg.foto || '';
-            document.getElementById('video_base64').value = reg.video || '';
-            
-            const previewFoto = document.getElementById('photo-preview');
-            if (reg.foto) { 
-                previewFoto.src = reg.foto; 
-                previewFoto.style.display = 'block'; 
-            } else {
-                previewFoto.style.display = 'none';
-            }
-            
-            const btnSalvar = document.getElementById('btn-salvar');
-            btnSalvar.innerText = "💾 Atualizar";
-            document.getElementById('btn-cancelar-edicao').style.display = 'block';
-            document.querySelector('.main-container').scrollTop = 0;
-        }
-
-        function cancelarEdicao() {
-            indiceEdicao = null;
-            document.getElementById('local').value = '';
-            document.getElementById('ocorrencia').value = '';
-            limparCampoDescricao();
-            document.getElementById('foto_base64').value = '';
-            document.getElementById('video_base64').value = '';
-            document.getElementById('photo-preview').style.display = 'none';
-            const btnSalvar = document.getElementById('btn-salvar');
-            btnSalvar.innerText = "➕ Adicionar";
-            document.getElementById('btn-cancelar-edicao').style.display = 'none';
-        }
-
-        async function excluirRegistro(index) {
-            if (confirm("Excluir item?")) {
-                registros.splice(index, 1);
-                await localforage.setItem('registros_caca_desperdicios', registros);
-                atualizarLista();
-            }
-        }
-
-        async function limparTudo() {
-            if (confirm("Apagar tudo?")) {
-                registros = [];
-                await localforage.setItem('registros_caca_desperdicios', registros);
-                cancelarEdicao();
-                atualizarLista();
-            }
-        }
-
-        function atualizarLista() {
-            const lista = document.getElementById('lista-registros');
-            document.getElementById('contador').innerText = registros.length;
-            lista.innerHTML = '';
-            registros.forEach((reg, index) => {
-                const item = document.createElement('div');
-                item.className = 'registro-item';
-                
-                let numFormat = index + 1;
-                let htmlMidiaIcon = '';
-                
-                if (reg.video) {
-                    let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+'; 
-                    htmlMidiaIcon = `
-                    <div class="video-thumbnail-container" onclick="abrirViewerMidia(${index})" title="Ver Vídeo">
-                        <img src="${thumb}">
-                        <div class="play-icon">▶</div>
-                    </div>`;
-                } else if (reg.foto) {
-                    htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="Ver Foto">`;
-                }
-
-                item.innerHTML = `
-                    <div class="registro-conteudo">
-                        <div class="registro-texto">
-                            <strong>${numFormat}. ${reg.area}</strong> ${reg.local ? '- ' + reg.local : ''} <br>
-                            <span style="color:var(--primary); font-size:13px; font-weight:bold;">${reg.ocorrencia || ''}</span>
-                        </div>
-                        ${htmlMidiaIcon}
-                    </div>
-                    <div class="acoes-item">
-                        <button class="btn-warning" onclick="editarRegistro(${index})">✏️ Editar</button>
-                        <button class="btn-danger" onclick="excluirRegistro(${index})">🗑 Excluir</button>
-                    </div>
-                `;
-                lista.appendChild(item);
+                audio: false
             });
-        }
 
-        // ===================================
-        // FUNÇÕES DE EXPORTAÇÃO COM NOME OBRIGATÓRIO
-        // ===================================
+        video.srcObject = streamQR;
 
-        function solicitarNomeArquivo(extensao) {
-            let nome = "";
-            while (!nome || nome.trim() === "") {
-                nome = prompt(`Digite O SEU NOME para exportar o arquivo ${extensao}\n(Exemplo: EDSON):`, "");
-                if (nome === null) return null; 
-                
-                if (nome.trim() === "") {
-                    alert("⚠️ Você PRECISA digitar um nome para continuar!");
-                }
+        video.setAttribute(
+            "playsinline",
+            "true"
+        );
+
+        video.muted = true;
+
+        await video.play();
+
+        status.innerText =
+            "APONTE PARA O QR CODE";
+
+        btn.innerText =
+            "🔳 LER QR CODE DO LOCAL";
+
+        qrScannerAtivo = true;
+
+        prepararBarcodeDetector();
+
+        iniciarLoopLeituraQR();
+
+    } catch (erro) {
+
+        console.error(
+            "Erro câmera QR:",
+            erro
+        );
+
+        modal.style.display = 'none';
+
+        btn.innerText =
+            "🔳 LER QR CODE DO LOCAL";
+
+        alert(
+            "❌ NÃO FOI POSSÍVEL ACESSAR A CÂMERA.\n\n" +
+            "Verifique se o navegador tem permissão para usar a câmera.\n\n" +
+            "Como alternativa, você poderá selecionar uma foto do QR Code."
+        );
+
+        /*
+         * Se a câmera falhar, oferece a galeria.
+         */
+
+        setTimeout(function() {
+
+            if (
+                confirm(
+                    "DESEJA SELECIONAR UMA FOTO DO QR CODE?"
+                )
+            ) {
+
+                document
+                    .getElementById('input-qr')
+                    .click();
+
             }
-            
-            nome = nome.toUpperCase(); // Força o nome para maiúsculo
-            
-            const data = new Date();
-            const dd = String(data.getDate()).padStart(2, '0');
-            const mm = String(data.getMonth() + 1).padStart(2, '0');
-            const aa = String(data.getFullYear()).slice(-2); 
-            const hh = String(data.getHours()).padStart(2, '0');
-            const min = String(data.getMinutes()).padStart(2, '0');
-            
-            return `${nome.trim()}_${dd}${mm}${aa}_${hh}${min}`;
+
+        }, 100);
+
+    }
+
+}
+
+
+/* =========================================================
+   PREPARA BARCODE DETECTOR
+   ========================================================= */
+
+function prepararBarcodeDetector() {
+
+    qrDetectorNativo = null;
+
+    if (
+        "BarcodeDetector" in window
+    ) {
+
+        try {
+
+            qrDetectorNativo =
+                new BarcodeDetector({
+                    formats: [
+                        "qr_code"
+                    ]
+                });
+
+            console.log(
+                "BarcodeDetector disponível."
+            );
+
+        } catch (e) {
+
+            console.log(
+                "BarcodeDetector indisponível.",
+                e
+            );
+
         }
 
-        function acionarExportar(tipo) {
-            if (registros.length === 0) { alert("Nenhum dado para exportar."); return; }
+    }
 
-            const nomeBase = solicitarNomeArquivo(tipo);
-            if (!nomeBase) return; 
+}
 
-            if (tipo === 'CSV') exportarCSV(nomeBase);
-            else if (tipo === 'PPTX') exportarPPTX(nomeBase);
-            else if (tipo === 'JSON') exportarJSON(nomeBase);
-        }
 
-        function exportarCSV(nomeBase) {
-            let nomeArquivo = nomeBase + '.csv';
-            let csvContent = "\uFEFFItem;Data;Hora;Área;Local;Ocorrência;Descrição;Mídia\n";
-            registros.forEach((r, i) => {
-                let tipoMidia = r.video ? "Vídeo" : (r.foto ? "Foto" : "Não tem");
-                let descLimpa = (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " ").replace(/;/g, ",");
-                let areaLimpa = (r.area || "").replace(/;/g, ",");
-                let localLimpo = (r.local || "").replace(/;/g, ",");
-                let ocorrenciaLimpa = (r.ocorrencia || "").replace(/;/g, ",");
+/* =========================================================
+   LOOP CONTÍNUO DO QR
+   ========================================================= */
 
-                csvContent += `${i + 1};${r.data || ""};${r.hora || ""};${areaLimpa};${localLimpo};${ocorrenciaLimpa};${descLimpa};${tipoMidia}\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = nomeArquivo;
-            link.click();
-        }
+function iniciarLoopLeituraQR() {
 
-        function exportarPPTX(nomeBase) {
-            let nomeArquivo = nomeBase + '.pptx';
-            let pptx = new PptxGenJS();
-            function getISOWeek(d) {
-                let t = new Date(d);
-                t.setHours(0,0,0,0);
-                t.setDate(t.getDate()+4-(t.getDay()||7));
-                return Math.ceil((((t-new Date(t.getFullYear(),0,1))/8.64e7)+1)/7);
-            }
-            let kw = getISOWeek(new Date());
-            
-            let slideAtual;
-            registros.forEach((reg, index) => {
-                if (index % 4 === 0) {
-                    slideAtual = pptx.addSlide();
-                    slideAtual.addText(`Ronda KW ${kw} - Desperdícios Utilities`, { x: 0.3, y: 0.2, w: 9, h: 0.4, fontSize: 24, bold: true });
-                }
-                
-                let yBase = 1.05 + ((index % 4) * 1.12);
-                let textX = 0.3; let textW = 7.0; 
-                let titulo = reg.local ? `Ocorrência #${index + 1} - ${reg.area} - ${reg.local}` : `Ocorrência #${index + 1} - ${reg.area}`;
-                let displayDataHora = reg.data || '';
-                if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` às ${reg.hora}`;
+    if (!qrScannerAtivo) {
+        return;
+    }
 
-                slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true });
-                slideAtual.addText("Ocorrência: " + (reg.ocorrencia || "Não classificada"), { x: textX, y: yBase + 0.25, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
-                if (reg.descricao) slideAtual.addText("Detalhe: " + reg.descricao, { x: textX, y: yBase + 0.45, w: textW, h: 0.2, fontSize: 11, color: '666666' });
-                slideAtual.addText("Registrado em: " + displayDataHora, { x: textX, y: yBase + 0.65, w: textW, h: 0.2, fontSize: 10, italic: true });
+    const video =
+        document.getElementById(
+            'qr-camera-video'
+        );
 
-                if (reg.video) {
-                    let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
-                    if (reg.foto) mediaOpts.cover = reg.foto;
-                    
-                    try {
-                        slideAtual.addMedia(mediaOpts);
-                    } catch(e) {
-                        if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain' } });
+    if (
+        video.readyState >= 2 &&
+        video.videoWidth > 0 &&
+        video.videoHeight > 0
+    ) {
+
+        /*
+         * Primeiro tenta o detector nativo.
+         */
+
+        if (qrDetectorNativo) {
+
+            qrDetectorNativo
+                .detect(video)
+                .then(function(barcodes) {
+
+                    if (
+                        barcodes &&
+                        barcodes.length > 0
+                    ) {
+
+                        let valor =
+                            barcodes[0].rawValue;
+
+                        if (valor) {
+
+                            processarQRDetectado(
+                                valor
+                            );
+
+                            return;
+                        }
+
                     }
 
-                    slideAtual.addText("▶ VÍDEO ANEXADO", { 
-                        x: 7.5, 
-                        y: yBase + 0.85, 
-                        w: 1.8, 
-                        h: 0.15, 
-                        fontSize: 9, 
-                        bold: true, 
-                        color: 'dc3545', 
-                        align: 'center' 
-                    });
-                    
-                } else if (reg.foto) {
-                    slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
+                    /*
+                     * Se o nativo não encontrou,
+                     * executa jsQR.
+                     */
+
+                    tentarJSQRVideo();
+
+                })
+                .catch(function() {
+
+                    tentarJSQRVideo();
+
+                });
+
+        } else {
+
+            tentarJSQRVideo();
+
+        }
+
+    }
+
+    qrAnimationFrame =
+        requestAnimationFrame(
+            iniciarLoopLeituraQR
+        );
+}
+
+
+/* =========================================================
+   JSQR NO VÍDEO
+   ========================================================= */
+
+function tentarJSQRVideo() {
+
+    if (!qrScannerAtivo) {
+        return;
+    }
+
+    const video =
+        document.getElementById(
+            'qr-camera-video'
+        );
+
+    const canvas =
+        document.getElementById(
+            'qr-canvas'
+        );
+
+    if (
+        video.videoWidth <= 0 ||
+        video.videoHeight <= 0
+    ) {
+        return;
+    }
+
+    /*
+     * Reduz um pouco a resolução para manter
+     * a leitura rápida no celular.
+     */
+
+    const larguraOriginal =
+        video.videoWidth;
+
+    const alturaOriginal =
+        video.videoHeight;
+
+    const larguraMaxima = 1280;
+
+    let largura =
+        larguraOriginal;
+
+    let altura =
+        alturaOriginal;
+
+    if (
+        largura > larguraMaxima
+    ) {
+
+        const escala =
+            larguraMaxima / largura;
+
+        largura =
+            Math.round(
+                largura * escala
+            );
+
+        altura =
+            Math.round(
+                altura * escala
+            );
+    }
+
+    canvas.width = largura;
+    canvas.height = altura;
+
+    const ctx =
+        canvas.getContext(
+            "2d",
+            {
+                willReadFrequently: true
+            }
+        );
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        largura,
+        altura
+    );
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            largura,
+            altura
+        );
+
+    try {
+
+        const code =
+            jsQR(
+                imageData.data,
+                imageData.width,
+                imageData.height,
+                {
+                    inversionAttempts:
+                        "attemptBoth"
                 }
-                
-                if (index % 4 < 3) slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9, h: 0, line: { color: 'E0E0E0', width: 1 } });
+            );
+
+        if (
+            code &&
+            code.data
+        ) {
+
+            processarQRDetectado(
+                code.data
+            );
+
+        }
+
+    } catch (erro) {
+
+        console.log(
+            "Erro jsQR:",
+            erro
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   QR DETECTADO
+   ========================================================= */
+
+function processarQRDetectado(
+    texto
+) {
+
+    if (!texto) {
+        return;
+    }
+
+    /*
+     * Evita múltiplas leituras do mesmo QR.
+     */
+
+    const agora =
+        Date.now();
+
+    if (
+        texto === qrUltimoTexto &&
+        agora - qrUltimaLeitura < 2500
+    ) {
+        return;
+    }
+
+    qrUltimoTexto = texto;
+    qrUltimaLeitura = agora;
+
+    qrScannerAtivo = false;
+
+    if (qrAnimationFrame) {
+
+        cancelAnimationFrame(
+            qrAnimationFrame
+        );
+
+        qrAnimationFrame = null;
+    }
+
+    fecharStreamQR();
+
+    document
+        .getElementById(
+            'qr-camera-status'
+        )
+        .innerText =
+        "✅ QR CODE ENCONTRADO!";
+
+    /*
+     * Pequeno atraso para mostrar
+     * visualmente que encontrou.
+     */
+
+    setTimeout(function() {
+
+        document
+            .getElementById(
+                'qr-camera-modal'
+            )
+            .style.display = 'none';
+
+        preencherCamposViaQR(
+            texto
+        );
+
+    }, 200);
+
+}
+
+
+/* =========================================================
+   FECHAR STREAM QR
+   ========================================================= */
+
+function fecharStreamQR() {
+
+    if (streamQR) {
+
+        streamQR
+            .getTracks()
+            .forEach(
+                track => track.stop()
+            );
+
+        streamQR = null;
+    }
+
+}
+
+
+/* =========================================================
+   FECHAR LEITOR QR
+   ========================================================= */
+
+function fecharLeitorQR() {
+
+    qrScannerAtivo = false;
+
+    if (qrAnimationFrame) {
+
+        cancelAnimationFrame(
+            qrAnimationFrame
+        );
+
+        qrAnimationFrame = null;
+    }
+
+    fecharStreamQR();
+
+    const video =
+        document.getElementById(
+            'qr-camera-video'
+        );
+
+    if (video) {
+        video.srcObject = null;
+    }
+
+    document
+        .getElementById(
+            'qr-camera-modal'
+        )
+        .style.display = 'none';
+
+    document
+        .getElementById(
+            'btn-qr'
+        )
+        .innerText =
+        "🔳 LER QR CODE DO LOCAL";
+
+}
+
+
+/* =========================================================
+   QR POR IMAGEM
+   ========================================================= */
+
+function processarImagemQR(event) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const btnQR =
+        document.getElementById(
+            'btn-qr'
+        );
+
+    const textoOriginal =
+        "🔳 LER QR CODE DO LOCAL";
+
+    btnQR.innerText =
+        "⏳ LENDO QR CODE...";
+
+    btnQR.style.backgroundColor =
+        "#ffc107";
+
+    btnQR.style.color =
+        "#000";
+
+    const img =
+        new Image();
+
+    img.onload =
+        async function() {
+
+            let detectado = false;
+
+            /*
+             * =================================================
+             * PRIMEIRA TENTATIVA:
+             * BarcodeDetector
+             * =================================================
+             */
+
+            if (
+                "BarcodeDetector" in window
+            ) {
+
+                try {
+
+                    const detector =
+                        new BarcodeDetector({
+                            formats: [
+                                "qr_code"
+                            ]
+                        });
+
+                    const barcodes =
+                        await detector.detect(
+                            img
+                        );
+
+                    if (
+                        barcodes &&
+                        barcodes.length > 0
+                    ) {
+
+                        const valor =
+                            barcodes[0].rawValue;
+
+                        if (valor) {
+
+                            restaurarBotaoQR(
+                                btnQR,
+                                textoOriginal
+                            );
+
+                            preencherCamposViaQR(
+                                valor
+                            );
+
+                            detectado = true;
+
+                            URL.revokeObjectURL(
+                                img.src
+                            );
+
+                            return;
+                        }
+
+                    }
+
+                } catch (erro) {
+
+                    console.log(
+                        "BarcodeDetector falhou:",
+                        erro
+                    );
+
+                }
+
+            }
+
+
+            /*
+             * =================================================
+             * SEGUNDA TENTATIVA:
+             * jsQR com imagem normal
+             * =================================================
+             */
+
+            if (!detectado) {
+
+                const resultado =
+                    detectarQRNaImagem(
+                        img,
+                        false
+                    );
+
+                if (resultado) {
+
+                    restaurarBotaoQR(
+                        btnQR,
+                        textoOriginal
+                    );
+
+                    preencherCamposViaQR(
+                        resultado
+                    );
+
+                    detectado = true;
+
+                    URL.revokeObjectURL(
+                        img.src
+                    );
+
+                    return;
+                }
+
+            }
+
+
+            /*
+             * =================================================
+             * TERCEIRA TENTATIVA:
+             * imagem invertida
+             * =================================================
+             */
+
+            if (!detectado) {
+
+                const resultado =
+                    detectarQRNaImagem(
+                        img,
+                        true
+                    );
+
+                if (resultado) {
+
+                    restaurarBotaoQR(
+                        btnQR,
+                        textoOriginal
+                    );
+
+                    preencherCamposViaQR(
+                        resultado
+                    );
+
+                    detectado = true;
+
+                    URL.revokeObjectURL(
+                        img.src
+                    );
+
+                    return;
+                }
+
+            }
+
+
+            /*
+             * =================================================
+             * NÃO ENCONTROU
+             * =================================================
+             */
+
+            restaurarBotaoQR(
+                btnQR,
+                textoOriginal
+            );
+
+            URL.revokeObjectURL(
+                img.src
+            );
+
+            alert(
+                "❌ NENHUM QR CODE ENCONTRADO.\n\n" +
+                "TENTE:\n\n" +
+                "1. Aproximar o celular.\n" +
+                "2. Deixar o QR ocupar boa parte da imagem.\n" +
+                "3. Evitar reflexos e sombras.\n" +
+                "4. Segurar o celular reto.\n" +
+                "5. Limpar a lente da câmera."
+            );
+
+        };
+
+    img.onerror =
+        function() {
+
+            restaurarBotaoQR(
+                btnQR,
+                textoOriginal
+            );
+
+            alert(
+                "❌ NÃO FOI POSSÍVEL ABRIR A IMAGEM."
+            );
+
+        };
+
+    img.src =
+        URL.createObjectURL(
+            file
+        );
+
+    event.target.value = '';
+
+}
+
+
+/* =========================================================
+   DETECTAR QR EM IMAGEM
+   ========================================================= */
+
+function detectarQRNaImagem(
+    img,
+    inverter
+) {
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+    const ctx =
+        canvas.getContext(
+            "2d",
+            {
+                willReadFrequently: true
+            }
+        );
+
+    const MAX_WIDTH = 1800;
+
+    let width =
+        img.naturalWidth ||
+        img.width;
+
+    let height =
+        img.naturalHeight ||
+        img.height;
+
+    if (
+        width > MAX_WIDTH
+    ) {
+
+        const escala =
+            MAX_WIDTH / width;
+
+        width =
+            Math.round(
+                width * escala
+            );
+
+        height =
+            Math.round(
+                height * escala
+            );
+
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx.drawImage(
+        img,
+        0,
+        0,
+        width,
+        height
+    );
+
+    /*
+     * Inverte a imagem quando solicitado.
+     */
+
+    if (inverter) {
+
+        const dados =
+            ctx.getImageData(
+                0,
+                0,
+                width,
+                height
+            );
+
+        for (
+            let i = 0;
+            i < dados.data.length;
+            i += 4
+        ) {
+
+            dados.data[i] =
+                255 - dados.data[i];
+
+            dados.data[i + 1] =
+                255 - dados.data[i + 1];
+
+            dados.data[i + 2] =
+                255 - dados.data[i + 2];
+
+        }
+
+        ctx.putImageData(
+            dados,
+            0,
+            0
+        );
+
+    }
+
+    const imageData =
+        ctx.getImageData(
+            0,
+            0,
+            width,
+            height
+        );
+
+    try {
+
+        const code =
+            jsQR(
+                imageData.data,
+                imageData.width,
+                imageData.height,
+                {
+                    inversionAttempts:
+                        "attemptBoth"
+                }
+            );
+
+        if (
+            code &&
+            code.data
+        ) {
+
+            return code.data;
+
+        }
+
+    } catch (erro) {
+
+        console.log(
+            "Erro ao analisar imagem:",
+            erro
+        );
+
+    }
+
+    return null;
+
+}
+
+
+/* =========================================================
+   RESTAURAR BOTÃO QR
+   ========================================================= */
+
+function restaurarBotaoQR(
+    btnQR,
+    textoOriginal
+) {
+
+    btnQR.innerText =
+        textoOriginal;
+
+    btnQR.style.backgroundColor =
+        "var(--purple)";
+
+    btnQR.style.color =
+        "#fff";
+
+}
+
+
+/* =========================================================
+   INTERPRETAR CONTEÚDO DO QR
+   ========================================================= */
+
+function preencherCamposViaQR(
+    decodedText
+) {
+
+    if (!decodedText) {
+
+        alert(
+            "❌ O QR CODE ESTÁ VAZIO."
+        );
+
+        return;
+    }
+
+    /*
+     * Remove espaços desnecessários
+     * e quebras de linha.
+     */
+
+    let texto =
+        String(decodedText)
+            .replace(/\r/g, "")
+            .replace(/\n/g, " ")
+            .trim();
+
+    /*
+     * Se o QR eventualmente vier com
+     * espaços em volta dos separadores,
+     * normaliza.
+     */
+
+    texto =
+        texto.replace(
+            /\s*;\s*/g,
+            ";"
+        );
+
+    let partes =
+        texto.split(";")
+            .map(
+                item =>
+                    item.trim()
+            );
+
+    /*
+     * Remove campos vazios do final.
+     */
+
+    while (
+        partes.length > 0 &&
+        partes[partes.length - 1] === ""
+    ) {
+
+        partes.pop();
+
+    }
+
+    if (
+        partes.length < 2
+    ) {
+
+        alert(
+            "❌ FORMATO INVÁLIDO NO QR CODE.\n\n" +
+            "O formato esperado é:\n\n" +
+            "ÁREA;LOCAL;OCORRÊNCIA;INTERRUPTOR"
+        );
+
+        return;
+    }
+
+
+    /*
+     * =================================================
+     * ÁREA
+     * =================================================
+     */
+
+    let areaQR =
+        (partes[0] || "")
+            .trim()
+            .toUpperCase();
+
+    let selectArea =
+        document.getElementById(
+            'area'
+        );
+
+    let existeArea =
+        Array.from(
+            selectArea.options
+        ).some(
+            o =>
+                o.value.toUpperCase() ===
+                areaQR
+        );
+
+    if (existeArea) {
+
+        selectArea.value =
+            areaQR;
+
+        document
+            .getElementById(
+                'area_outros'
+            )
+            .style.display =
+            'none';
+
+        document
+            .getElementById(
+                'area_outros'
+            )
+            .value = "";
+
+    } else {
+
+        selectArea.value =
+            'OUTROS';
+
+        document
+            .getElementById(
+                'area_outros'
+            )
+            .value =
+            areaQR;
+
+        document
+            .getElementById(
+                'area_outros'
+            )
+            .style.display =
+            'block';
+
+    }
+
+
+    /*
+     * =================================================
+     * LOCAL
+     * =================================================
+     */
+
+    document
+        .getElementById(
+            'local'
+        )
+        .value =
+        (partes[1] || "")
+            .trim()
+            .toUpperCase();
+
+
+    /*
+     * =================================================
+     * OCORRÊNCIA
+     * =================================================
+     */
+
+    if (
+        partes.length >= 3 &&
+        partes[2].trim() !== ""
+    ) {
+
+        let ocorrenciaQR =
+            partes[2]
+                .trim()
+                .toUpperCase();
+
+        let selectOcorrencia =
+            document.getElementById(
+                'ocorrencia'
+            );
+
+        let existeOc =
+            Array.from(
+                selectOcorrencia.options
+            ).some(
+                o =>
+                    o.value.toUpperCase() ===
+                    ocorrenciaQR
+            );
+
+        if (existeOc) {
+
+            selectOcorrencia.value =
+                ocorrenciaQR;
+
+            document
+                .getElementById(
+                    'ocorrencia_outros'
+                )
+                .style.display =
+                'none';
+
+            document
+                .getElementById(
+                    'ocorrencia_outros'
+                )
+                .value = "";
+
+        } else {
+
+            selectOcorrencia.value =
+                'OUTROS';
+
+            document
+                .getElementById(
+                    'ocorrencia_outros'
+                )
+                .value =
+                ocorrenciaQR;
+
+            document
+                .getElementById(
+                    'ocorrencia_outros'
+                )
+                .style.display =
+                'block';
+
+        }
+
+    }
+
+
+    /*
+     * =================================================
+     * INTERRUPTOR
+     * =================================================
+     */
+
+    let mensagem =
+        "✅ QR CODE LIDO COM SUCESSO!";
+
+    if (
+        partes.length >= 4 &&
+        partes[3].trim() !== ""
+    ) {
+
+        let infoInterruptor =
+            partes
+                .slice(3)
+                .join(";")
+                .trim()
+                .toUpperCase();
+
+        preencherCampoDescricao(
+            "LOCAL DO INTERRUPTOR: " +
+            infoInterruptor
+        );
+
+        mensagem +=
+            "\n\n📍 ATENÇÃO!\n\n" +
+            "VÁ ATÉ O INTERRUPTOR:\n" +
+            infoInterruptor;
+
+    }
+
+    /*
+     * Se houver campo adicional, mas não
+     * for interruptor, ele não é perdido.
+     */
+
+    if (
+        partes.length > 4
+    ) {
+
+        console.log(
+            "Dados adicionais do QR:",
+            partes.slice(4)
+        );
+
+    }
+
+    alert(
+        mensagem
+    );
+
+}
+
+
+/* =========================================================
+   DESCRIÇÃO
+   ========================================================= */
+
+function abrirModalDescricao() {
+
+    const modal =
+        document.getElementById(
+            'descricao-modal'
+        );
+
+    const textarea =
+        document.getElementById(
+            'descricao-texto'
+        );
+
+    const inputHidden =
+        document.getElementById(
+            'descricao'
+        );
+
+    textarea.value =
+        inputHidden.value;
+
+    modal.style.display =
+        'flex';
+
+    textarea.focus();
+
+}
+
+function fecharModalDescricao() {
+
+    document
+        .getElementById(
+            'descricao-modal'
+        )
+        .style.display =
+        'none';
+
+}
+
+
+/* =========================================================
+   MODAIS
+   ========================================================= */
+
+function abrirModalMidia() {
+
+    document
+        .getElementById(
+            'midia-modal'
+        )
+        .style.display =
+        'flex';
+
+}
+
+function fecharModalMidia() {
+
+    document
+        .getElementById(
+            'midia-modal'
+        )
+        .style.display =
+        'none';
+
+}
+
+function abrirModalExportar() {
+
+    document
+        .getElementById(
+            'exportar-modal'
+        )
+        .style.display =
+        'flex';
+
+}
+
+function fecharModalExportar() {
+
+    document
+        .getElementById(
+            'exportar-modal'
+        )
+        .style.display =
+        'none';
+
+}
+
+function abrirModalImportar() {
+
+    document
+        .getElementById(
+            'importar-modal'
+        )
+        .style.display =
+        'flex';
+
+}
+
+function fecharModalImportar() {
+
+    document
+        .getElementById(
+            'importar-modal'
+        )
+        .style.display =
+        'none';
+
+}
+
+function abrirModalColar() {
+
+    fecharModalImportar();
+
+    document
+        .getElementById(
+            'texto-colar'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'colar-modal'
+        )
+        .style.display =
+        'flex';
+
+    setTimeout(
+        () =>
+            document
+                .getElementById(
+                    'texto-colar'
+                )
+                .focus(),
+        100
+    );
+
+}
+
+function fecharModalColar() {
+
+    document
+        .getElementById(
+            'colar-modal'
+        )
+        .style.display =
+        'none';
+
+}
+
+
+/* =========================================================
+   DESCRIÇÃO
+   ========================================================= */
+
+function salvarDescricao() {
+
+    const textarea =
+        document.getElementById(
+            'descricao-texto'
+        );
+
+    const inputHidden =
+        document.getElementById(
+            'descricao'
+        );
+
+    const display =
+        document.getElementById(
+            'descricao-display'
+        );
+
+    inputHidden.value =
+        textarea.value;
+
+    display.innerText =
+        textarea.value.trim() !== ''
+            ? textarea.value
+            : 'TOQUE PARA DIGITAR...';
+
+    display.style.color =
+        textarea.value.trim() !== ''
+            ? '#333'
+            : '#6c757d';
+
+    fecharModalDescricao();
+
+}
+
+
+function limparCampoDescricao() {
+
+    document
+        .getElementById(
+            'descricao'
+        )
+        .value = '';
+
+    const display =
+        document.getElementById(
+            'descricao-display'
+        );
+
+    display.innerText =
+        'TOQUE PARA DIGITAR...';
+
+    display.style.color =
+        '#6c757d';
+
+}
+
+
+function preencherCampoDescricao(
+    texto
+) {
+
+    document
+        .getElementById(
+            'descricao'
+        )
+        .value =
+        texto || '';
+
+    const display =
+        document.getElementById(
+            'descricao-display'
+        );
+
+    display.innerText =
+        (
+            texto &&
+            texto.trim() !== ''
+        )
+            ? texto
+            : 'TOQUE PARA DIGITAR...';
+
+    display.style.color =
+        (
+            texto &&
+            texto.trim() !== ''
+        )
+            ? '#333'
+            : '#6c757d';
+
+}
+
+
+/* =========================================================
+   OUTROS
+   ========================================================= */
+
+function verificarAreaOutros() {
+
+    const area =
+        document.getElementById(
+            'area'
+        ).value;
+
+    const campoOutros =
+        document.getElementById(
+            'area_outros'
+        );
+
+    campoOutros.style.display =
+        area === 'OUTROS'
+            ? 'block'
+            : 'none';
+
+}
+
+
+function verificarOcorrenciaOutros() {
+
+    const ocorrencia =
+        document.getElementById(
+            'ocorrencia'
+        ).value;
+
+    const campoOutros =
+        document.getElementById(
+            'ocorrencia_outros'
+        );
+
+    campoOutros.style.display =
+        ocorrencia === 'OUTROS'
+            ? 'block'
+            : 'none';
+
+}
+
+
+/* =========================================================
+   CÂMERA FOTO/VÍDEO
+   ========================================================= */
+
+async function iniciarCamera(
+    modo
+) {
+
+    fecharModalMidia();
+
+    const modal =
+        document.getElementById(
+            'camera-modal'
+        );
+
+    const video =
+        document.getElementById(
+            'video-preview'
+        );
+
+    modal.style.display =
+        'block';
+
+    if (modo === 'foto') {
+
+        document
+            .getElementById(
+                'btn-tirar-foto'
+            )
+            .style.display =
+            'block';
+
+        document
+            .getElementById(
+                'btn-iniciar-gravacao'
+            )
+            .style.display =
+            'none';
+
+    } else {
+
+        document
+            .getElementById(
+                'btn-tirar-foto'
+            )
+            .style.display =
+            'none';
+
+        document
+            .getElementById(
+                'btn-iniciar-gravacao'
+            )
+            .style.display =
+            'block';
+
+    }
+
+    document
+        .getElementById(
+            'btn-parar-gravacao'
+        )
+        .style.display =
+        'none';
+
+    document
+        .getElementById(
+            'status-gravacao'
+        )
+        .style.display =
+        'none';
+
+    try {
+
+        streamDeVideo =
+            await navigator.mediaDevices.getUserMedia({
+
+                video: {
+                    facingMode: {
+                        ideal: 'environment'
+                    }
+                },
+
+                audio: true
+
             });
-            pptx.writeFile({ fileName: nomeArquivo });
+
+        video.srcObject =
+            streamDeVideo;
+
+        video.muted =
+            true;
+
+    } catch (erro) {
+
+        alert(
+            "ERRO AO ACESSAR CÂMERA/MICROFONE: " +
+            erro
+        );
+
+        fecharCamera();
+
+    }
+
+}
+
+
+function fecharCamera() {
+
+    const modal =
+        document.getElementById(
+            'camera-modal'
+        );
+
+    modal.style.display =
+        'none';
+
+    if (streamDeVideo) {
+
+        streamDeVideo
+            .getTracks()
+            .forEach(
+                track =>
+                    track.stop()
+            );
+
+        streamDeVideo = null;
+    }
+
+    if (
+        mediaRecorder &&
+        mediaRecorder.state === 'recording'
+    ) {
+
+        mediaRecorder.stop();
+
+    }
+
+}
+
+
+/* =========================================================
+   FOTO
+   ========================================================= */
+
+function capturarFoto() {
+
+    const video =
+        document.getElementById(
+            'video-preview'
+        );
+
+    const canvas =
+        document.getElementById(
+            'canvas'
+        );
+
+    const context =
+        canvas.getContext(
+            '2d'
+        );
+
+    canvas.width =
+        video.videoWidth || 1280;
+
+    canvas.height =
+        video.videoHeight || 720;
+
+    context.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const fotoBase64 =
+        canvas.toDataURL(
+            'image/jpeg',
+            0.6
+        );
+
+    document
+        .getElementById(
+            'foto_base64'
+        )
+        .value =
+        fotoBase64;
+
+    document
+        .getElementById(
+            'video_base64'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'photo-preview'
+        )
+        .src =
+        fotoBase64;
+
+    document
+        .getElementById(
+            'photo-preview'
+        )
+        .style.display =
+        'block';
+
+    fecharCamera();
+
+}
+
+
+/* =========================================================
+   VÍDEO
+   ========================================================= */
+
+function iniciarGravacaoVideo() {
+
+    pedacosGravados = [];
+
+    try {
+
+        mediaRecorder =
+            new MediaRecorder(
+                streamDeVideo,
+                {
+                    mimeType:
+                        'video/webm'
+                }
+            );
+
+    } catch (e) {
+
+        try {
+
+            mediaRecorder =
+                new MediaRecorder(
+                    streamDeVideo
+                );
+
+        } catch (err) {
+
+            alert(
+                "SEU NAVEGADOR NÃO SUPORTA GRAVAÇÃO."
+            );
+
+            return;
+
         }
 
-        function exportarJSON(nomeBase) {
-            let nomeArquivo = nomeBase + '.json';
-            const blob = new Blob([JSON.stringify(registros, null, 2)], { type: "application/json" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = nomeArquivo;
-            link.click();
-            fecharModalExportarJSON();
+    }
+
+    mediaRecorder.ondataavailable =
+        e => {
+
+            if (
+                e.data.size > 0
+            ) {
+
+                pedacosGravados.push(
+                    e.data
+                );
+
+            }
+
+        };
+
+    mediaRecorder.onstop =
+        () => {
+
+            const blob =
+                new Blob(
+                    pedacosGravados,
+                    {
+                        type:
+                            'video/webm'
+                    }
+                );
+
+            const reader =
+                new FileReader();
+
+            reader.readAsDataURL(
+                blob
+            );
+
+            reader.onloadend =
+                () => {
+
+                    document
+                        .getElementById(
+                            'video_base64'
+                        )
+                        .value =
+                        reader.result;
+
+                    document
+                        .getElementById(
+                            'photo-preview'
+                        )
+                        .src =
+                        document
+                            .getElementById(
+                                'foto_base64'
+                            )
+                            .value;
+
+                    document
+                        .getElementById(
+                            'photo-preview'
+                        )
+                        .style.display =
+                        'block';
+
+                };
+
+        };
+
+    mediaRecorder.start();
+
+    document
+        .getElementById(
+            'btn-tirar-foto'
+        )
+        .style.display =
+        'none';
+
+    document
+        .getElementById(
+            'btn-iniciar-gravacao'
+        )
+        .style.display =
+        'none';
+
+    document
+        .getElementById(
+            'btn-parar-gravacao'
+        )
+        .style.display =
+        'block';
+
+    document
+        .getElementById(
+            'status-gravacao'
+        )
+        .innerText =
+        '🔴 GRAVANDO VÍDEO (MÁX 5S)...';
+
+    document
+        .getElementById(
+            'status-gravacao'
+        )
+        .style.display =
+        'block';
+
+    setTimeout(
+        () => {
+
+            if (
+                mediaRecorder &&
+                mediaRecorder.state ===
+                'recording'
+            ) {
+
+                pararGravacaoVideo();
+
+            }
+
+        },
+        5000
+    );
+
+}
+
+
+function pararGravacaoVideo() {
+
+    if (
+        mediaRecorder &&
+        mediaRecorder.state ===
+        'recording'
+    ) {
+
+        try {
+
+            const video =
+                document.getElementById(
+                    'video-preview'
+                );
+
+            const canvas =
+                document.getElementById(
+                    'canvas'
+                );
+
+            const context =
+                canvas.getContext(
+                    '2d'
+                );
+
+            canvas.width =
+                video.videoWidth || 1280;
+
+            canvas.height =
+                video.videoHeight || 720;
+
+            context.drawImage(
+                video,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            document
+                .getElementById(
+                    'foto_base64'
+                )
+                .value =
+                canvas.toDataURL(
+                    'image/jpeg',
+                    0.5
+                );
+
+        } catch (e) {}
+
+        mediaRecorder.stop();
+
+    }
+
+    fecharCamera();
+
+}
+
+
+/* =========================================================
+   GALERIA
+   ========================================================= */
+
+function acionarGaleria() {
+
+    fecharModalMidia();
+
+    document
+        .getElementById(
+            'input-galeria'
+        )
+        .click();
+
+}
+
+
+function processarMidiaGaleria(
+    event
+) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const reader =
+        new FileReader();
+
+    reader.onload =
+        function(e) {
+
+            const result =
+                e.target.result;
+
+            if (
+                file.type.startsWith(
+                    'image/'
+                )
+            ) {
+
+                document
+                    .getElementById(
+                        'foto_base64'
+                    )
+                    .value =
+                    result;
+
+                document
+                    .getElementById(
+                        'video_base64'
+                    )
+                    .value = '';
+
+                document
+                    .getElementById(
+                        'photo-preview'
+                    )
+                    .src =
+                    result;
+
+                document
+                    .getElementById(
+                        'photo-preview'
+                    )
+                    .style.display =
+                    'block';
+
+            } else if (
+                file.type.startsWith(
+                    'video/'
+                )
+            ) {
+
+                document
+                    .getElementById(
+                        'video_base64'
+                    )
+                    .value =
+                    result;
+
+                extrairFrameVideo(
+                    result
+                );
+
+            }
+
+        };
+
+    reader.readAsDataURL(
+        file
+    );
+
+    event.target.value = '';
+
+}
+
+
+/* =========================================================
+   FRAME DO VÍDEO
+   ========================================================= */
+
+function extrairFrameVideo(
+    videoDataUrl
+) {
+
+    const video =
+        document.createElement(
+            'video'
+        );
+
+    video.src =
+        videoDataUrl;
+
+    video.muted =
+        true;
+
+    video.playsInline =
+        true;
+
+    video.onloadeddata =
+        () => {
+
+            video.currentTime =
+                1;
+
+        };
+
+    video.onseeked =
+        () => {
+
+            const canvas =
+                document.createElement(
+                    'canvas'
+                );
+
+            canvas.width =
+                video.videoWidth || 640;
+
+            canvas.height =
+                video.videoHeight || 480;
+
+            const ctx =
+                canvas.getContext(
+                    '2d'
+                );
+
+            ctx.drawImage(
+                video,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            const frameBase64 =
+                canvas.toDataURL(
+                    'image/jpeg',
+                    0.6
+                );
+
+            document
+                .getElementById(
+                    'foto_base64'
+                )
+                .value =
+                frameBase64;
+
+            document
+                .getElementById(
+                    'photo-preview'
+                )
+                .src =
+                frameBase64;
+
+            document
+                .getElementById(
+                    'photo-preview'
+                )
+                .style.display =
+                'block';
+
+        };
+
+    video.onerror =
+        () => {
+
+            let thumb =
+                'data:image/svg+xml;base64,' +
+                'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+
+            document
+                .getElementById(
+                    'foto_base64'
+                )
+                .value =
+                thumb;
+
+            document
+                .getElementById(
+                    'photo-preview'
+                )
+                .src =
+                thumb;
+
+            document
+                .getElementById(
+                    'photo-preview'
+                )
+                .style.display =
+                'block';
+
+        };
+
+}
+
+
+/* =========================================================
+   VISUALIZADOR
+   ========================================================= */
+
+function abrirViewerMidia(
+    index
+) {
+
+    const reg =
+        registros[index];
+
+    const modal =
+        document.getElementById(
+            'media-viewer-modal'
+        );
+
+    const img =
+        document.getElementById(
+            'viewer-img'
+        );
+
+    const video =
+        document.getElementById(
+            'viewer-video'
+        );
+
+    if (reg.video) {
+
+        video.src =
+            reg.video;
+
+        video.style.display =
+            'inline-block';
+
+        img.style.display =
+            'none';
+
+        img.src = '';
+
+        setTimeout(
+            () =>
+                video.play(),
+            200
+        );
+
+    } else if (reg.foto) {
+
+        img.src =
+            reg.foto;
+
+        img.style.display =
+            'inline-block';
+
+        video.style.display =
+            'none';
+
+        video.src = '';
+
+    }
+
+    modal.style.display =
+        'block';
+
+}
+
+
+function fecharViewerMidia() {
+
+    document
+        .getElementById(
+            'media-viewer-modal'
+        )
+        .style.display =
+        'none';
+
+    document
+        .getElementById(
+            'viewer-video'
+        )
+        .pause();
+
+    document
+        .getElementById(
+            'viewer-video'
+        )
+        .src = '';
+
+}
+
+
+/* =========================================================
+   AÇÕES
+   ========================================================= */
+
+function resetarBotoesAcao() {
+
+    let radios =
+        document.getElementsByName(
+            'acao'
+        );
+
+    for (
+        let i = 0;
+        i < radios.length;
+        i++
+    ) {
+
+        radios[i].checked =
+            false;
+
+    }
+
+}
+
+
+/* =========================================================
+   SALVAR REGISTRO
+   ========================================================= */
+
+async function salvarRegistro() {
+
+    let auditorVal =
+        document
+            .getElementById(
+                'auditor'
+            )
+            .value
+            .trim();
+
+    if (!auditorVal) {
+
+        alert(
+            "PREENCHA O NOME DO AUDITOR!"
+        );
+
+        return;
+
+    }
+
+    let areaVal =
+        document
+            .getElementById(
+                'area'
+            )
+            .value;
+
+    if (
+        areaVal === 'OUTROS'
+    ) {
+
+        areaVal =
+            document
+                .getElementById(
+                    'area_outros'
+                )
+                .value;
+
+    }
+
+    let ocorrenciaVal =
+        document
+            .getElementById(
+                'ocorrencia'
+            )
+            .value;
+
+    if (
+        ocorrenciaVal === 'OUTROS'
+    ) {
+
+        ocorrenciaVal =
+            document
+                .getElementById(
+                    'ocorrencia_outros'
+                )
+                .value;
+
+    }
+
+    if (
+        !areaVal ||
+        !ocorrenciaVal
+    ) {
+
+        alert(
+            "SELECIONE ÁREA E OCORRÊNCIA!"
+        );
+
+        return;
+
+    }
+
+    let localVal =
+        document
+            .getElementById(
+                'local'
+            )
+            .value
+            .trim();
+
+    if (!localVal) {
+
+        alert(
+            "PREENCHA O LOCAL ESPECÍFICO (EX: F40)!"
+        );
+
+        return;
+
+    }
+
+    let acaoSelecionada =
+        document.querySelector(
+            'input[name="acao"]:checked'
+        );
+
+    if (!acaoSelecionada) {
+
+        alert(
+            "VOCÊ PRECISA INFORMAR A AÇÃO TOMADA!"
+        );
+
+        return;
+
+    }
+
+    let auditorUpper =
+        auditorVal.toUpperCase();
+
+    let areaUpper =
+        areaVal.toUpperCase();
+
+    let localUpper =
+        localVal.toUpperCase();
+
+    let ocorrenciaUpper =
+        ocorrenciaVal.toUpperCase();
+
+    let descUpper =
+        document
+            .getElementById(
+                'descricao'
+            )
+            .value
+            .toUpperCase();
+
+    let acaoUpper =
+        acaoSelecionada.value
+            .toUpperCase();
+
+    let agora =
+        new Date();
+
+    let dataRegistro =
+        agora.toLocaleDateString(
+            'pt-BR'
+        );
+
+    let horaRegistro =
+        agora.toLocaleTimeString(
+            'pt-BR'
+        );
+
+    let ehEdicao =
+        indiceEdicao !== null;
+
+    let duplicado = false;
+
+    for (
+        let i = 0;
+        i < registros.length;
+        i++
+    ) {
+
+        if (
+            ehEdicao &&
+            i === indiceEdicao
+        ) {
+            continue;
         }
 
-        function copiarJSON() {
-            if (registros.length === 0) { alert("Nenhum dado para copiar."); return; }
-            const jsonString = JSON.stringify(registros, null, 2);
-            navigator.clipboard.writeText(jsonString).then(() => {
-                alert("✅ DADOS COPIADOS COM SUCESSO!\n\nAGORA É SÓ DAR CTRL+V (COLAR) ONDE DESEJAR.");
-            }).catch(err => {
-                alert("ERRO AO COPIAR. SEU NAVEGADOR PODE ESTAR BLOQUEANDO. ERRO: " + err);
-            });
-            fecharModalExportarJSON();
+        let r =
+            registros[i];
+
+        if (
+            r.area === areaUpper &&
+            r.local === localUpper &&
+            r.ocorrencia === ocorrenciaUpper
+        ) {
+
+            duplicado = true;
+
+            break;
+
         }
 
-        function acionarImportarJSON() { 
-            fecharModalImportar();
-            document.getElementById('input-json').click(); 
+    }
+
+    if (duplicado) {
+
+        let confirma =
+            confirm(
+                "VOCÊ JÁ EFETUOU ESSE REGISTRO.\n" +
+                "DESEJA ADICIONAR NOVAMENTE?"
+            );
+
+        if (!confirma) {
+            return;
         }
 
-        async function importarJSON(e) {
-            const files = e.target.files;
-            if (!files || files.length === 0) return;
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
+    }
+
+    if (ehEdicao) {
+
+        dataRegistro =
+            registros[indiceEdicao].data ||
+            dataRegistro;
+
+        horaRegistro =
+            registros[indiceEdicao].hora ||
+            horaRegistro;
+
+    }
+
+    const novoReg = {
+
+        data:
+            dataRegistro,
+
+        hora:
+            horaRegistro,
+
+        auditor:
+            auditorUpper,
+
+        area:
+            areaUpper,
+
+        local:
+            localUpper,
+
+        ocorrencia:
+            ocorrenciaUpper,
+
+        descricao:
+            descUpper,
+
+        acao:
+            acaoUpper,
+
+        foto:
+            document
+                .getElementById(
+                    'foto_base64'
+                )
+                .value,
+
+        video:
+            document
+                .getElementById(
+                    'video_base64'
+                )
+                .value
+
+    };
+
+    if (ehEdicao) {
+
+        registros[indiceEdicao] =
+            novoReg;
+
+        cancelarEdicao();
+
+    } else {
+
+        registros.push(
+            novoReg
+        );
+
+    }
+
+    document
+        .getElementById(
+            'local'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'ocorrencia'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'ocorrencia_outros'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'area_outros'
+        )
+        .value = '';
+
+    limparCampoDescricao();
+
+    resetarBotoesAcao();
+
+    document
+        .getElementById(
+            'foto_base64'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'video_base64'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'photo-preview'
+        )
+        .style.display =
+        'none';
+
+    await localforage.setItem(
+        'registros_caca_desperdicios',
+        registros
+    );
+
+    atualizarLista();
+
+    if (!ehEdicao) {
+
+        document
+            .querySelector(
+                '.center-section'
+            )
+            .scrollTop =
+            document
+                .querySelector(
+                    '.center-section'
+                )
+                .scrollHeight;
+
+    }
+
+}
+
+
+/* =========================================================
+   EDITAR
+   ========================================================= */
+
+function editarRegistro(
+    index
+) {
+
+    const reg =
+        registros[index];
+
+    indiceEdicao =
+        index;
+
+    let selectArea =
+        document.getElementById(
+            'area'
+        );
+
+    let existeArea =
+        Array.from(
+            selectArea.options
+        ).some(
+            o =>
+                o.value.toUpperCase() ===
+                reg.area.toUpperCase()
+        );
+
+    if (existeArea) {
+
+        Array.from(
+            selectArea.options
+        ).forEach(
+            o => {
+
+                if (
+                    o.value.toUpperCase() ===
+                    reg.area.toUpperCase()
+                ) {
+
+                    selectArea.value =
+                        o.value;
+
+                }
+
+            }
+        );
+
+        document
+            .getElementById(
+                'area_outros'
+            )
+            .style.display =
+            'none';
+
+    } else {
+
+        selectArea.value =
+            'OUTROS';
+
+        document
+            .getElementById(
+                'area_outros'
+            )
+            .value =
+            reg.area;
+
+        document
+            .getElementById(
+                'area_outros'
+            )
+            .style.display =
+            'block';
+
+    }
+
+    document
+        .getElementById(
+            'local'
+        )
+        .value =
+        reg.local;
+
+    let selectOcorrencia =
+        document.getElementById(
+            'ocorrencia'
+        );
+
+    let existeOcorrencia =
+        Array.from(
+            selectOcorrencia.options
+        ).some(
+            o =>
+                o.value.toUpperCase() ===
+                reg.ocorrencia.toUpperCase()
+        );
+
+    if (existeOcorrencia) {
+
+        Array.from(
+            selectOcorrencia.options
+        ).forEach(
+            o => {
+
+                if (
+                    o.value.toUpperCase() ===
+                    reg.ocorrencia.toUpperCase()
+                ) {
+
+                    selectOcorrencia.value =
+                        o.value;
+
+                }
+
+            }
+        );
+
+        document
+            .getElementById(
+                'ocorrencia_outros'
+            )
+            .style.display =
+            'none';
+
+    } else {
+
+        selectOcorrencia.value =
+            'OUTROS';
+
+        document
+            .getElementById(
+                'ocorrencia_outros'
+            )
+            .value =
+            reg.ocorrencia;
+
+        document
+            .getElementById(
+                'ocorrencia_outros'
+            )
+            .style.display =
+            'block';
+
+    }
+
+    preencherCampoDescricao(
+        reg.descricao
+    );
+
+    let radios =
+        document.getElementsByName(
+            'acao'
+        );
+
+    for (
+        let r of radios
+    ) {
+
+        r.checked =
+            r.value.toUpperCase() ===
+            (reg.acao || '')
+                .toUpperCase();
+
+    }
+
+    document
+        .getElementById(
+            'foto_base64'
+        )
+        .value =
+        reg.foto || '';
+
+    document
+        .getElementById(
+            'video_base64'
+        )
+        .value =
+        reg.video || '';
+
+    const previewFoto =
+        document.getElementById(
+            'photo-preview'
+        );
+
+    if (reg.foto) {
+
+        previewFoto.src =
+            reg.foto;
+
+        previewFoto.style.display =
+            'block';
+
+    } else {
+
+        previewFoto.style.display =
+            'none';
+
+    }
+
+    const btnSalvar =
+        document.getElementById(
+            'btn-salvar'
+        );
+
+    btnSalvar.innerText =
+        "💾 ATUALIZAR";
+
+    document
+        .getElementById(
+            'btn-cancelar-edicao'
+        )
+        .style.display =
+        'block';
+
+    document
+        .querySelector(
+            '.center-section'
+        )
+        .style.display =
+        'none';
+
+    document
+        .querySelector(
+            '.bottom-section'
+        )
+        .style.display =
+        'none';
+
+}
+
+
+/* =========================================================
+   CANCELAR EDIÇÃO
+   ========================================================= */
+
+function cancelarEdicao() {
+
+    indiceEdicao =
+        null;
+
+    document
+        .getElementById(
+            'local'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'ocorrencia'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'ocorrencia_outros'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'area_outros'
+        )
+        .value = '';
+
+    limparCampoDescricao();
+
+    resetarBotoesAcao();
+
+    document
+        .getElementById(
+            'foto_base64'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'video_base64'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'photo-preview'
+        )
+        .style.display =
+        'none';
+
+    const btnSalvar =
+        document.getElementById(
+            'btn-salvar'
+        );
+
+    btnSalvar.innerText =
+        "➕ ADICIONAR";
+
+    document
+        .getElementById(
+            'btn-cancelar-edicao'
+        )
+        .style.display =
+        'none';
+
+    document
+        .querySelector(
+            '.center-section'
+        )
+        .style.display =
+        '';
+
+    document
+        .querySelector(
+            '.bottom-section'
+        )
+        .style.display =
+        '';
+
+}
+
+
+/* =========================================================
+   EXCLUIR
+   ========================================================= */
+
+async function excluirRegistro(
+    index
+) {
+
+    if (
+        confirm(
+            "EXCLUIR ITEM?"
+        )
+    ) {
+
+        registros.splice(
+            index,
+            1
+        );
+
+        await localforage.setItem(
+            'registros_caca_desperdicios',
+            registros
+        );
+
+        atualizarLista();
+
+    }
+
+}
+
+
+async function limparTudo() {
+
+    if (
+        confirm(
+            "APAGAR TUDO?"
+        )
+    ) {
+
+        registros = [];
+
+        await localforage.setItem(
+            'registros_caca_desperdicios',
+            registros
+        );
+
+        cancelarEdicao();
+
+        atualizarLista();
+
+    }
+
+}
+
+
+/* =========================================================
+   LISTA
+   ========================================================= */
+
+function atualizarLista() {
+
+    const lista =
+        document.getElementById(
+            'lista-registros'
+        );
+
+    document
+        .getElementById(
+            'contador'
+        )
+        .innerText =
+        registros.length;
+
+    lista.innerHTML = '';
+
+    registros.forEach(
+        (reg, index) => {
+
+            const item =
+                document.createElement(
+                    'div'
+                );
+
+            item.className =
+                'registro-item';
+
+            let numFormat =
+                index + 1;
+
+            let htmlMidiaIcon =
+                '';
+
+            if (reg.video) {
+
+                let thumb =
+                    reg.foto ||
+                    'data:image/svg+xml;base64,' +
+                    'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+
+                htmlMidiaIcon = `
+
+                    <div
+                        class="video-thumbnail-container"
+                        onclick="abrirViewerMidia(${index})"
+                        title="VER VÍDEO"
+                    >
+
+                        <img src="${thumb}">
+
+                        <div class="play-icon">
+                            ▶
+                        </div>
+
+                    </div>
+
+                `;
+
+            } else if (reg.foto) {
+
+                htmlMidiaIcon = `
+
+                    <img
+                        src="${reg.foto}"
+                        class="registro-miniatura"
+                        onclick="abrirViewerMidia(${index})"
+                        title="VER FOTO"
+                    >
+
+                `;
+
+            }
+
+            item.innerHTML = `
+
+                <div class="registro-conteudo">
+
+                    <div class="registro-texto">
+
+                        <strong>
+                            ${numFormat}. ${reg.area}
+                        </strong>
+
+                        ${
+                            reg.local
+                                ? '- ' + reg.local
+                                : ''
+                        }
+
+                        <br>
+
+                        <span
+                            style="
+                                color:var(--primary);
+                                font-size:13px;
+                                font-weight:bold;
+                            "
+                        >
+                            ${reg.ocorrencia || ''}
+                        </span>
+
+                        <br>
+
+                        <span
+                            style="
+                                color:#28a745;
+                                font-size:11px;
+                                font-weight:bold;
+                            "
+                        >
+                            AÇÃO:
+                            ${
+                                reg.acao ||
+                                'NÃO INFORMADA'
+                            }
+                        </span>
+
+                    </div>
+
+                    ${htmlMidiaIcon}
+
+                </div>
+
+                <div class="acoes-item">
+
+                    <button
+                        class="btn-warning"
+                        onclick="editarRegistro(${index})"
+                    >
+                        ✏️ EDITAR
+                    </button>
+
+                    <button
+                        class="btn-danger"
+                        onclick="excluirRegistro(${index})"
+                    >
+                        🗑 EXCLUIR
+                    </button>
+
+                </div>
+
+            `;
+
+            lista.appendChild(
+                item
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   NOME DO ARQUIVO
+   ========================================================= */
+
+function solicitarNomeArquivo(
+    extensao
+) {
+
+    let auditorSalvo =
+        localStorage.getItem(
+            'auditor_nome'
+        ) || "";
+
+    let nome = "";
+
+    while (
+        !nome ||
+        nome.trim() === ""
+    ) {
+
+        nome =
+            prompt(
+                `CONFIRME O NOME PARA EXPORTAR O ARQUIVO ${extensao}:`,
+                auditorSalvo
+            );
+
+        if (nome === null) {
+            return null;
+        }
+
+        if (
+            nome.trim() === ""
+        ) {
+
+            alert(
+                "⚠️ VOCÊ PRECISA DIGITAR UM NOME PARA CONTINUAR!"
+            );
+
+        }
+
+    }
+
+    nome =
+        nome.toUpperCase();
+
+    const data =
+        new Date();
+
+    const dd =
+        String(
+            data.getDate()
+        ).padStart(
+            2,
+            '0'
+        );
+
+    const mm =
+        String(
+            data.getMonth() + 1
+        ).padStart(
+            2,
+            '0'
+        );
+
+    const aa =
+        String(
+            data.getFullYear()
+        ).slice(-2);
+
+    const hh =
+        String(
+            data.getHours()
+        ).padStart(
+            2,
+            '0'
+        );
+
+    const min =
+        String(
+            data.getMinutes()
+        ).padStart(
+            2,
+            '0'
+        );
+
+    return (
+        `${nome.trim()}_${dd}${mm}${aa}_${hh}${min}`
+    );
+
+}
+
+
+/* =========================================================
+   EXPORTAÇÃO
+   ========================================================= */
+
+function acionarExportar(
+    tipo
+) {
+
+    if (
+        registros.length === 0
+    ) {
+
+        alert(
+            "NENHUM DADO PARA EXPORTAR."
+        );
+
+        return;
+
+    }
+
+    const nomeBase =
+        solicitarNomeArquivo(
+            tipo
+        );
+
+    if (!nomeBase) {
+        return;
+    }
+
+    fecharModalExportar();
+
+    if (
+        tipo === 'XLSX'
+    ) {
+
+        exportarXLSX(
+            nomeBase
+        );
+
+    } else if (
+        tipo === 'PPTX'
+    ) {
+
+        exportarPPTX(
+            nomeBase
+        );
+
+    } else if (
+        tipo === 'JSON'
+    ) {
+
+        exportarJSON(
+            nomeBase
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   XLSX
+   ========================================================= */
+
+function exportarXLSX(
+    nomeBase
+) {
+
+    let nomeArquivo =
+        nomeBase + '.xlsx';
+
+    let dadosExcel =
+        registros.map(
+            (r, i) => {
+
+                let tipoMidia =
+                    r.video
+                        ? "VÍDEO"
+                        : (
+                            r.foto
+                                ? "FOTO"
+                                : "NÃO TEM"
+                        );
+
+                return {
+
+                    "ITEM":
+                        i + 1,
+
+                    "DATA":
+                        r.data || "",
+
+                    "HORA":
+                        r.hora || "",
+
+                    "AUDITOR":
+                        r.auditor || "",
+
+                    "ÁREA":
+                        r.area || "",
+
+                    "LOCAL":
+                        r.local || "",
+
+                    "OCORRÊNCIA":
+                        r.ocorrencia || "",
+
+                    "DESCRIÇÃO":
+                        (
+                            r.descricao || ""
+                        ).replace(
+                            /(\r\n|\n|\r)/gm,
+                            " "
+                        ),
+
+                    "AÇÃO TOMADA":
+                        r.acao || "",
+
+                    "MÍDIA":
+                        tipoMidia
+
+                };
+
+            }
+        );
+
+    const worksheet =
+        XLSX.utils.json_to_sheet(
+            dadosExcel
+        );
+
+    const workbook =
+        XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Auditoria"
+    );
+
+    XLSX.writeFile(
+        workbook,
+        nomeArquivo
+    );
+
+}
+
+
+/* =========================================================
+   POWERPOINT
+   ========================================================= */
+
+function exportarPPTX(
+    nomeBase
+) {
+
+    let nomeArquivo =
+        nomeBase + '.pptx';
+
+    let pptx =
+        new PptxGenJS();
+
+    function getISOWeek(d) {
+
+        let t =
+            new Date(d);
+
+        t.setHours(
+            0,
+            0,
+            0,
+            0
+        );
+
+        t.setDate(
+            t.getDate() +
+            4 -
+            (
+                t.getDay() || 7
+            )
+        );
+
+        return Math.ceil(
+            (
+                (
+                    t -
+                    new Date(
+                        t.getFullYear(),
+                        0,
+                        1
+                    )
+                ) /
+                8.64e7 +
+                1
+            ) /
+            7
+        );
+
+    }
+
+    let kw =
+        getISOWeek(
+            new Date()
+        );
+
+    let slideAtual;
+
+    registros.forEach(
+        (reg, index) => {
+
+            if (
+                index % 4 === 0
+            ) {
+
+                slideAtual =
+                    pptx.addSlide();
+
+                slideAtual.addText(
+                    `RONDA KW ${kw} - DESPERDÍCIOS UTILITIES`,
+                    {
+                        x: 0.3,
+                        y: 0.2,
+                        w: 9,
+                        h: 0.4,
+                        fontSize: 24,
+                        bold: true
+                    }
+                );
+
+            }
+
+            let yBase =
+                1.05 +
+                (
+                    index % 4
+                ) *
+                1.12;
+
+            let textX =
+                0.3;
+
+            let textW =
+                7.0;
+
+            let areaUpper =
+                reg.area || "";
+
+            let localUpper =
+                reg.local || "";
+
+            let ocorrenciaUpper =
+                reg.ocorrencia ||
+                "NÃO CLASSIFICADA";
+
+            let descUpper =
+                reg.descricao || "";
+
+            let acaoUpper =
+                reg.acao ||
+                "NÃO INFORMADA";
+
+            let auditorUpper =
+                reg.auditor ||
+                "DESCONHECIDO";
+
+            let titulo =
+                localUpper
+                    ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}`
+                    : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
+
+            let displayDataHora =
+                reg.data || '';
+
+            if (
+                reg.hora &&
+                !displayDataHora.includes(
+                    reg.hora
+                )
+            ) {
+
+                displayDataHora +=
+                    ` ÀS ${reg.hora}`;
+
+            }
+
+            slideAtual.addText(
+                titulo,
+                {
+                    x: textX,
+                    y: yBase,
+                    w: textW,
+                    h: 0.25,
+                    fontSize: 14,
+                    bold: true
+                }
+            );
+
+            slideAtual.addText(
+                "OCORRÊNCIA: " +
+                ocorrenciaUpper,
+                {
+                    x: textX,
+                    y: yBase + 0.22,
+                    w: textW,
+                    h: 0.2,
+                    fontSize: 12,
+                    bold: true,
+                    color: '0056b3'
+                }
+            );
+
+            if (descUpper) {
+
+                slideAtual.addText(
+                    "DETALHE: " +
+                    descUpper,
+                    {
+                        x: textX,
+                        y: yBase + 0.40,
+                        w: textW,
+                        h: 0.2,
+                        fontSize: 11,
+                        color: '666666'
+                    }
+                );
+
+            }
+
+            slideAtual.addText(
+                "AÇÃO: " +
+                acaoUpper,
+                {
+                    x: textX,
+                    y: yBase + 0.58,
+                    w: textW,
+                    h: 0.2,
+                    fontSize: 11,
+                    bold: true,
+                    color: '28a745'
+                }
+            );
+
+            slideAtual.addText(
+                "REGISTRADO POR " +
+                auditorUpper +
+                " EM: " +
+                displayDataHora,
+                {
+                    x: textX,
+                    y: yBase + 0.76,
+                    w: textW,
+                    h: 0.2,
+                    fontSize: 9,
+                    italic: true
+                }
+            );
+
+            if (reg.video) {
+
+                let mediaOpts = {
+
+                    type: 'video',
+
+                    data:
+                        reg.video,
+
+                    x: 7.5,
+
+                    y: yBase,
+
+                    w: 1.8,
+
+                    h: 0.85
+
+                };
+
+                if (reg.foto) {
+                    mediaOpts.cover =
+                        reg.foto;
+                }
+
+                try {
+
+                    slideAtual.addMedia(
+                        mediaOpts
+                    );
+
+                } catch(e) {
+
+                    if (reg.foto) {
+
+                        slideAtual.addImage({
+
+                            data:
+                                reg.foto,
+
+                            x: 7.5,
+
+                            y: yBase,
+
+                            w: 1.8,
+
+                            h: 0.85,
+
+                            sizing: {
+                                type:
+                                    'contain'
+                            }
+
+                        });
+
+                    }
+
+                }
+
+                slideAtual.addText(
+                    "▶ VÍDEO ANEXADO",
+                    {
+                        x: 7.5,
+                        y:
+                            yBase +
+                            0.85,
+                        w: 1.8,
+                        h: 0.15,
+                        fontSize: 9,
+                        bold: true,
+                        color: 'dc3545',
+                        align: 'center'
+                    }
+                );
+
+            } else if (reg.foto) {
+
+                slideAtual.addImage({
+
+                    data:
+                        reg.foto,
+
+                    x: 7.5,
+
+                    y: yBase,
+
+                    w: 1.8,
+
+                    h: 1.0,
+
+                    sizing: {
+                        type:
+                            'contain'
+                    }
+
+                });
+
+            }
+
+            if (
+                index % 4 < 3
+            ) {
+
+                slideAtual.addShape(
+                    pptx.ShapeType.line,
+                    {
+                        x: 0.3,
+                        y:
+                            yBase +
+                            1.05,
+                        w: 9,
+                        h: 0,
+                        line: {
+                            color:
+                                'E0E0E0',
+                            width:
+                                1
+                        }
+                    }
+                );
+
+            }
+
+        }
+    );
+
+    pptx.writeFile({
+        fileName:
+            nomeArquivo
+    });
+
+}
+
+
+/* =========================================================
+   JSON
+   ========================================================= */
+
+function exportarJSON(
+    nomeBase
+) {
+
+    let nomeArquivo =
+        nomeBase + '.json';
+
+    const blob =
+        new Blob(
+            [
+                JSON.stringify(
+                    registros,
+                    null,
+                    2
+                )
+            ],
+            {
+                type:
+                    "application/json"
+            }
+        );
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+    link.href =
+        URL.createObjectURL(
+            blob
+        );
+
+    link.download =
+        nomeArquivo;
+
+    link.click();
+
+}
+
+
+/* =========================================================
+   COPIAR JSON
+   ========================================================= */
+
+function copiarJSON() {
+
+    if (
+        registros.length === 0
+    ) {
+
+        alert(
+            "NENHUM DADO PARA COPIAR."
+        );
+
+        return;
+
+    }
+
+    const jsonString =
+        JSON.stringify(
+            registros,
+            null,
+            2
+        );
+
+    navigator.clipboard
+        .writeText(
+            jsonString
+        )
+        .then(
+            () => {
+
+                alert(
+                    "✅ DADOS COPIADOS COM SUCESSO!\n\n" +
+                    "AGORA É SÓ DAR CTRL+V (COLAR) ONDE DESEJAR."
+                );
+
+            }
+        )
+        .catch(
+            err => {
+
+                alert(
+                    "ERRO AO COPIAR. SEU NAVEGADOR PODE ESTAR BLOQUEANDO.\n" +
+                    "ERRO: " +
+                    err
+                );
+
+            }
+        );
+
+    fecharModalExportar();
+
+}
+
+
+/* =========================================================
+   IMPORTAR JSON
+   ========================================================= */
+
+function acionarImportarJSON() {
+
+    fecharModalImportar();
+
+    document
+        .getElementById(
+            'input-json'
+        )
+        .click();
+
+}
+
+
+async function importarJSON(e) {
+
+    const files =
+        e.target.files;
+
+    if (
+        !files ||
+        files.length === 0
+    ) {
+        return;
+    }
+
+    for (
+        let i = 0;
+        i < files.length;
+        i++
+    ) {
+
+        const file =
+            files[i];
+
+        await new Promise(
+            (resolve) => {
+
+                const reader =
+                    new FileReader();
+
+                reader.onload =
+                    function(event) {
+
                         try {
-                            const dados = JSON.parse(event.target.result);
-                            if (Array.isArray(dados)) registros = registros.concat(dados);
-                        } catch (err) { alert("ERRO ARQUIVO: " + file.name); }
+
+                            const dados =
+                                JSON.parse(
+                                    event.target.result
+                                );
+
+                            if (
+                                Array.isArray(
+                                    dados
+                                )
+                            ) {
+
+                                const dadosFormatados =
+                                    dados.map(
+                                        reg => ({
+
+                                            ...reg,
+
+                                            auditor:
+                                                (
+                                                    reg.auditor ||
+                                                    ""
+                                                ).toUpperCase(),
+
+                                            area:
+                                                (
+                                                    reg.area ||
+                                                    ""
+                                                ).toUpperCase(),
+
+                                            local:
+                                                (
+                                                    reg.local ||
+                                                    ""
+                                                ).toUpperCase(),
+
+                                            ocorrencia:
+                                                (
+                                                    reg.ocorrencia ||
+                                                    ""
+                                                ).toUpperCase(),
+
+                                            descricao:
+                                                (
+                                                    reg.descricao ||
+                                                    ""
+                                                ).toUpperCase(),
+
+                                            acao:
+                                                (
+                                                    reg.acao ||
+                                                    ""
+                                                ).toUpperCase()
+
+                                        })
+                                    );
+
+                                registros =
+                                    registros.concat(
+                                        dadosFormatados
+                                    );
+
+                            }
+
+                        } catch (err) {
+
+                            alert(
+                                "ERRO NO ARQUIVO: " +
+                                file.name
+                            );
+
+                        }
+
                         resolve();
+
                     };
-                    reader.readAsText(file);
-                });
+
+                reader.readAsText(
+                    file
+                );
+
             }
-            await localforage.setItem('registros_caca_desperdicios', registros);
+        );
+
+    }
+
+    await localforage.setItem(
+        'registros_caca_desperdicios',
+        registros
+    );
+
+    atualizarLista();
+
+    e.target.value = '';
+
+}
+
+
+/* =========================================================
+   COLAR JSON
+   ========================================================= */
+
+async function processarColarJSON() {
+
+    const texto =
+        document
+            .getElementById(
+                'texto-colar'
+            )
+            .value;
+
+    if (
+        !texto ||
+        texto.trim() === ''
+    ) {
+
+        alert(
+            "COLE O TEXTO ANTES DE IMPORTAR."
+        );
+
+        return;
+
+    }
+
+    try {
+
+        const dadosImportados =
+            JSON.parse(
+                texto
+            );
+
+        if (
+            Array.isArray(
+                dadosImportados
+            )
+        ) {
+
+            const dadosFormatados =
+                dadosImportados.map(
+                    reg => ({
+
+                        ...reg,
+
+                        auditor:
+                            (
+                                reg.auditor ||
+                                ""
+                            ).toUpperCase(),
+
+                        area:
+                            (
+                                reg.area ||
+                                ""
+                            ).toUpperCase(),
+
+                        local:
+                            (
+                                reg.local ||
+                                ""
+                            ).toUpperCase(),
+
+                        ocorrencia:
+                            (
+                                reg.ocorrencia ||
+                                ""
+                            ).toUpperCase(),
+
+                        descricao:
+                            (
+                                reg.descricao ||
+                                ""
+                            ).toUpperCase(),
+
+                        acao:
+                            (
+                                reg.acao ||
+                                ""
+                            ).toUpperCase()
+
+                    })
+                );
+
+            registros =
+                registros.concat(
+                    dadosFormatados
+                );
+
+            await localforage.setItem(
+                'registros_caca_desperdicios',
+                registros
+            );
+
             atualizarLista();
-            e.target.value = ''; 
+
+            alert(
+                `SUCESSO! ${dadosFormatados.length} REGISTROS FORAM IMPORTADOS COM SUCESSO.`
+            );
+
+            fecharModalColar();
+
+        } else {
+
+            alert(
+                "O TEXTO COLADO NÃO POSSUI O FORMATO CORRETO DE LISTA."
+            );
+
         }
 
-        async function processarColarJSON() {
-            const texto = document.getElementById('texto-colar').value;
-            if (!texto || texto.trim() === '') {
-                alert("COLE O TEXTO ANTES DE IMPORTAR.");
-                return;
-            }
-            try {
-                const dadosImportados = JSON.parse(texto);
-                if (Array.isArray(dadosImportados)) {
-                    registros = registros.concat(dadosImportados);
-                    await localforage.setItem('registros_caca_desperdicios', registros);
-                    atualizarLista();
-                    alert(`SUCESSO! ${dadosImportados.length} REGISTROS FORAM IMPORTADOS COM SUCESSO.`);
-                    fecharModalColar();
-                } else {
-                    alert("O TEXTO COLADO NÃO POSSUI O FORMATO CORRETO DE LISTA.");
-                }
-            } catch (erro) {
-                alert("ERRO AO LER O TEXTO. VERIFIQUE SE COPIOU O JSON INTEIRO.\nDETALHE: " + erro);
-            }
+    } catch (erro) {
+
+        alert(
+            "ERRO AO LER O TEXTO. VERIFIQUE SE COPIOU O JSON INTEIRO.\n\n" +
+            "DETALHE: " +
+            erro
+        );
+
+    }
+
+}
+
+</script>
+
+
+<script>
+
+if (
+    'serviceWorker' in navigator
+) {
+
+    window.addEventListener(
+        'load',
+        function() {
+
+            navigator.serviceWorker
+                .register(
+                    './sw.js'
+                )
+                .then(
+                    function(
+                        registration
+                    ) {
+
+                        console.log(
+                            'SERVICEWORKER REGISTRADO COM SUCESSO.'
+                        );
+
+                    },
+                    function(err) {
+
+                        console.log(
+                            'FALHA AO REGISTRAR O SERVICEWORKER: ',
+                            err
+                        );
+
+                    }
+                );
+
         }
-    </script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js').then(function(registration) {
-                    console.log('ServiceWorker registrado com sucesso.');
-                }, function(err) {
-                    console.log('Falha ao registrar o ServiceWorker: ', err);
-                });
-            });
-        }
-    </script>
+    );
+
+}
+
+</script>
+
 </body>
 </html>
