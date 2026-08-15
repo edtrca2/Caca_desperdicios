@@ -277,10 +277,7 @@
             height: 32px;
         }
 
-        /* =========================================================
-           MODAIS
-           ========================================================= */
-
+        /* Modais */
         #camera-modal,
         #qr-camera-modal,
         #media-viewer-modal,
@@ -301,10 +298,7 @@
             padding-top: 20px;
         }
 
-        /* =========================================================
-           NOVO LEITOR QR
-           ========================================================= */
-
+        /* LEITOR QR */
         #qr-camera-modal {
             padding: 0;
             background: #000;
@@ -326,11 +320,7 @@
             padding: 15px;
             box-sizing: border-box;
             z-index: 10;
-            background: linear-gradient(
-                to bottom,
-                rgba(0,0,0,0.75),
-                rgba(0,0,0,0)
-            );
+            background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0));
         }
 
         .qr-camera-titulo {
@@ -359,9 +349,7 @@
             transform: translate(-50%, -50%);
             box-sizing: border-box;
             z-index: 5;
-            box-shadow:
-                0 0 0 9999px rgba(0,0,0,0.25),
-                0 0 20px rgba(0,255,102,0.5);
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), 0 0 20px rgba(0,255,102,0.5);
         }
 
         .qr-moldura::before,
@@ -371,19 +359,8 @@
             background: #00ff66;
         }
 
-        .qr-moldura::before {
-            width: 40%;
-            height: 3px;
-            left: 30%;
-            top: -3px;
-        }
-
-        .qr-moldura::after {
-            width: 3px;
-            height: 40%;
-            left: -3px;
-            top: 30%;
-        }
+        .qr-moldura::before { width: 40%; height: 3px; left: 30%; top: -3px; }
+        .qr-moldura::after { width: 3px; height: 40%; left: -3px; top: 30%; }
 
         .qr-camera-bottom {
             position: absolute;
@@ -393,11 +370,7 @@
             padding: 20px 15px 25px 15px;
             box-sizing: border-box;
             z-index: 10;
-            background: linear-gradient(
-                to top,
-                rgba(0,0,0,0.85),
-                rgba(0,0,0,0)
-            );
+            background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
         }
 
         .qr-camera-bottom button {
@@ -424,11 +397,7 @@
             100% { transform: translateY(-120px); opacity: 0.3; }
         }
 
-        #qr-canvas {
-            display: none;
-        }
-
-        /* ========================================================= */
+        #qr-canvas { display: none; }
 
         #media-viewer-modal .fechar-btn {
             position: absolute;
@@ -478,18 +447,6 @@
             height: 45px;
         }
 
-        #descricao-modal,
-        #colar-modal,
-        #exportar-modal,
-        #importar-modal,
-        #midia-modal {
-            padding-top: 0;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            padding: 15px;
-        }
-
         .modal-box {
             background: white;
             width: 100%;
@@ -530,49 +487,18 @@
 
         <div style="grid-column: span 2;">
             <label>NOME DO AUDITOR:</label>
-            <input
-                type="text"
-                id="auditor"
-                placeholder="QUEM ESTÁ FAZENDO A RONDA?"
-                oninput="this.value = this.value.toUpperCase(); localStorage.setItem('auditor_nome', this.value);"
-            >
+            <input type="text" id="auditor" placeholder="QUEM ESTÁ FAZENDO A RONDA?" oninput="this.value = this.value.toUpperCase(); localStorage.setItem('auditor_nome', this.value);">
         </div>
-
-        <!-- =====================================================
-             QR CODE
-             ===================================================== -->
 
         <div style="grid-column: span 2;">
-
-            <button
-                id="btn-qr"
-                class="btn-purple"
-                onclick="abrirLeitorQR()"
-            >
-                🔳 LER QR CODE DO LOCAL
-            </button>
-
-            <!-- LEITURA DE QR POR IMAGEM -->
-            <input
-                type="file"
-                id="input-qr"
-                accept="image/*"
-                capture="environment"
-                style="display:none;"
-                onchange="processarImagemQR(event)"
-            >
-
+            <button id="btn-qr" class="btn-purple" onclick="abrirLeitorQR()">🔳 LER QR CODE DO LOCAL</button>
+            <input type="file" id="input-qr" accept="image/*" capture="environment" style="display:none;" onchange="processarImagemQR(event)">
         </div>
-
-        <!-- ===================================================== -->
 
         <div>
             <label>ÁREA / SETOR:</label>
-
             <select id="area" onchange="verificarAreaOutros()">
-
                 <option value="" disabled selected>SELECIONE...</option>
-
                 <option value="ARMAÇÃO">ARMAÇÃO</option>
                 <option value="ESTAMPARIA">ESTAMPARIA</option>
                 <option value="MONTAGEM FINAL">MONTAGEM FINAL</option>
@@ -584,154 +510,77 @@
                 <option value="GESTAMP/SM">GESTAMP/SM</option>
                 <option value="VUTEQ">VUTEQ</option>
                 <option value="OUTROS">OUTROS</option>
-
             </select>
-
-            <input
-                type="text"
-                id="area_outros"
-                placeholder="NOME DA ÁREA..."
-                style="display:none; margin-top:5px; border-color:var(--primary);"
-            >
+            <input type="text" id="area_outros" placeholder="NOME DA ÁREA..." style="display:none; margin-top:5px; border-color:var(--primary);">
         </div>
 
         <div>
             <label>LOCAL ESPECÍFICO:</label>
-
-            <input
-                type="text"
-                id="local"
-                placeholder="EX: F40, COLUNA"
-            >
+            <input type="text" id="local" placeholder="EX: F40, COLUNA" oninput="this.value = this.value.toUpperCase();">
         </div>
 
         <div>
             <label>OCORRÊNCIA:</label>
-
             <select id="ocorrencia" onchange="verificarOcorrenciaOutros()">
-
                 <option value="" disabled selected>SELECIONE...</option>
-
                 <option value="VAZAMENTOS DE AR">VAZAMENTOS DE AR</option>
                 <option value="VAZAMENTO DE ÁGUA">VAZAMENTO DE ÁGUA</option>
                 <option value="LUZ ACESA">LUZ ACESA</option>
                 <option value="VENTILADOR LIGADO">VENTILADOR LIGADO</option>
                 <option value="TV LIGADA">TV LIGADA</option>
                 <option value="OUTROS">OUTROS</option>
-
             </select>
-
-            <input
-                type="text"
-                id="ocorrencia_outros"
-                placeholder="ESPECIFIQUE..."
-                style="display:none; margin-top:5px; border-color:var(--primary);"
-            >
+            <input type="text" id="ocorrencia_outros" placeholder="ESPECIFIQUE..." style="display:none; margin-top:5px; border-color:var(--primary);">
         </div>
 
         <div>
             <label>DESCRIÇÃO (Opcional):</label>
-
-            <div
-                id="descricao-display"
-                class="fake-input"
-                onclick="abrirModalDescricao()"
-            >
-                TOQUE PARA DIGITAR...
-            </div>
-
+            <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">TOQUE PARA DIGITAR...</div>
             <input type="hidden" id="descricao">
         </div>
 
         <div style="grid-column: span 2;">
-
             <label>AÇÃO TOMADA:</label>
-
             <div class="radio-group">
+                <input type="radio" id="acao_sem_acao" name="acao" value="SEM AÇÃO">
+                <label for="acao_sem_acao" class="radio-btn">SEM AÇÃO</label>
 
-                <input
-                    type="radio"
-                    id="acao_sem_acao"
-                    name="acao"
-                    value="SEM AÇÃO"
-                >
-                <label for="acao_sem_acao" class="radio-btn">
-                    SEM AÇÃO
-                </label>
-
-                <input
-                    type="radio"
-                    id="acao_desligado"
-                    name="acao"
-                    value="DESLIGADO"
-                >
-                <label for="acao_desligado" class="radio-btn">
-                    DESLIGADO
-                </label>
-
-                <input
-                    type="radio"
-                    id="acao_informado_area"
-                    name="acao"
-                    value="INFORMADO À ÁREA"
-                >
-                <label for="acao_informado_area" class="radio-btn">
-                    INFORMADO À ÁREA
-                </label>
-
-                <input
-                    type="radio"
-                    id="acao_plantao_sb"
-                    name="acao"
-                    value="INFORMADO PLANTÃO SB"
-                >
-                <label for="acao_plantao_sb" class="radio-btn">
-                    PLANTÃO SB
-                </label>
-
+                <input type="radio" id="acao_desligado" name="acao" value="DESLIGADO">
+                <label for="acao_desligado" class="radio-btn">DESLIGADO</label>
+                
+                <input type="radio" id="acao_informado_area" name="acao" value="INFORMADO À ÁREA">
+                <label for="acao_informado_area" class="radio-btn">INFORMADO À ÁREA</label>
+                
+                <input type="radio" id="acao_plantao_sb" name="acao" value="INFORMADO PLANTÃO SB">
+                <label for="acao_plantao_sb" class="radio-btn">PLANTÃO SB</label>
             </div>
         </div>
 
-    </div>
+        <!-- ========================================================
+             NOVO CAMPO CHAVE / INTERRUPTOR AO LADO DO BOTÃO DE MÍDIA 
+             ======================================================== -->
+        <div style="grid-column: span 1;">
+            <label>CHAVE / INTERRUPTOR:</label>
+            <input type="text" id="interruptor" placeholder="ONDE FICA?" oninput="this.value = this.value.toUpperCase();">
+        </div>
+
+        <!-- BOTÃO DE MÍDIA EMPURRADO PARA A DIREITA -->
+        <div style="grid-column: span 1; display: flex; align-items: flex-end;">
+            <button type="button" class="btn-secondary" onclick="abrirModalMidia()" style="margin: 0; width: 100%; height: 35px;">📷 MÍDIA</button>
+        </div>
+
+    </div> <!-- FIM DO FORM GRID -->
 
     <div style="display:flex; justify-content:center;">
-        <img
-            id="photo-preview"
-            class="media-preview"
-            src=""
-            alt="Preview"
-        >
+        <img id="photo-preview" class="media-preview" src="" alt="Preview">
     </div>
 
-    <div style="display:flex; gap:8px; margin-top:10px;">
-
-        <button
-            class="btn-secondary"
-            onclick="abrirModalMidia()"
-            style="margin:0; flex:1;"
-        >
-            📷 MÍDIA
-        </button>
-
-        <button
-            class="btn-primary"
-            id="btn-salvar"
-            onclick="salvarRegistro()"
-            style="margin:0; flex:1;"
-        >
-            ➕ ADICIONAR
-        </button>
-
+    <!-- BOTÃO ADICIONAR ISOLADO ABAIXO PARA EVITAR ERROS -->
+    <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin:0; width: 100%;">➕ ADICIONAR REGISTRO</button>
     </div>
 
-    <button
-        class="btn-secondary"
-        id="btn-cancelar-edicao"
-        style="display:none; margin-top:8px; width:100%;"
-        onclick="cancelarEdicao()"
-    >
-        ❌ CANCELAR EDIÇÃO
-    </button>
+    <button class="btn-secondary" id="btn-cancelar-edicao" style="display:none; margin-top:8px; width:100%;" onclick="cancelarEdicao()">❌ CANCELAR EDIÇÃO</button>
 
     <input type="hidden" id="foto_base64">
     <input type="hidden" id="video_base64">
@@ -740,489 +589,132 @@
 
 
 <div class="center-section">
-
     <div class="header-lista">
-
-        <h3>
-            REGISTROS (<span id="contador">0</span>)
-        </h3>
-
-        <button
-            class="btn-danger"
-            style="width:auto; height:30px; padding:0 12px; margin:0; font-size:11px;"
-            onclick="limparTudo()"
-        >
-            🗑 LIMPAR TUDO
-        </button>
-
+        <h3>REGISTROS (<span id="contador">0</span>)</h3>
+        <button class="btn-danger" style="width:auto; height:30px; padding:0 12px; margin:0; font-size:11px;" onclick="limparTudo()">🗑 LIMPAR TUDO</button>
     </div>
-
     <div id="lista-registros"></div>
-
 </div>
 
 
 <div class="bottom-section">
-
-    <button
-        class="btn-primary"
-        onclick="abrirModalExportar()"
-    >
-        📤 EXPORTAR
-    </button>
-
-    <button
-        class="btn-warning"
-        style="color:var(--warning-text);"
-        onclick="abrirModalImportar()"
-    >
-        📂 IMPORTAR
-    </button>
-
-    <input
-        type="file"
-        id="input-json"
-        accept=".json"
-        multiple
-        style="display:none;"
-        onchange="importarJSON(event)"
-    >
-
+    <button class="btn-primary" onclick="abrirModalExportar()">📤 EXPORTAR</button>
+    <button class="btn-warning" style="color:var(--warning-text);" onclick="abrirModalImportar()">📂 IMPORTAR</button>
+    <input type="file" id="input-json" accept=".json" multiple style="display:none;" onchange="importarJSON(event)">
 </div>
 
 
-<!-- =========================================================
-     NOVO MODAL DE LEITURA QR
-     ========================================================= -->
-
+<!-- MODAL LEITURA QR -->
 <div id="qr-camera-modal">
-
-    <video
-        id="qr-camera-video"
-        autoplay
-        playsinline
-        muted
-    ></video>
-
+    <video id="qr-camera-video" autoplay playsinline muted></video>
     <canvas id="qr-canvas"></canvas>
-
     <div class="qr-camera-top">
-
-        <div
-            class="qr-camera-titulo"
-        >
-            🔳 LEITOR DE QR CODE
-        </div>
-
-        <div
-            id="qr-camera-status"
-            class="qr-camera-status"
-        >
-            Aponte a câmera para o QR Code
-        </div>
-
+        <div class="qr-camera-titulo">🔳 LEITOR DE QR CODE</div>
+        <div id="qr-camera-status" class="qr-camera-status">Aponte a câmera para o QR Code</div>
     </div>
-
-    <div class="qr-moldura">
-        <div class="qr-linha-leitura"></div>
-    </div>
-
+    <div class="qr-moldura"><div class="qr-linha-leitura"></div></div>
     <div class="qr-camera-bottom">
-
-        <button
-            id="btn-qr-galeria"
-            class="btn-info"
-            onclick="fecharLeitorQR(); document.getElementById('input-qr').click();"
-        >
-            🖼️ LER IMAGEM DA GALERIA
-        </button>
-
-        <button
-            class="btn-danger"
-            onclick="fecharLeitorQR()"
-        >
-            ❌ CANCELAR
-        </button>
-
+        <button id="btn-qr-galeria" class="btn-info" onclick="fecharLeitorQR(); document.getElementById('input-qr').click();">🖼️ LER IMAGEM DA GALERIA</button>
+        <button class="btn-danger" onclick="fecharLeitorQR()">❌ CANCELAR</button>
     </div>
-
 </div>
 
-
-<!-- =========================================================
-     MODAL DE DESCRIÇÃO
-     ========================================================= -->
-
+<!-- MODAL DESCRIÇÃO -->
 <div id="descricao-modal">
-
     <div class="modal-box">
-
-        <h3 style="margin-top:0; color:var(--primary);">
-            DESCRIÇÃO DO PROBLEMA
-        </h3>
-
-        <p style="margin:0; font-size:13px; color:#666;">
-            DIGITE OS DETALHES ADICIONAIS ABAIXO:
-        </p>
-
-        <textarea
-            id="descricao-texto"
-            rows="5"
-        ></textarea>
-
+        <h3 style="margin-top:0; color:var(--primary);">DESCRIÇÃO DO PROBLEMA</h3>
+        <p style="margin:0; font-size:13px; color:#666;">DIGITE OS DETALHES ADICIONAIS ABAIXO:</p>
+        <textarea id="descricao-texto" rows="5"></textarea>
         <div style="display:flex; gap:10px; margin-top:15px;">
-
-            <button
-                class="btn-danger"
-                style="margin:0;"
-                onclick="fecharModalDescricao()"
-            >
-                CANCELAR
-            </button>
-
-            <button
-                class="btn-success"
-                style="margin:0;"
-                onclick="salvarDescricao()"
-            >
-                CONFIRMAR
-            </button>
-
+            <button class="btn-danger" style="margin:0;" onclick="fecharModalDescricao()">CANCELAR</button>
+            <button class="btn-success" style="margin:0;" onclick="salvarDescricao()">CONFIRMAR</button>
         </div>
-
     </div>
-
 </div>
 
-
-<!-- =========================================================
-     MODAL MÍDIA
-     ========================================================= -->
-
+<!-- MODAL MÍDIA -->
 <div id="midia-modal">
-
-    <div
-        class="modal-box"
-        style="text-align:center;"
-    >
-
-        <h3 style="margin-top:0; color:var(--primary);">
-            ADICIONAR MÍDIA
-        </h3>
-
-        <p style="margin:0; font-size:13px; color:#666;">
-            ESCOLHA A ORIGEM DA FOTO OU VÍDEO:
-        </p>
-
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-top:0; color:var(--primary);">ADICIONAR MÍDIA</h3>
+        <p style="margin:0; font-size:13px; color:#666;">ESCOLHA A ORIGEM DA FOTO OU VÍDEO:</p>
         <div class="botoes-menu-modal">
-
-            <button
-                class="btn-success"
-                onclick="iniciarCamera('foto')"
-            >
-                📷 TIRAR FOTO
-            </button>
-
-            <button
-                class="btn-warning"
-                style="color:var(--warning-text);"
-                onclick="iniciarCamera('video')"
-            >
-                🎥 GRAVAR VÍDEO
-            </button>
-
-            <button
-                class="btn-info"
-                onclick="acionarGaleria()"
-            >
-                📂 CARREGAR DA GALERIA
-            </button>
-
-            <button
-                class="btn-danger"
-                onclick="fecharModalMidia()"
-            >
-                ❌ CANCELAR
-            </button>
-
+            <button class="btn-success" onclick="iniciarCamera('foto')">📷 TIRAR FOTO</button>
+            <button class="btn-warning" style="color:var(--warning-text);" onclick="iniciarCamera('video')">🎥 GRAVAR VÍDEO</button>
+            <button class="btn-info" onclick="acionarGaleria()">📂 CARREGAR DA GALERIA</button>
+            <button class="btn-danger" onclick="fecharModalMidia()">❌ CANCELAR</button>
         </div>
-
-        <input
-            type="file"
-            id="input-galeria"
-            accept="image/*,video/*"
-            style="display:none;"
-            onchange="processarMidiaGaleria(event)"
-        >
-
+        <input type="file" id="input-galeria" accept="image/*,video/*" style="display:none;" onchange="processarMidiaGaleria(event)">
     </div>
-
 </div>
 
-
-<!-- =========================================================
-     EXPORTAR
-     ========================================================= -->
-
+<!-- MODAL EXPORTAR -->
 <div id="exportar-modal">
-
-    <div
-        class="modal-box"
-        style="text-align:center;"
-    >
-
-        <h3 style="margin-top:0; color:var(--primary);">
-            EXPORTAR DADOS
-        </h3>
-
-        <p style="margin:0; font-size:13px; color:#666;">
-            ESCOLHA O FORMATO DO ARQUIVO:
-        </p>
-
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-top:0; color:var(--primary);">EXPORTAR DADOS</h3>
+        <p style="margin:0; font-size:13px; color:#666;">ESCOLHA O FORMATO DO ARQUIVO:</p>
         <div class="botoes-menu-modal">
-
-            <button
-                class="btn-success"
-                onclick="acionarExportar('XLSX')"
-            >
-                📊 EXCEL (.XLSX)
-            </button>
-
-            <button
-                class="btn-primary"
-                onclick="acionarExportar('PPTX')"
-            >
-                📺 POWERPOINT (.PPTX)
-            </button>
-
-            <button
-                class="btn-info"
-                onclick="acionarExportar('JSON')"
-            >
-                💾 ARQUIVO (.JSON)
-            </button>
-
-            <button
-                class="btn-secondary"
-                onclick="copiarJSON()"
-            >
-                📋 COPIAR TEXTO (JSON)
-            </button>
-
-            <button
-                class="btn-danger"
-                onclick="fecharModalExportar()"
-            >
-                ❌ CANCELAR
-            </button>
-
+            <button class="btn-success" onclick="acionarExportar('XLSX')">📊 EXCEL (.XLSX)</button>
+            <button class="btn-primary" onclick="acionarExportar('PPTX')">📺 POWERPOINT (.PPTX)</button>
+            <button class="btn-info" onclick="acionarExportar('JSON')">💾 ARQUIVO (.JSON)</button>
+            <button class="btn-secondary" onclick="copiarJSON()">📋 COPIAR TEXTO (JSON)</button>
+            <button class="btn-danger" onclick="fecharModalExportar()">❌ CANCELAR</button>
         </div>
-
     </div>
-
 </div>
 
-
-<!-- =========================================================
-     IMPORTAR
-     ========================================================= -->
-
+<!-- MODAL IMPORTAR -->
 <div id="importar-modal">
-
-    <div
-        class="modal-box"
-        style="text-align:center;"
-    >
-
-        <h3 style="margin-top:0; color:#d39e00;">
-            IMPORTAR DADOS
-        </h3>
-
-        <p style="margin:0; font-size:13px; color:#666;">
-            ESCOLHA COMO DESEJA IMPORTAR O JSON:
-        </p>
-
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-top:0; color:#d39e00;">IMPORTAR DADOS</h3>
+        <p style="margin:0; font-size:13px; color:#666;">ESCOLHA COMO DESEJA IMPORTAR O JSON:</p>
         <div class="botoes-menu-modal">
-
-            <button
-                class="btn-warning"
-                onclick="acionarImportarJSON()"
-            >
-                📁 IMPORTAR JSON (.JSON)
-            </button>
-
-            <button
-                class="btn-warning"
-                onclick="abrirModalColar()"
-            >
-                📥 COLAR TEXTO JSON
-            </button>
-
-            <button
-                class="btn-danger"
-                onclick="fecharModalImportar()"
-            >
-                ❌ CANCELAR
-            </button>
-
+            <button class="btn-warning" onclick="acionarImportarJSON()">📁 IMPORTAR JSON (.JSON)</button>
+            <button class="btn-warning" onclick="abrirModalColar()">📥 COLAR TEXTO JSON</button>
+            <button class="btn-danger" onclick="fecharModalImportar()">❌ CANCELAR</button>
         </div>
-
     </div>
-
 </div>
 
-
-<!-- =========================================================
-     COLAR JSON
-     ========================================================= -->
-
+<!-- MODAL COLAR JSON -->
 <div id="colar-modal">
-
     <div class="modal-box">
-
-        <h3 style="margin-top:0; color:#d39e00;">
-            COLAR TEXTO JSON
-        </h3>
-
-        <p style="margin:0; font-size:13px; color:#666;">
-            COLE AQUI O CÓDIGO QUE VOCÊ COPIOU DO WHATSAPP:
-        </p>
-
-        <textarea
-            id="texto-colar"
-            rows="8"
-        ></textarea>
-
+        <h3 style="margin-top:0; color:#d39e00;">COLAR TEXTO JSON</h3>
+        <p style="margin:0; font-size:13px; color:#666;">COLE AQUI O CÓDIGO QUE VOCÊ COPIOU DO WHATSAPP:</p>
+        <textarea id="texto-colar" rows="8"></textarea>
         <div style="display:flex; gap:10px; margin-top:15px;">
-
-            <button
-                class="btn-danger"
-                style="margin:0;"
-                onclick="fecharModalColar()"
-            >
-                CANCELAR
-            </button>
-
-            <button
-                class="btn-success"
-                style="margin:0;"
-                onclick="processarColarJSON()"
-            >
-                IMPORTAR DADOS
-            </button>
-
+            <button class="btn-danger" style="margin:0;" onclick="fecharModalColar()">CANCELAR</button>
+            <button class="btn-success" style="margin:0;" onclick="processarColarJSON()">IMPORTAR DADOS</button>
         </div>
-
     </div>
-
 </div>
 
-
-<!-- =========================================================
-     CÂMERA PARA FOTO/VÍDEO
-     ========================================================= -->
-
+<!-- MODAL CÂMERA MÍDIA -->
 <div id="camera-modal">
-
-    <video
-        id="video-preview"
-        autoplay
-        playsinline
-    ></video>
-
-    <p
-        id="status-gravacao"
-        style="color:red; font-weight:bold; display:none; margin:5px 0;"
-    >
-        🔴 GRAVANDO VÍDEO (MÁX 5S)...
-    </p>
-
+    <video id="video-preview" autoplay playsinline></video>
+    <p id="status-gravacao" style="color:red; font-weight:bold; display:none; margin:5px 0;">🔴 GRAVANDO VÍDEO (MÁX 5S)...</p>
     <div class="modal-botoes">
-
-        <button
-            id="btn-tirar-foto"
-            class="btn-success"
-            onclick="capturarFoto()"
-        >
-            📷 CAPTURAR FOTO
-        </button>
-
-        <button
-            id="btn-iniciar-gravacao"
-            class="btn-warning"
-            style="color:var(--warning-text);"
-            onclick="iniciarGravacaoVideo()"
-        >
-            🎥 GRAVAR VÍDEO
-        </button>
-
-        <button
-            id="btn-parar-gravacao"
-            class="btn-danger"
-            style="display:none;"
-            onclick="pararGravacaoVideo()"
-        >
-            ⏹️ PARAR E SALVAR VÍDEO
-        </button>
-
-        <button
-            class="btn-danger"
-            onclick="fecharCamera()"
-        >
-            ❌ CANCELAR
-        </button>
-
+        <button id="btn-tirar-foto" class="btn-success" onclick="capturarFoto()">📷 CAPTURAR FOTO</button>
+        <button id="btn-iniciar-gravacao" class="btn-warning" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
+        <button id="btn-parar-gravacao" class="btn-danger" style="display:none;" onclick="pararGravacaoVideo()">⏹️ PARAR E SALVAR VÍDEO</button>
+        <button class="btn-danger" onclick="fecharCamera()">❌ CANCELAR</button>
     </div>
-
-    <canvas
-        id="canvas"
-        style="display:none;"
-    ></canvas>
-
+    <canvas id="canvas" style="display:none;"></canvas>
 </div>
 
-
-<!-- =========================================================
-     VISUALIZADOR
-     ========================================================= -->
-
+<!-- MODAL VISUALIZADOR MÍDIA -->
 <div id="media-viewer-modal">
-
-    <span
-        class="fechar-btn"
-        onclick="fecharViewerMidia()"
-    >
-        &times;
-    </span>
-
-    <img
-        id="viewer-img"
-        style="display:none;"
-    >
-
-    <video
-        id="viewer-video"
-        controls
-        style="display:none;"
-    ></video>
-
+    <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
+    <img id="viewer-img" style="display:none;">
+    <video id="viewer-video" controls style="display:none;"></video>
 </div>
-
 
 <script>
-
 let streamDeVideo = null;
 let streamQR = null;
-
 let mediaRecorder = null;
 let pedacosGravados = [];
-
 let registros = [];
 let indiceEdicao = null;
-
-/* =========================================================
-   VARIÁVEIS DO LEITOR QR
-   ========================================================= */
 
 let qrScannerAtivo = false;
 let qrAnimationFrame = null;
@@ -1230,4150 +722,896 @@ let qrUltimoTexto = "";
 let qrUltimaLeitura = 0;
 let qrDetectorNativo = null;
 
-
-/* =========================================================
-   INICIALIZAÇÃO
-   ========================================================= */
-
 window.onload = async function() {
-
-    let auditorSalvo =
-        localStorage.getItem('auditor_nome');
-
-    if (auditorSalvo) {
-        document.getElementById('auditor').value =
-            auditorSalvo;
-    }
-
-    let dadosSalvos =
-        await localforage.getItem(
-            'registros_caca_desperdicios'
-        );
-
+    let auditorSalvo = localStorage.getItem('auditor_nome');
+    if (auditorSalvo) document.getElementById('auditor').value = auditorSalvo;
+    let dadosSalvos = await localforage.getItem('registros_caca_desperdicios');
     if (dadosSalvos) {
-
         registros = dadosSalvos;
-
         atualizarLista();
     }
 };
 
-
-/* =========================================================
-   LEITOR QR - ABRIR CÂMERA
-   ========================================================= */
-
+/* --- LEITOR QR CODE NATIVO E jsQR --- */
 async function abrirLeitorQR() {
-
-    const modal =
-        document.getElementById('qr-camera-modal');
-
-    const video =
-        document.getElementById('qr-camera-video');
-
-    const status =
-        document.getElementById('qr-camera-status');
-
-    const btn =
-        document.getElementById('btn-qr');
+    const modal = document.getElementById('qr-camera-modal');
+    const video = document.getElementById('qr-camera-video');
+    const status = document.getElementById('qr-camera-status');
+    const btn = document.getElementById('btn-qr');
 
     qrUltimoTexto = "";
     qrUltimaLeitura = 0;
-
-    status.innerText =
-        "Iniciando câmera...";
-
+    status.innerText = "Iniciando câmera...";
     modal.style.display = 'block';
-
-    btn.innerText =
-        "⏳ ABRINDO LEITOR QR...";
+    btn.innerText = "⏳ ABRINDO LEITOR QR...";
 
     try {
-
-        if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
-        ) {
-            throw new Error(
-                "Seu navegador não permite acesso à câmera."
-            );
-        }
-
-        /*
-         * Primeiro tenta câmera traseira.
-         */
-
-        streamQR =
-            await navigator.mediaDevices.getUserMedia({
-
-                video: {
-                    facingMode: {
-                        ideal: "environment"
-                    },
-
-                    width: {
-                        ideal: 1920
-                    },
-
-                    height: {
-                        ideal: 1080
-                    }
-                },
-
-                audio: false
-            });
-
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("Sem permissão");
+        streamQR = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+            audio: false
+        });
         video.srcObject = streamQR;
-
-        video.setAttribute(
-            "playsinline",
-            "true"
-        );
-
+        video.setAttribute("playsinline", "true");
         video.muted = true;
-
         await video.play();
 
-        status.innerText =
-            "APONTE PARA O QR CODE";
-
-        btn.innerText =
-            "🔳 LER QR CODE DO LOCAL";
-
+        status.innerText = "APONTE PARA O QR CODE";
+        btn.innerText = "🔳 LER QR CODE DO LOCAL";
         qrScannerAtivo = true;
 
         prepararBarcodeDetector();
-
         iniciarLoopLeituraQR();
-
     } catch (erro) {
-
-        console.error(
-            "Erro câmera QR:",
-            erro
-        );
-
+        console.error("Erro câmera QR:", erro);
         modal.style.display = 'none';
-
-        btn.innerText =
-            "🔳 LER QR CODE DO LOCAL";
-
-        alert(
-            "❌ NÃO FOI POSSÍVEL ACESSAR A CÂMERA.\n\n" +
-            "Verifique se o navegador tem permissão para usar a câmera.\n\n" +
-            "Como alternativa, você poderá selecionar uma foto do QR Code."
-        );
-
-        /*
-         * Se a câmera falhar, oferece a galeria.
-         */
-
-        setTimeout(function() {
-
-            if (
-                confirm(
-                    "DESEJA SELECIONAR UMA FOTO DO QR CODE?"
-                )
-            ) {
-
-                document
-                    .getElementById('input-qr')
-                    .click();
-
-            }
-
+        btn.innerText = "🔳 LER QR CODE DO LOCAL";
+        alert("❌ NÃO FOI POSSÍVEL ACESSAR A CÂMERA.\nVerifique as permissões do navegador.\nVocê ainda pode selecionar uma foto do QR Code na galeria.");
+        setTimeout(() => {
+            if (confirm("DESEJA SELECIONAR UMA FOTO DO QR CODE?")) document.getElementById('input-qr').click();
         }, 100);
-
     }
-
 }
-
-
-/* =========================================================
-   PREPARA BARCODE DETECTOR
-   ========================================================= */
 
 function prepararBarcodeDetector() {
-
     qrDetectorNativo = null;
-
-    if (
-        "BarcodeDetector" in window
-    ) {
-
-        try {
-
-            qrDetectorNativo =
-                new BarcodeDetector({
-                    formats: [
-                        "qr_code"
-                    ]
-                });
-
-            console.log(
-                "BarcodeDetector disponível."
-            );
-
-        } catch (e) {
-
-            console.log(
-                "BarcodeDetector indisponível.",
-                e
-            );
-
-        }
-
+    if ("BarcodeDetector" in window) {
+        try { qrDetectorNativo = new BarcodeDetector({ formats: ["qr_code"] }); } catch (e) { console.log(e); }
     }
-
 }
-
-
-/* =========================================================
-   LOOP CONTÍNUO DO QR
-   ========================================================= */
 
 function iniciarLoopLeituraQR() {
+    if (!qrScannerAtivo) return;
+    const video = document.getElementById('qr-camera-video');
 
-    if (!qrScannerAtivo) {
-        return;
-    }
-
-    const video =
-        document.getElementById(
-            'qr-camera-video'
-        );
-
-    if (
-        video.readyState >= 2 &&
-        video.videoWidth > 0 &&
-        video.videoHeight > 0
-    ) {
-
-        /*
-         * Primeiro tenta o detector nativo.
-         */
-
+    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
         if (qrDetectorNativo) {
-
-            qrDetectorNativo
-                .detect(video)
-                .then(function(barcodes) {
-
-                    if (
-                        barcodes &&
-                        barcodes.length > 0
-                    ) {
-
-                        let valor =
-                            barcodes[0].rawValue;
-
-                        if (valor) {
-
-                            processarQRDetectado(
-                                valor
-                            );
-
-                            return;
-                        }
-
-                    }
-
-                    /*
-                     * Se o nativo não encontrou,
-                     * executa jsQR.
-                     */
-
-                    tentarJSQRVideo();
-
-                })
-                .catch(function() {
-
-                    tentarJSQRVideo();
-
-                });
-
+            qrDetectorNativo.detect(video).then(function(barcodes) {
+                if (barcodes && barcodes.length > 0) {
+                    let valor = barcodes[0].rawValue;
+                    if (valor) { processarQRDetectado(valor); return; }
+                }
+                tentarJSQRVideo();
+            }).catch(() => tentarJSQRVideo());
         } else {
-
             tentarJSQRVideo();
-
         }
-
     }
-
-    qrAnimationFrame =
-        requestAnimationFrame(
-            iniciarLoopLeituraQR
-        );
+    qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR);
 }
-
-
-/* =========================================================
-   JSQR NO VÍDEO
-   ========================================================= */
 
 function tentarJSQRVideo() {
+    if (!qrScannerAtivo) return;
+    const video = document.getElementById('qr-camera-video');
+    const canvas = document.getElementById('qr-canvas');
+    if (video.videoWidth <= 0 || video.videoHeight <= 0) return;
 
-    if (!qrScannerAtivo) {
-        return;
-    }
-
-    const video =
-        document.getElementById(
-            'qr-camera-video'
-        );
-
-    const canvas =
-        document.getElementById(
-            'qr-canvas'
-        );
-
-    if (
-        video.videoWidth <= 0 ||
-        video.videoHeight <= 0
-    ) {
-        return;
-    }
-
-    /*
-     * Reduz um pouco a resolução para manter
-     * a leitura rápida no celular.
-     */
-
-    const larguraOriginal =
-        video.videoWidth;
-
-    const alturaOriginal =
-        video.videoHeight;
-
+    let largura = video.videoWidth;
+    let altura = video.videoHeight;
     const larguraMaxima = 1280;
 
-    let largura =
-        larguraOriginal;
-
-    let altura =
-        alturaOriginal;
-
-    if (
-        largura > larguraMaxima
-    ) {
-
-        const escala =
-            larguraMaxima / largura;
-
-        largura =
-            Math.round(
-                largura * escala
-            );
-
-        altura =
-            Math.round(
-                altura * escala
-            );
+    if (largura > larguraMaxima) {
+        const escala = larguraMaxima / largura;
+        largura = Math.round(largura * escala);
+        altura = Math.round(altura * escala);
     }
-
     canvas.width = largura;
     canvas.height = altura;
-
-    const ctx =
-        canvas.getContext(
-            "2d",
-            {
-                willReadFrequently: true
-            }
-        );
-
-    ctx.drawImage(
-        video,
-        0,
-        0,
-        largura,
-        altura
-    );
-
-    const imageData =
-        ctx.getImageData(
-            0,
-            0,
-            largura,
-            altura
-        );
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, largura, altura);
+    const imageData = ctx.getImageData(0, 0, largura, altura);
 
     try {
-
-        const code =
-            jsQR(
-                imageData.data,
-                imageData.width,
-                imageData.height,
-                {
-                    inversionAttempts:
-                        "attemptBoth"
-                }
-            );
-
-        if (
-            code &&
-            code.data
-        ) {
-
-            processarQRDetectado(
-                code.data
-            );
-
-        }
-
-    } catch (erro) {
-
-        console.log(
-            "Erro jsQR:",
-            erro
-        );
-
-    }
-
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+        if (code && code.data) processarQRDetectado(code.data);
+    } catch (erro) { console.log(erro); }
 }
 
-
-/* =========================================================
-   QR DETECTADO
-   ========================================================= */
-
-function processarQRDetectado(
-    texto
-) {
-
-    if (!texto) {
-        return;
-    }
-
-    /*
-     * Evita múltiplas leituras do mesmo QR.
-     */
-
-    const agora =
-        Date.now();
-
-    if (
-        texto === qrUltimoTexto &&
-        agora - qrUltimaLeitura < 2500
-    ) {
-        return;
-    }
-
+function processarQRDetectado(texto) {
+    if (!texto) return;
+    const agora = Date.now();
+    if (texto === qrUltimoTexto && agora - qrUltimaLeitura < 2500) return;
     qrUltimoTexto = texto;
     qrUltimaLeitura = agora;
-
     qrScannerAtivo = false;
 
-    if (qrAnimationFrame) {
-
-        cancelAnimationFrame(
-            qrAnimationFrame
-        );
-
-        qrAnimationFrame = null;
-    }
-
+    if (qrAnimationFrame) { cancelAnimationFrame(qrAnimationFrame); qrAnimationFrame = null; }
     fecharStreamQR();
-
-    document
-        .getElementById(
-            'qr-camera-status'
-        )
-        .innerText =
-        "✅ QR CODE ENCONTRADO!";
-
-    /*
-     * Pequeno atraso para mostrar
-     * visualmente que encontrou.
-     */
+    document.getElementById('qr-camera-status').innerText = "✅ QR CODE ENCONTRADO!";
 
     setTimeout(function() {
-
-        document
-            .getElementById(
-                'qr-camera-modal'
-            )
-            .style.display = 'none';
-
-        preencherCamposViaQR(
-            texto
-        );
-
+        document.getElementById('qr-camera-modal').style.display = 'none';
+        preencherCamposViaQR(texto);
     }, 200);
-
 }
-
-
-/* =========================================================
-   FECHAR STREAM QR
-   ========================================================= */
 
 function fecharStreamQR() {
-
-    if (streamQR) {
-
-        streamQR
-            .getTracks()
-            .forEach(
-                track => track.stop()
-            );
-
-        streamQR = null;
-    }
-
+    if (streamQR) { streamQR.getTracks().forEach(track => track.stop()); streamQR = null; }
 }
-
-
-/* =========================================================
-   FECHAR LEITOR QR
-   ========================================================= */
 
 function fecharLeitorQR() {
-
     qrScannerAtivo = false;
-
-    if (qrAnimationFrame) {
-
-        cancelAnimationFrame(
-            qrAnimationFrame
-        );
-
-        qrAnimationFrame = null;
-    }
-
+    if (qrAnimationFrame) { cancelAnimationFrame(qrAnimationFrame); qrAnimationFrame = null; }
     fecharStreamQR();
-
-    const video =
-        document.getElementById(
-            'qr-camera-video'
-        );
-
-    if (video) {
-        video.srcObject = null;
-    }
-
-    document
-        .getElementById(
-            'qr-camera-modal'
-        )
-        .style.display = 'none';
-
-    document
-        .getElementById(
-            'btn-qr'
-        )
-        .innerText =
-        "🔳 LER QR CODE DO LOCAL";
-
+    const video = document.getElementById('qr-camera-video');
+    if (video) video.srcObject = null;
+    document.getElementById('qr-camera-modal').style.display = 'none';
+    document.getElementById('btn-qr').innerText = "🔳 LER QR CODE DO LOCAL";
 }
-
-
-/* =========================================================
-   QR POR IMAGEM
-   ========================================================= */
 
 function processarImagemQR(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const btnQR = document.getElementById('btn-qr');
+    const textoOriginal = "🔳 LER QR CODE DO LOCAL";
+    btnQR.innerText = "⏳ LENDO QR CODE...";
+    btnQR.style.backgroundColor = "#ffc107";
+    btnQR.style.color = "#000";
+    const img = new Image();
 
-    const file =
-        event.target.files[0];
-
-    if (!file) {
-        return;
-    }
-
-    const btnQR =
-        document.getElementById(
-            'btn-qr'
-        );
-
-    const textoOriginal =
-        "🔳 LER QR CODE DO LOCAL";
-
-    btnQR.innerText =
-        "⏳ LENDO QR CODE...";
-
-    btnQR.style.backgroundColor =
-        "#ffc107";
-
-    btnQR.style.color =
-        "#000";
-
-    const img =
-        new Image();
-
-    img.onload =
-        async function() {
-
-            let detectado = false;
-
-            /*
-             * =================================================
-             * PRIMEIRA TENTATIVA:
-             * BarcodeDetector
-             * =================================================
-             */
-
-            if (
-                "BarcodeDetector" in window
-            ) {
-
-                try {
-
-                    const detector =
-                        new BarcodeDetector({
-                            formats: [
-                                "qr_code"
-                            ]
-                        });
-
-                    const barcodes =
-                        await detector.detect(
-                            img
-                        );
-
-                    if (
-                        barcodes &&
-                        barcodes.length > 0
-                    ) {
-
-                        const valor =
-                            barcodes[0].rawValue;
-
-                        if (valor) {
-
-                            restaurarBotaoQR(
-                                btnQR,
-                                textoOriginal
-                            );
-
-                            preencherCamposViaQR(
-                                valor
-                            );
-
-                            detectado = true;
-
-                            URL.revokeObjectURL(
-                                img.src
-                            );
-
-                            return;
-                        }
-
+    img.onload = async function() {
+        let detectado = false;
+        if ("BarcodeDetector" in window) {
+            try {
+                const detector = new BarcodeDetector({ formats: ["qr_code"] });
+                const barcodes = await detector.detect(img);
+                if (barcodes && barcodes.length > 0) {
+                    const valor = barcodes[0].rawValue;
+                    if (valor) {
+                        restaurarBotaoQR(btnQR, textoOriginal);
+                        preencherCamposViaQR(valor);
+                        detectado = true;
+                        URL.revokeObjectURL(img.src);
+                        return;
                     }
-
-                } catch (erro) {
-
-                    console.log(
-                        "BarcodeDetector falhou:",
-                        erro
-                    );
-
                 }
+            } catch (erro) { console.log(erro); }
+        }
 
+        if (!detectado) {
+            const resultado = detectarQRNaImagem(img, false);
+            if (resultado) {
+                restaurarBotaoQR(btnQR, textoOriginal);
+                preencherCamposViaQR(resultado);
+                detectado = true;
+                URL.revokeObjectURL(img.src);
+                return;
             }
+        }
 
-
-            /*
-             * =================================================
-             * SEGUNDA TENTATIVA:
-             * jsQR com imagem normal
-             * =================================================
-             */
-
-            if (!detectado) {
-
-                const resultado =
-                    detectarQRNaImagem(
-                        img,
-                        false
-                    );
-
-                if (resultado) {
-
-                    restaurarBotaoQR(
-                        btnQR,
-                        textoOriginal
-                    );
-
-                    preencherCamposViaQR(
-                        resultado
-                    );
-
-                    detectado = true;
-
-                    URL.revokeObjectURL(
-                        img.src
-                    );
-
-                    return;
-                }
-
+        if (!detectado) {
+            const resultado = detectarQRNaImagem(img, true);
+            if (resultado) {
+                restaurarBotaoQR(btnQR, textoOriginal);
+                preencherCamposViaQR(resultado);
+                detectado = true;
+                URL.revokeObjectURL(img.src);
+                return;
             }
+        }
 
-
-            /*
-             * =================================================
-             * TERCEIRA TENTATIVA:
-             * imagem invertida
-             * =================================================
-             */
-
-            if (!detectado) {
-
-                const resultado =
-                    detectarQRNaImagem(
-                        img,
-                        true
-                    );
-
-                if (resultado) {
-
-                    restaurarBotaoQR(
-                        btnQR,
-                        textoOriginal
-                    );
-
-                    preencherCamposViaQR(
-                        resultado
-                    );
-
-                    detectado = true;
-
-                    URL.revokeObjectURL(
-                        img.src
-                    );
-
-                    return;
-                }
-
-            }
-
-
-            /*
-             * =================================================
-             * NÃO ENCONTROU
-             * =================================================
-             */
-
-            restaurarBotaoQR(
-                btnQR,
-                textoOriginal
-            );
-
-            URL.revokeObjectURL(
-                img.src
-            );
-
-            alert(
-                "❌ NENHUM QR CODE ENCONTRADO.\n\n" +
-                "TENTE:\n\n" +
-                "1. Aproximar o celular.\n" +
-                "2. Deixar o QR ocupar boa parte da imagem.\n" +
-                "3. Evitar reflexos e sombras.\n" +
-                "4. Segurar o celular reto.\n" +
-                "5. Limpar a lente da câmera."
-            );
-
-        };
-
-    img.onerror =
-        function() {
-
-            restaurarBotaoQR(
-                btnQR,
-                textoOriginal
-            );
-
-            alert(
-                "❌ NÃO FOI POSSÍVEL ABRIR A IMAGEM."
-            );
-
-        };
-
-    img.src =
-        URL.createObjectURL(
-            file
-        );
-
+        restaurarBotaoQR(btnQR, textoOriginal);
+        URL.revokeObjectURL(img.src);
+        alert("❌ NENHUM QR CODE ENCONTRADO.\nTente focar melhor ou evitar reflexos de tela.");
+    };
+    img.onerror = function() {
+        restaurarBotaoQR(btnQR, textoOriginal);
+        alert("❌ NÃO FOI POSSÍVEL ABRIR A IMAGEM.");
+    };
+    img.src = URL.createObjectURL(file);
     event.target.value = '';
-
 }
 
-
-/* =========================================================
-   DETECTAR QR EM IMAGEM
-   ========================================================= */
-
-function detectarQRNaImagem(
-    img,
-    inverter
-) {
-
-    const canvas =
-        document.createElement(
-            "canvas"
-        );
-
-    const ctx =
-        canvas.getContext(
-            "2d",
-            {
-                willReadFrequently: true
-            }
-        );
-
+function detectarQRNaImagem(img, inverter) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     const MAX_WIDTH = 1800;
+    let width = img.naturalWidth || img.width;
+    let height = img.naturalHeight || img.height;
 
-    let width =
-        img.naturalWidth ||
-        img.width;
-
-    let height =
-        img.naturalHeight ||
-        img.height;
-
-    if (
-        width > MAX_WIDTH
-    ) {
-
-        const escala =
-            MAX_WIDTH / width;
-
-        width =
-            Math.round(
-                width * escala
-            );
-
-        height =
-            Math.round(
-                height * escala
-            );
-
+    if (width > MAX_WIDTH) {
+        const escala = MAX_WIDTH / width;
+        width = Math.round(width * escala);
+        height = Math.round(height * escala);
     }
-
     canvas.width = width;
     canvas.height = height;
-
-    ctx.drawImage(
-        img,
-        0,
-        0,
-        width,
-        height
-    );
-
-    /*
-     * Inverte a imagem quando solicitado.
-     */
+    ctx.drawImage(img, 0, 0, width, height);
 
     if (inverter) {
-
-        const dados =
-            ctx.getImageData(
-                0,
-                0,
-                width,
-                height
-            );
-
-        for (
-            let i = 0;
-            i < dados.data.length;
-            i += 4
-        ) {
-
-            dados.data[i] =
-                255 - dados.data[i];
-
-            dados.data[i + 1] =
-                255 - dados.data[i + 1];
-
-            dados.data[i + 2] =
-                255 - dados.data[i + 2];
-
+        const dados = ctx.getImageData(0, 0, width, height);
+        for (let i = 0; i < dados.data.length; i += 4) {
+            dados.data[i] = 255 - dados.data[i];
+            dados.data[i + 1] = 255 - dados.data[i + 1];
+            dados.data[i + 2] = 255 - dados.data[i + 2];
         }
-
-        ctx.putImageData(
-            dados,
-            0,
-            0
-        );
-
+        ctx.putImageData(dados, 0, 0);
     }
 
-    const imageData =
-        ctx.getImageData(
-            0,
-            0,
-            width,
-            height
-        );
-
+    const imageData = ctx.getImageData(0, 0, width, height);
     try {
-
-        const code =
-            jsQR(
-                imageData.data,
-                imageData.width,
-                imageData.height,
-                {
-                    inversionAttempts:
-                        "attemptBoth"
-                }
-            );
-
-        if (
-            code &&
-            code.data
-        ) {
-
-            return code.data;
-
-        }
-
-    } catch (erro) {
-
-        console.log(
-            "Erro ao analisar imagem:",
-            erro
-        );
-
-    }
-
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+        if (code && code.data) return code.data;
+    } catch (erro) { console.log(erro); }
     return null;
-
 }
 
-
-/* =========================================================
-   RESTAURAR BOTÃO QR
-   ========================================================= */
-
-function restaurarBotaoQR(
-    btnQR,
-    textoOriginal
-) {
-
-    btnQR.innerText =
-        textoOriginal;
-
-    btnQR.style.backgroundColor =
-        "var(--purple)";
-
-    btnQR.style.color =
-        "#fff";
-
+function restaurarBotaoQR(btnQR, textoOriginal) {
+    btnQR.innerText = textoOriginal;
+    btnQR.style.backgroundColor = "var(--purple)";
+    btnQR.style.color = "#fff";
 }
 
+function preencherCamposViaQR(decodedText) {
+    if (!decodedText) return;
+    let texto = String(decodedText).replace(/\r/g, "").replace(/\n/g, " ").trim().replace(/\s*;\s*/g, ";");
+    let partes = texto.split(";").map(item => item.trim());
+    while (partes.length > 0 && partes[partes.length - 1] === "") partes.pop();
 
-/* =========================================================
-   INTERPRETAR CONTEÚDO DO QR
-   ========================================================= */
-
-function preencherCamposViaQR(
-    decodedText
-) {
-
-    if (!decodedText) {
-
-        alert(
-            "❌ O QR CODE ESTÁ VAZIO."
-        );
-
+    if (partes.length < 2) {
+        alert("❌ FORMATO INVÁLIDO NO QR CODE.\nFormato esperado: ÁREA;LOCAL;OCORRÊNCIA;INTERRUPTOR");
         return;
     }
 
-    /*
-     * Remove espaços desnecessários
-     * e quebras de linha.
-     */
-
-    let texto =
-        String(decodedText)
-            .replace(/\r/g, "")
-            .replace(/\n/g, " ")
-            .trim();
-
-    /*
-     * Se o QR eventualmente vier com
-     * espaços em volta dos separadores,
-     * normaliza.
-     */
-
-    texto =
-        texto.replace(
-            /\s*;\s*/g,
-            ";"
-        );
-
-    let partes =
-        texto.split(";")
-            .map(
-                item =>
-                    item.trim()
-            );
-
-    /*
-     * Remove campos vazios do final.
-     */
-
-    while (
-        partes.length > 0 &&
-        partes[partes.length - 1] === ""
-    ) {
-
-        partes.pop();
-
-    }
-
-    if (
-        partes.length < 2
-    ) {
-
-        alert(
-            "❌ FORMATO INVÁLIDO NO QR CODE.\n\n" +
-            "O formato esperado é:\n\n" +
-            "ÁREA;LOCAL;OCORRÊNCIA;INTERRUPTOR"
-        );
-
-        return;
-    }
-
-
-    /*
-     * =================================================
-     * ÁREA
-     * =================================================
-     */
-
-    let areaQR =
-        (partes[0] || "")
-            .trim()
-            .toUpperCase();
-
-    let selectArea =
-        document.getElementById(
-            'area'
-        );
-
-    let existeArea =
-        Array.from(
-            selectArea.options
-        ).some(
-            o =>
-                o.value.toUpperCase() ===
-                areaQR
-        );
-
+    // ÁREA
+    let areaQR = (partes[0] || "").trim().toUpperCase();
+    let selectArea = document.getElementById('area');
+    let existeArea = Array.from(selectArea.options).some(o => o.value.toUpperCase() === areaQR);
     if (existeArea) {
-
-        selectArea.value =
-            areaQR;
-
-        document
-            .getElementById(
-                'area_outros'
-            )
-            .style.display =
-            'none';
-
-        document
-            .getElementById(
-                'area_outros'
-            )
-            .value = "";
-
+        selectArea.value = areaQR;
+        document.getElementById('area_outros').style.display = 'none';
+        document.getElementById('area_outros').value = "";
     } else {
-
-        selectArea.value =
-            'OUTROS';
-
-        document
-            .getElementById(
-                'area_outros'
-            )
-            .value =
-            areaQR;
-
-        document
-            .getElementById(
-                'area_outros'
-            )
-            .style.display =
-            'block';
-
+        selectArea.value = 'OUTROS';
+        document.getElementById('area_outros').value = areaQR;
+        document.getElementById('area_outros').style.display = 'block';
     }
 
+    // LOCAL
+    document.getElementById('local').value = (partes[1] || "").trim().toUpperCase();
 
-    /*
-     * =================================================
-     * LOCAL
-     * =================================================
-     */
-
-    document
-        .getElementById(
-            'local'
-        )
-        .value =
-        (partes[1] || "")
-            .trim()
-            .toUpperCase();
-
-
-    /*
-     * =================================================
-     * OCORRÊNCIA
-     * =================================================
-     */
-
-    if (
-        partes.length >= 3 &&
-        partes[2].trim() !== ""
-    ) {
-
-        let ocorrenciaQR =
-            partes[2]
-                .trim()
-                .toUpperCase();
-
-        let selectOcorrencia =
-            document.getElementById(
-                'ocorrencia'
-            );
-
-        let existeOc =
-            Array.from(
-                selectOcorrencia.options
-            ).some(
-                o =>
-                    o.value.toUpperCase() ===
-                    ocorrenciaQR
-            );
-
+    // OCORRÊNCIA
+    if (partes.length >= 3 && partes[2].trim() !== "") {
+        let ocorrenciaQR = partes[2].trim().toUpperCase();
+        let selectOcorrencia = document.getElementById('ocorrencia');
+        let existeOc = Array.from(selectOcorrencia.options).some(o => o.value.toUpperCase() === ocorrenciaQR);
         if (existeOc) {
-
-            selectOcorrencia.value =
-                ocorrenciaQR;
-
-            document
-                .getElementById(
-                    'ocorrencia_outros'
-                )
-                .style.display =
-                'none';
-
-            document
-                .getElementById(
-                    'ocorrencia_outros'
-                )
-                .value = "";
-
+            selectOcorrencia.value = ocorrenciaQR;
+            document.getElementById('ocorrencia_outros').style.display = 'none';
+            document.getElementById('ocorrencia_outros').value = "";
         } else {
-
-            selectOcorrencia.value =
-                'OUTROS';
-
-            document
-                .getElementById(
-                    'ocorrencia_outros'
-                )
-                .value =
-                ocorrenciaQR;
-
-            document
-                .getElementById(
-                    'ocorrencia_outros'
-                )
-                .style.display =
-                'block';
-
+            selectOcorrencia.value = 'OUTROS';
+            document.getElementById('ocorrencia_outros').value = ocorrenciaQR;
+            document.getElementById('ocorrencia_outros').style.display = 'block';
         }
-
     }
 
-
-    /*
-     * =================================================
-     * INTERRUPTOR
-     * =================================================
-     */
-
-    let mensagem =
-        "✅ QR CODE LIDO COM SUCESSO!";
-
-    if (
-        partes.length >= 4 &&
-        partes[3].trim() !== ""
-    ) {
-
-        let infoInterruptor =
-            partes
-                .slice(3)
-                .join(";")
-                .trim()
-                .toUpperCase();
-
-        preencherCampoDescricao(
-            "LOCAL DO INTERRUPTOR: " +
-            infoInterruptor
-        );
-
-        mensagem +=
-            "\n\n📍 ATENÇÃO!\n\n" +
-            "VÁ ATÉ O INTERRUPTOR:\n" +
-            infoInterruptor;
-
+    // CHAVE / INTERRUPTOR NOVO CAMPO DEDICADO
+    let mensagem = "✅ QR CODE LIDO COM SUCESSO!";
+    if (partes.length >= 4 && partes[3].trim() !== "") {
+        let infoInterruptor = partes.slice(3).join(";").trim().toUpperCase();
+        document.getElementById('interruptor').value = infoInterruptor; // Preenche o novo campo diretamente
+        mensagem += "\n\n📍 ATENÇÃO!\n\nVÁ ATÉ O INTERRUPTOR:\n" + infoInterruptor;
     }
 
-    /*
-     * Se houver campo adicional, mas não
-     * for interruptor, ele não é perdido.
-     */
-
-    if (
-        partes.length > 4
-    ) {
-
-        console.log(
-            "Dados adicionais do QR:",
-            partes.slice(4)
-        );
-
-    }
-
-    alert(
-        mensagem
-    );
-
+    alert(mensagem);
 }
 
-
-/* =========================================================
-   DESCRIÇÃO
-   ========================================================= */
-
+/* --- DEMAIS FUNÇÕES DO APP --- */
 function abrirModalDescricao() {
-
-    const modal =
-        document.getElementById(
-            'descricao-modal'
-        );
-
-    const textarea =
-        document.getElementById(
-            'descricao-texto'
-        );
-
-    const inputHidden =
-        document.getElementById(
-            'descricao'
-        );
-
-    textarea.value =
-        inputHidden.value;
-
-    modal.style.display =
-        'flex';
-
+    const modal = document.getElementById('descricao-modal');
+    const textarea = document.getElementById('descricao-texto');
+    textarea.value = document.getElementById('descricao').value;
+    modal.style.display = 'flex';
     textarea.focus();
-
 }
-
-function fecharModalDescricao() {
-
-    document
-        .getElementById(
-            'descricao-modal'
-        )
-        .style.display =
-        'none';
-
-}
-
-
-/* =========================================================
-   MODAIS
-   ========================================================= */
-
-function abrirModalMidia() {
-
-    document
-        .getElementById(
-            'midia-modal'
-        )
-        .style.display =
-        'flex';
-
-}
-
-function fecharModalMidia() {
-
-    document
-        .getElementById(
-            'midia-modal'
-        )
-        .style.display =
-        'none';
-
-}
-
-function abrirModalExportar() {
-
-    document
-        .getElementById(
-            'exportar-modal'
-        )
-        .style.display =
-        'flex';
-
-}
-
-function fecharModalExportar() {
-
-    document
-        .getElementById(
-            'exportar-modal'
-        )
-        .style.display =
-        'none';
-
-}
-
-function abrirModalImportar() {
-
-    document
-        .getElementById(
-            'importar-modal'
-        )
-        .style.display =
-        'flex';
-
-}
-
-function fecharModalImportar() {
-
-    document
-        .getElementById(
-            'importar-modal'
-        )
-        .style.display =
-        'none';
-
-}
-
+function fecharModalDescricao() { document.getElementById('descricao-modal').style.display = 'none'; }
+function abrirModalMidia() { document.getElementById('midia-modal').style.display = 'flex'; }
+function fecharModalMidia() { document.getElementById('midia-modal').style.display = 'none'; }
+function abrirModalExportar() { document.getElementById('exportar-modal').style.display = 'flex'; }
+function fecharModalExportar() { document.getElementById('exportar-modal').style.display = 'none'; }
+function abrirModalImportar() { document.getElementById('importar-modal').style.display = 'flex'; }
+function fecharModalImportar() { document.getElementById('importar-modal').style.display = 'none'; }
 function abrirModalColar() {
-
-    fecharModalImportar();
-
-    document
-        .getElementById(
-            'texto-colar'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'colar-modal'
-        )
-        .style.display =
-        'flex';
-
-    setTimeout(
-        () =>
-            document
-                .getElementById(
-                    'texto-colar'
-                )
-                .focus(),
-        100
-    );
-
+    fecharModalImportar(); 
+    document.getElementById('texto-colar').value = '';
+    document.getElementById('colar-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('texto-colar').focus(), 100);
 }
-
-function fecharModalColar() {
-
-    document
-        .getElementById(
-            'colar-modal'
-        )
-        .style.display =
-        'none';
-
-}
-
-
-/* =========================================================
-   DESCRIÇÃO
-   ========================================================= */
-
+function fecharModalColar() { document.getElementById('colar-modal').style.display = 'none'; }
 function salvarDescricao() {
-
-    const textarea =
-        document.getElementById(
-            'descricao-texto'
-        );
-
-    const inputHidden =
-        document.getElementById(
-            'descricao'
-        );
-
-    const display =
-        document.getElementById(
-            'descricao-display'
-        );
-
-    inputHidden.value =
-        textarea.value;
-
-    display.innerText =
-        textarea.value.trim() !== ''
-            ? textarea.value
-            : 'TOQUE PARA DIGITAR...';
-
-    display.style.color =
-        textarea.value.trim() !== ''
-            ? '#333'
-            : '#6c757d';
-
+    const textarea = document.getElementById('descricao-texto');
+    const display = document.getElementById('descricao-display');
+    document.getElementById('descricao').value = textarea.value;
+    display.innerText = textarea.value.trim() !== '' ? textarea.value : 'TOQUE PARA DIGITAR...';
+    display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
     fecharModalDescricao();
-
 }
-
-
 function limparCampoDescricao() {
-
-    document
-        .getElementById(
-            'descricao'
-        )
-        .value = '';
-
-    const display =
-        document.getElementById(
-            'descricao-display'
-        );
-
-    display.innerText =
-        'TOQUE PARA DIGITAR...';
-
-    display.style.color =
-        '#6c757d';
-
+    document.getElementById('descricao').value = '';
+    const display = document.getElementById('descricao-display');
+    display.innerText = 'TOQUE PARA DIGITAR...';
+    display.style.color = '#6c757d';
 }
-
-
-function preencherCampoDescricao(
-    texto
-) {
-
-    document
-        .getElementById(
-            'descricao'
-        )
-        .value =
-        texto || '';
-
-    const display =
-        document.getElementById(
-            'descricao-display'
-        );
-
-    display.innerText =
-        (
-            texto &&
-            texto.trim() !== ''
-        )
-            ? texto
-            : 'TOQUE PARA DIGITAR...';
-
-    display.style.color =
-        (
-            texto &&
-            texto.trim() !== ''
-        )
-            ? '#333'
-            : '#6c757d';
-
+function preencherCampoDescricao(texto) {
+    document.getElementById('descricao').value = texto || '';
+    const display = document.getElementById('descricao-display');
+    display.innerText = (texto && texto.trim() !== '') ? texto : 'TOQUE PARA DIGITAR...';
+    display.style.color = (texto && texto.trim() !== '') ? '#333' : '#6c757d';
 }
-
-
-/* =========================================================
-   OUTROS
-   ========================================================= */
-
 function verificarAreaOutros() {
-
-    const area =
-        document.getElementById(
-            'area'
-        ).value;
-
-    const campoOutros =
-        document.getElementById(
-            'area_outros'
-        );
-
-    campoOutros.style.display =
-        area === 'OUTROS'
-            ? 'block'
-            : 'none';
-
+    const area = document.getElementById('area').value;
+    document.getElementById('area_outros').style.display = area === 'OUTROS' ? 'block' : 'none';
 }
-
-
 function verificarOcorrenciaOutros() {
-
-    const ocorrencia =
-        document.getElementById(
-            'ocorrencia'
-        ).value;
-
-    const campoOutros =
-        document.getElementById(
-            'ocorrencia_outros'
-        );
-
-    campoOutros.style.display =
-        ocorrencia === 'OUTROS'
-            ? 'block'
-            : 'none';
-
+    const ocorrencia = document.getElementById('ocorrencia').value;
+    document.getElementById('ocorrencia_outros').style.display = ocorrencia === 'OUTROS' ? 'block' : 'none';
 }
-
-
-/* =========================================================
-   CÂMERA FOTO/VÍDEO
-   ========================================================= */
-
-async function iniciarCamera(
-    modo
-) {
-
+async function iniciarCamera(modo) {
     fecharModalMidia();
-
-    const modal =
-        document.getElementById(
-            'camera-modal'
-        );
-
-    const video =
-        document.getElementById(
-            'video-preview'
-        );
-
-    modal.style.display =
-        'block';
-
+    const modal = document.getElementById('camera-modal');
+    const video = document.getElementById('video-preview');
+    modal.style.display = 'block';
     if (modo === 'foto') {
-
-        document
-            .getElementById(
-                'btn-tirar-foto'
-            )
-            .style.display =
-            'block';
-
-        document
-            .getElementById(
-                'btn-iniciar-gravacao'
-            )
-            .style.display =
-            'none';
-
+        document.getElementById('btn-tirar-foto').style.display = 'block';
+        document.getElementById('btn-iniciar-gravacao').style.display = 'none';
     } else {
-
-        document
-            .getElementById(
-                'btn-tirar-foto'
-            )
-            .style.display =
-            'none';
-
-        document
-            .getElementById(
-                'btn-iniciar-gravacao'
-            )
-            .style.display =
-            'block';
-
+        document.getElementById('btn-tirar-foto').style.display = 'none';
+        document.getElementById('btn-iniciar-gravacao').style.display = 'block';
     }
-
-    document
-        .getElementById(
-            'btn-parar-gravacao'
-        )
-        .style.display =
-        'none';
-
-    document
-        .getElementById(
-            'status-gravacao'
-        )
-        .style.display =
-        'none';
-
+    document.getElementById('btn-parar-gravacao').style.display = 'none';
+    document.getElementById('status-gravacao').style.display = 'none';
     try {
-
-        streamDeVideo =
-            await navigator.mediaDevices.getUserMedia({
-
-                video: {
-                    facingMode: {
-                        ideal: 'environment'
-                    }
-                },
-
-                audio: true
-
-            });
-
-        video.srcObject =
-            streamDeVideo;
-
-        video.muted =
-            true;
-
+        streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: true });
+        video.srcObject = streamDeVideo;
+        video.muted = true;
     } catch (erro) {
-
-        alert(
-            "ERRO AO ACESSAR CÂMERA/MICROFONE: " +
-            erro
-        );
-
+        alert("ERRO AO ACESSAR CÂMERA/MICROFONE: " + erro);
         fecharCamera();
-
     }
-
 }
-
-
 function fecharCamera() {
-
-    const modal =
-        document.getElementById(
-            'camera-modal'
-        );
-
-    modal.style.display =
-        'none';
-
-    if (streamDeVideo) {
-
-        streamDeVideo
-            .getTracks()
-            .forEach(
-                track =>
-                    track.stop()
-            );
-
-        streamDeVideo = null;
-    }
-
-    if (
-        mediaRecorder &&
-        mediaRecorder.state === 'recording'
-    ) {
-
-        mediaRecorder.stop();
-
-    }
-
+    document.getElementById('camera-modal').style.display = 'none';
+    if (streamDeVideo) { streamDeVideo.getTracks().forEach(track => track.stop()); streamDeVideo = null; }
+    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
 }
-
-
-/* =========================================================
-   FOTO
-   ========================================================= */
-
 function capturarFoto() {
-
-    const video =
-        document.getElementById(
-            'video-preview'
-        );
-
-    const canvas =
-        document.getElementById(
-            'canvas'
-        );
-
-    const context =
-        canvas.getContext(
-            '2d'
-        );
-
-    canvas.width =
-        video.videoWidth || 1280;
-
-    canvas.height =
-        video.videoHeight || 720;
-
-    context.drawImage(
-        video,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    const fotoBase64 =
-        canvas.toDataURL(
-            'image/jpeg',
-            0.6
-        );
-
-    document
-        .getElementById(
-            'foto_base64'
-        )
-        .value =
-        fotoBase64;
-
-    document
-        .getElementById(
-            'video_base64'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'photo-preview'
-        )
-        .src =
-        fotoBase64;
-
-    document
-        .getElementById(
-            'photo-preview'
-        )
-        .style.display =
-        'block';
-
+    const video = document.getElementById('video-preview');
+    const canvas = document.getElementById('canvas');
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+    document.getElementById('foto_base64').value = fotoBase64;
+    document.getElementById('video_base64').value = '';
+    document.getElementById('photo-preview').src = fotoBase64;
+    document.getElementById('photo-preview').style.display = 'block';
     fecharCamera();
-
 }
-
-
-/* =========================================================
-   VÍDEO
-   ========================================================= */
-
 function iniciarGravacaoVideo() {
-
     pedacosGravados = [];
-
-    try {
-
-        mediaRecorder =
-            new MediaRecorder(
-                streamDeVideo,
-                {
-                    mimeType:
-                        'video/webm'
-                }
-            );
-
-    } catch (e) {
-
-        try {
-
-            mediaRecorder =
-                new MediaRecorder(
-                    streamDeVideo
-                );
-
-        } catch (err) {
-
-            alert(
-                "SEU NAVEGADOR NÃO SUPORTA GRAVAÇÃO."
-            );
-
-            return;
-
-        }
-
-    }
-
-    mediaRecorder.ondataavailable =
-        e => {
-
-            if (
-                e.data.size > 0
-            ) {
-
-                pedacosGravados.push(
-                    e.data
-                );
-
-            }
-
+    try { mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' }); } 
+    catch (e) { try { mediaRecorder = new MediaRecorder(streamDeVideo); } catch (err) { alert("NÃO SUPORTADO."); return; } }
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(pedacosGravados, { type: 'video/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = () => {
+            document.getElementById('video_base64').value = reader.result;
+            document.getElementById('photo-preview').src = document.getElementById('foto_base64').value;
+            document.getElementById('photo-preview').style.display = 'block';
         };
-
-    mediaRecorder.onstop =
-        () => {
-
-            const blob =
-                new Blob(
-                    pedacosGravados,
-                    {
-                        type:
-                            'video/webm'
-                    }
-                );
-
-            const reader =
-                new FileReader();
-
-            reader.readAsDataURL(
-                blob
-            );
-
-            reader.onloadend =
-                () => {
-
-                    document
-                        .getElementById(
-                            'video_base64'
-                        )
-                        .value =
-                        reader.result;
-
-                    document
-                        .getElementById(
-                            'photo-preview'
-                        )
-                        .src =
-                        document
-                            .getElementById(
-                                'foto_base64'
-                            )
-                            .value;
-
-                    document
-                        .getElementById(
-                            'photo-preview'
-                        )
-                        .style.display =
-                        'block';
-
-                };
-
-        };
-
+    };
     mediaRecorder.start();
-
-    document
-        .getElementById(
-            'btn-tirar-foto'
-        )
-        .style.display =
-        'none';
-
-    document
-        .getElementById(
-            'btn-iniciar-gravacao'
-        )
-        .style.display =
-        'none';
-
-    document
-        .getElementById(
-            'btn-parar-gravacao'
-        )
-        .style.display =
-        'block';
-
-    document
-        .getElementById(
-            'status-gravacao'
-        )
-        .innerText =
-        '🔴 GRAVANDO VÍDEO (MÁX 5S)...';
-
-    document
-        .getElementById(
-            'status-gravacao'
-        )
-        .style.display =
-        'block';
-
-    setTimeout(
-        () => {
-
-            if (
-                mediaRecorder &&
-                mediaRecorder.state ===
-                'recording'
-            ) {
-
-                pararGravacaoVideo();
-
-            }
-
-        },
-        5000
-    );
-
+    document.getElementById('btn-tirar-foto').style.display = 'none';
+    document.getElementById('btn-iniciar-gravacao').style.display = 'none';
+    document.getElementById('btn-parar-gravacao').style.display = 'block';
+    document.getElementById('status-gravacao').innerText = '🔴 GRAVANDO VÍDEO (MÁX 5S)...';
+    document.getElementById('status-gravacao').style.display = 'block';
+    setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') pararGravacaoVideo(); }, 5000);
 }
-
-
 function pararGravacaoVideo() {
-
-    if (
-        mediaRecorder &&
-        mediaRecorder.state ===
-        'recording'
-    ) {
-
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
         try {
-
-            const video =
-                document.getElementById(
-                    'video-preview'
-                );
-
-            const canvas =
-                document.getElementById(
-                    'canvas'
-                );
-
-            const context =
-                canvas.getContext(
-                    '2d'
-                );
-
-            canvas.width =
-                video.videoWidth || 1280;
-
-            canvas.height =
-                video.videoHeight || 720;
-
-            context.drawImage(
-                video,
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            document
-                .getElementById(
-                    'foto_base64'
-                )
-                .value =
-                canvas.toDataURL(
-                    'image/jpeg',
-                    0.5
-                );
-
-        } catch (e) {}
-
+            const video = document.getElementById('video-preview');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 720;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
+        } catch(e) {}
         mediaRecorder.stop();
-
     }
-
     fecharCamera();
-
 }
-
-
-/* =========================================================
-   GALERIA
-   ========================================================= */
-
 function acionarGaleria() {
-
     fecharModalMidia();
-
-    document
-        .getElementById(
-            'input-galeria'
-        )
-        .click();
-
+    document.getElementById('input-galeria').click();
 }
-
-
-function processarMidiaGaleria(
-    event
-) {
-
-    const file =
-        event.target.files[0];
-
-    if (!file) {
-        return;
+function processarMidiaGaleria(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const result = e.target.result;
+        if (file.type.startsWith('image/')) {
+            document.getElementById('foto_base64').value = result;
+            document.getElementById('video_base64').value = '';
+            document.getElementById('photo-preview').src = result;
+            document.getElementById('photo-preview').style.display = 'block';
+        } else if (file.type.startsWith('video/')) {
+            document.getElementById('video_base64').value = result;
+            extrairFrameVideo(result);
+        }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = ''; 
+}
+function extrairFrameVideo(videoDataUrl) {
+    const video = document.createElement('video');
+    video.src = videoDataUrl; video.muted = true; video.playsInline = true;
+    video.onloadeddata = () => { video.currentTime = 1; };
+    video.onseeked = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frameBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        document.getElementById('foto_base64').value = frameBase64;
+        document.getElementById('photo-preview').src = frameBase64;
+        document.getElementById('photo-preview').style.display = 'block';
+    };
+    video.onerror = () => {
+        let thumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+        document.getElementById('foto_base64').value = thumb;
+        document.getElementById('photo-preview').src = thumb;
+        document.getElementById('photo-preview').style.display = 'block';
+    };
+}
+function abrirViewerMidia(index) {
+    const reg = registros[index];
+    const modal = document.getElementById('media-viewer-modal');
+    const img = document.getElementById('viewer-img');
+    const video = document.getElementById('viewer-video');
+    if (reg.video) { 
+        video.src = reg.video; video.style.display = 'inline-block'; img.style.display = 'none'; img.src = '';
+        setTimeout(() => video.play(), 200);
+    } else if (reg.foto) { 
+        img.src = reg.foto; img.style.display = 'inline-block'; video.style.display = 'none'; video.src = ''; 
     }
-
-    const reader =
-        new FileReader();
-
-    reader.onload =
-        function(e) {
-
-            const result =
-                e.target.result;
-
-            if (
-                file.type.startsWith(
-                    'image/'
-                )
-            ) {
-
-                document
-                    .getElementById(
-                        'foto_base64'
-                    )
-                    .value =
-                    result;
-
-                document
-                    .getElementById(
-                        'video_base64'
-                    )
-                    .value = '';
-
-                document
-                    .getElementById(
-                        'photo-preview'
-                    )
-                    .src =
-                    result;
-
-                document
-                    .getElementById(
-                        'photo-preview'
-                    )
-                    .style.display =
-                    'block';
-
-            } else if (
-                file.type.startsWith(
-                    'video/'
-                )
-            ) {
-
-                document
-                    .getElementById(
-                        'video_base64'
-                    )
-                    .value =
-                    result;
-
-                extrairFrameVideo(
-                    result
-                );
-
-            }
-
-        };
-
-    reader.readAsDataURL(
-        file
-    );
-
-    event.target.value = '';
-
+    modal.style.display = 'block';
 }
-
-
-/* =========================================================
-   FRAME DO VÍDEO
-   ========================================================= */
-
-function extrairFrameVideo(
-    videoDataUrl
-) {
-
-    const video =
-        document.createElement(
-            'video'
-        );
-
-    video.src =
-        videoDataUrl;
-
-    video.muted =
-        true;
-
-    video.playsInline =
-        true;
-
-    video.onloadeddata =
-        () => {
-
-            video.currentTime =
-                1;
-
-        };
-
-    video.onseeked =
-        () => {
-
-            const canvas =
-                document.createElement(
-                    'canvas'
-                );
-
-            canvas.width =
-                video.videoWidth || 640;
-
-            canvas.height =
-                video.videoHeight || 480;
-
-            const ctx =
-                canvas.getContext(
-                    '2d'
-                );
-
-            ctx.drawImage(
-                video,
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
-
-            const frameBase64 =
-                canvas.toDataURL(
-                    'image/jpeg',
-                    0.6
-                );
-
-            document
-                .getElementById(
-                    'foto_base64'
-                )
-                .value =
-                frameBase64;
-
-            document
-                .getElementById(
-                    'photo-preview'
-                )
-                .src =
-                frameBase64;
-
-            document
-                .getElementById(
-                    'photo-preview'
-                )
-                .style.display =
-                'block';
-
-        };
-
-    video.onerror =
-        () => {
-
-            let thumb =
-                'data:image/svg+xml;base64,' +
-                'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
-
-            document
-                .getElementById(
-                    'foto_base64'
-                )
-                .value =
-                thumb;
-
-            document
-                .getElementById(
-                    'photo-preview'
-                )
-                .src =
-                thumb;
-
-            document
-                .getElementById(
-                    'photo-preview'
-                )
-                .style.display =
-                'block';
-
-        };
-
-}
-
-
-/* =========================================================
-   VISUALIZADOR
-   ========================================================= */
-
-function abrirViewerMidia(
-    index
-) {
-
-    const reg =
-        registros[index];
-
-    const modal =
-        document.getElementById(
-            'media-viewer-modal'
-        );
-
-    const img =
-        document.getElementById(
-            'viewer-img'
-        );
-
-    const video =
-        document.getElementById(
-            'viewer-video'
-        );
-
-    if (reg.video) {
-
-        video.src =
-            reg.video;
-
-        video.style.display =
-            'inline-block';
-
-        img.style.display =
-            'none';
-
-        img.src = '';
-
-        setTimeout(
-            () =>
-                video.play(),
-            200
-        );
-
-    } else if (reg.foto) {
-
-        img.src =
-            reg.foto;
-
-        img.style.display =
-            'inline-block';
-
-        video.style.display =
-            'none';
-
-        video.src = '';
-
-    }
-
-    modal.style.display =
-        'block';
-
-}
-
-
 function fecharViewerMidia() {
-
-    document
-        .getElementById(
-            'media-viewer-modal'
-        )
-        .style.display =
-        'none';
-
-    document
-        .getElementById(
-            'viewer-video'
-        )
-        .pause();
-
-    document
-        .getElementById(
-            'viewer-video'
-        )
-        .src = '';
-
+    document.getElementById('media-viewer-modal').style.display = 'none';
+    document.getElementById('viewer-video').pause();
+    document.getElementById('viewer-video').src = '';
 }
-
-
-/* =========================================================
-   AÇÕES
-   ========================================================= */
-
 function resetarBotoesAcao() {
-
-    let radios =
-        document.getElementsByName(
-            'acao'
-        );
-
-    for (
-        let i = 0;
-        i < radios.length;
-        i++
-    ) {
-
-        radios[i].checked =
-            false;
-
-    }
-
+    let radios = document.getElementsByName('acao');
+    for(let i=0; i<radios.length; i++) radios[i].checked = false;
 }
-
-
-/* =========================================================
-   SALVAR REGISTRO
-   ========================================================= */
 
 async function salvarRegistro() {
+    let auditorVal = document.getElementById('auditor').value.trim();
+    if (!auditorVal) { alert("PREENCHA O NOME DO AUDITOR!"); return; }
 
-    let auditorVal =
-        document
-            .getElementById(
-                'auditor'
-            )
-            .value
-            .trim();
+    let areaVal = document.getElementById('area').value;
+    if (areaVal === 'OUTROS') areaVal = document.getElementById('area_outros').value;
+    let ocorrenciaVal = document.getElementById('ocorrencia').value;
+    if (ocorrenciaVal === 'OUTROS') ocorrenciaVal = document.getElementById('ocorrencia_outros').value;
+    
+    if (!areaVal || !ocorrenciaVal) { alert("SELECIONE ÁREA E OCORRÊNCIA!"); return; }
 
-    if (!auditorVal) {
+    let localVal = document.getElementById('local').value.trim();
+    if (!localVal) { alert("PREENCHA O LOCAL ESPECÍFICO (EX: F40)!"); return; }
 
-        alert(
-            "PREENCHA O NOME DO AUDITOR!"
-        );
+    let acaoSelecionada = document.querySelector('input[name="acao"]:checked');
+    if (!acaoSelecionada) { alert("VOCÊ PRECISA INFORMAR A AÇÃO TOMADA!"); return; }
 
-        return;
+    let auditorUpper = auditorVal.toUpperCase();
+    let areaUpper = areaVal.toUpperCase();
+    let localUpper = localVal.toUpperCase();
+    let ocorrenciaUpper = ocorrenciaVal.toUpperCase();
+    let descUpper = document.getElementById('descricao').value.toUpperCase();
+    let interruptorUpper = document.getElementById('interruptor').value.toUpperCase().trim();
+    let acaoUpper = acaoSelecionada.value.toUpperCase();
 
-    }
-
-    let areaVal =
-        document
-            .getElementById(
-                'area'
-            )
-            .value;
-
-    if (
-        areaVal === 'OUTROS'
-    ) {
-
-        areaVal =
-            document
-                .getElementById(
-                    'area_outros'
-                )
-                .value;
-
-    }
-
-    let ocorrenciaVal =
-        document
-            .getElementById(
-                'ocorrencia'
-            )
-            .value;
-
-    if (
-        ocorrenciaVal === 'OUTROS'
-    ) {
-
-        ocorrenciaVal =
-            document
-                .getElementById(
-                    'ocorrencia_outros'
-                )
-                .value;
-
-    }
-
-    if (
-        !areaVal ||
-        !ocorrenciaVal
-    ) {
-
-        alert(
-            "SELECIONE ÁREA E OCORRÊNCIA!"
-        );
-
-        return;
-
-    }
-
-    let localVal =
-        document
-            .getElementById(
-                'local'
-            )
-            .value
-            .trim();
-
-    if (!localVal) {
-
-        alert(
-            "PREENCHA O LOCAL ESPECÍFICO (EX: F40)!"
-        );
-
-        return;
-
-    }
-
-    let acaoSelecionada =
-        document.querySelector(
-            'input[name="acao"]:checked'
-        );
-
-    if (!acaoSelecionada) {
-
-        alert(
-            "VOCÊ PRECISA INFORMAR A AÇÃO TOMADA!"
-        );
-
-        return;
-
-    }
-
-    let auditorUpper =
-        auditorVal.toUpperCase();
-
-    let areaUpper =
-        areaVal.toUpperCase();
-
-    let localUpper =
-        localVal.toUpperCase();
-
-    let ocorrenciaUpper =
-        ocorrenciaVal.toUpperCase();
-
-    let descUpper =
-        document
-            .getElementById(
-                'descricao'
-            )
-            .value
-            .toUpperCase();
-
-    let acaoUpper =
-        acaoSelecionada.value
-            .toUpperCase();
-
-    let agora =
-        new Date();
-
-    let dataRegistro =
-        agora.toLocaleDateString(
-            'pt-BR'
-        );
-
-    let horaRegistro =
-        agora.toLocaleTimeString(
-            'pt-BR'
-        );
-
-    let ehEdicao =
-        indiceEdicao !== null;
+    let dataRegistro = new Date().toLocaleDateString('pt-BR');
+    let horaRegistro = new Date().toLocaleTimeString('pt-BR');
+    let ehEdicao = (indiceEdicao !== null);
 
     let duplicado = false;
-
-    for (
-        let i = 0;
-        i < registros.length;
-        i++
-    ) {
-
-        if (
-            ehEdicao &&
-            i === indiceEdicao
-        ) {
-            continue;
-        }
-
-        let r =
-            registros[i];
-
-        if (
-            r.area === areaUpper &&
-            r.local === localUpper &&
-            r.ocorrencia === ocorrenciaUpper
-        ) {
-
+    for (let i = 0; i < registros.length; i++) {
+        if (ehEdicao && i === indiceEdicao) continue; 
+        let r = registros[i];
+        if (r.area === areaUpper && r.local === localUpper && r.ocorrencia === ocorrenciaUpper) {
             duplicado = true;
-
             break;
-
         }
-
     }
 
     if (duplicado) {
-
-        let confirma =
-            confirm(
-                "VOCÊ JÁ EFETUOU ESSE REGISTRO.\n" +
-                "DESEJA ADICIONAR NOVAMENTE?"
-            );
-
-        if (!confirma) {
-            return;
-        }
-
+        let confirma = confirm("VOCÊ JÁ EFETUOU ESSE REGISTRO.\nDESEJA ADICIONAR NOVAMENTE?");
+        if (!confirma) return; 
     }
 
     if (ehEdicao) {
-
-        dataRegistro =
-            registros[indiceEdicao].data ||
-            dataRegistro;
-
-        horaRegistro =
-            registros[indiceEdicao].hora ||
-            horaRegistro;
-
+        dataRegistro = registros[indiceEdicao].data || dataRegistro;
+        horaRegistro = registros[indiceEdicao].hora || horaRegistro;
     }
 
-    const novoReg = {
-
-        data:
-            dataRegistro,
-
-        hora:
-            horaRegistro,
-
-        auditor:
-            auditorUpper,
-
-        area:
-            areaUpper,
-
-        local:
-            localUpper,
-
-        ocorrencia:
-            ocorrenciaUpper,
-
-        descricao:
-            descUpper,
-
-        acao:
-            acaoUpper,
-
-        foto:
-            document
-                .getElementById(
-                    'foto_base64'
-                )
-                .value,
-
-        video:
-            document
-                .getElementById(
-                    'video_base64'
-                )
-                .value
-
+    const novoReg = { 
+        data: dataRegistro, 
+        hora: horaRegistro, 
+        auditor: auditorUpper,
+        area: areaUpper, 
+        local: localUpper, 
+        ocorrencia: ocorrenciaUpper, 
+        interruptor: interruptorUpper,
+        descricao: descUpper, 
+        acao: acaoUpper,
+        foto: document.getElementById('foto_base64').value, 
+        video: document.getElementById('video_base64').value 
     };
 
-    if (ehEdicao) {
-
-        registros[indiceEdicao] =
-            novoReg;
-
-        cancelarEdicao();
-
-    } else {
-
-        registros.push(
-            novoReg
-        );
-
-    }
-
-    document
-        .getElementById(
-            'local'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'ocorrencia'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'ocorrencia_outros'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'area_outros'
-        )
-        .value = '';
-
+    if (ehEdicao) { registros[indiceEdicao] = novoReg; cancelarEdicao(); } 
+    else { registros.push(novoReg); }
+    
+    document.getElementById('local').value = '';
+    document.getElementById('ocorrencia').value = '';
+    document.getElementById('interruptor').value = '';
     limparCampoDescricao();
-
     resetarBotoesAcao();
-
-    document
-        .getElementById(
-            'foto_base64'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'video_base64'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'photo-preview'
-        )
-        .style.display =
-        'none';
-
-    await localforage.setItem(
-        'registros_caca_desperdicios',
-        registros
-    );
-
+    document.getElementById('foto_base64').value = '';
+    document.getElementById('video_base64').value = '';
+    document.getElementById('photo-preview').style.display = 'none';
+    
+    await localforage.setItem('registros_caca_desperdicios', registros);
     atualizarLista();
-
-    if (!ehEdicao) {
-
-        document
-            .querySelector(
-                '.center-section'
-            )
-            .scrollTop =
-            document
-                .querySelector(
-                    '.center-section'
-                )
-                .scrollHeight;
-
-    }
-
+    
+    if (!ehEdicao) document.querySelector('.center-section').scrollTop = document.querySelector('.center-section').scrollHeight;
 }
 
-
-/* =========================================================
-   EDITAR
-   ========================================================= */
-
-function editarRegistro(
-    index
-) {
-
-    const reg =
-        registros[index];
-
-    indiceEdicao =
-        index;
-
-    let selectArea =
-        document.getElementById(
-            'area'
-        );
-
-    let existeArea =
-        Array.from(
-            selectArea.options
-        ).some(
-            o =>
-                o.value.toUpperCase() ===
-                reg.area.toUpperCase()
-        );
-
+function editarRegistro(index) {
+    const reg = registros[index];
+    indiceEdicao = index;
+    
+    let selectArea = document.getElementById('area');
+    let existeArea = Array.from(selectArea.options).some(o => o.value.toUpperCase() === reg.area.toUpperCase());
     if (existeArea) {
-
-        Array.from(
-            selectArea.options
-        ).forEach(
-            o => {
-
-                if (
-                    o.value.toUpperCase() ===
-                    reg.area.toUpperCase()
-                ) {
-
-                    selectArea.value =
-                        o.value;
-
-                }
-
-            }
-        );
-
-        document
-            .getElementById(
-                'area_outros'
-            )
-            .style.display =
-            'none';
-
+        Array.from(selectArea.options).forEach(o => { if (o.value.toUpperCase() === reg.area.toUpperCase()) selectArea.value = o.value; });
+        document.getElementById('area_outros').style.display = 'none';
     } else {
-
-        selectArea.value =
-            'OUTROS';
-
-        document
-            .getElementById(
-                'area_outros'
-            )
-            .value =
-            reg.area;
-
-        document
-            .getElementById(
-                'area_outros'
-            )
-            .style.display =
-            'block';
-
+        selectArea.value = 'OUTROS';
+        document.getElementById('area_outros').value = reg.area;
+        document.getElementById('area_outros').style.display = 'block';
     }
 
-    document
-        .getElementById(
-            'local'
-        )
-        .value =
-        reg.local;
+    document.getElementById('local').value = reg.local;
 
-    let selectOcorrencia =
-        document.getElementById(
-            'ocorrencia'
-        );
-
-    let existeOcorrencia =
-        Array.from(
-            selectOcorrencia.options
-        ).some(
-            o =>
-                o.value.toUpperCase() ===
-                reg.ocorrencia.toUpperCase()
-        );
-
+    let selectOcorrencia = document.getElementById('ocorrencia');
+    let existeOcorrencia = Array.from(selectOcorrencia.options).some(o => o.value.toUpperCase() === reg.ocorrencia.toUpperCase());
     if (existeOcorrencia) {
-
-        Array.from(
-            selectOcorrencia.options
-        ).forEach(
-            o => {
-
-                if (
-                    o.value.toUpperCase() ===
-                    reg.ocorrencia.toUpperCase()
-                ) {
-
-                    selectOcorrencia.value =
-                        o.value;
-
-                }
-
-            }
-        );
-
-        document
-            .getElementById(
-                'ocorrencia_outros'
-            )
-            .style.display =
-            'none';
-
+        Array.from(selectOcorrencia.options).forEach(o => { if (o.value.toUpperCase() === reg.ocorrencia.toUpperCase()) selectOcorrencia.value = o.value; });
+        document.getElementById('ocorrencia_outros').style.display = 'none';
     } else {
-
-        selectOcorrencia.value =
-            'OUTROS';
-
-        document
-            .getElementById(
-                'ocorrencia_outros'
-            )
-            .value =
-            reg.ocorrencia;
-
-        document
-            .getElementById(
-                'ocorrencia_outros'
-            )
-            .style.display =
-            'block';
-
+        selectOcorrencia.value = 'OUTROS';
+        document.getElementById('ocorrencia_outros').value = reg.ocorrencia;
+        document.getElementById('ocorrencia_outros').style.display = 'block';
     }
 
-    preencherCampoDescricao(
-        reg.descricao
-    );
+    document.getElementById('interruptor').value = reg.interruptor || '';
+    preencherCampoDescricao(reg.descricao);
+    
+    let radios = document.getElementsByName('acao');
+    for(let r of radios) { r.checked = (r.value.toUpperCase() === (reg.acao || '').toUpperCase()); }
 
-    let radios =
-        document.getElementsByName(
-            'acao'
-        );
-
-    for (
-        let r of radios
-    ) {
-
-        r.checked =
-            r.value.toUpperCase() ===
-            (reg.acao || '')
-                .toUpperCase();
-
-    }
-
-    document
-        .getElementById(
-            'foto_base64'
-        )
-        .value =
-        reg.foto || '';
-
-    document
-        .getElementById(
-            'video_base64'
-        )
-        .value =
-        reg.video || '';
-
-    const previewFoto =
-        document.getElementById(
-            'photo-preview'
-        );
-
-    if (reg.foto) {
-
-        previewFoto.src =
-            reg.foto;
-
-        previewFoto.style.display =
-            'block';
-
-    } else {
-
-        previewFoto.style.display =
-            'none';
-
-    }
-
-    const btnSalvar =
-        document.getElementById(
-            'btn-salvar'
-        );
-
-    btnSalvar.innerText =
-        "💾 ATUALIZAR";
-
-    document
-        .getElementById(
-            'btn-cancelar-edicao'
-        )
-        .style.display =
-        'block';
-
-    document
-        .querySelector(
-            '.center-section'
-        )
-        .style.display =
-        'none';
-
-    document
-        .querySelector(
-            '.bottom-section'
-        )
-        .style.display =
-        'none';
-
+    document.getElementById('foto_base64').value = reg.foto || '';
+    document.getElementById('video_base64').value = reg.video || '';
+    
+    const previewFoto = document.getElementById('photo-preview');
+    if (reg.foto) { previewFoto.src = reg.foto; previewFoto.style.display = 'block'; } 
+    else { previewFoto.style.display = 'none'; }
+    
+    const btnSalvar = document.getElementById('btn-salvar');
+    btnSalvar.innerText = "💾 ATUALIZAR";
+    document.getElementById('btn-cancelar-edicao').style.display = 'block';
+    
+    document.querySelector('.center-section').style.display = 'none';
+    document.querySelector('.bottom-section').style.display = 'none';
 }
-
-
-/* =========================================================
-   CANCELAR EDIÇÃO
-   ========================================================= */
 
 function cancelarEdicao() {
-
-    indiceEdicao =
-        null;
-
-    document
-        .getElementById(
-            'local'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'ocorrencia'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'ocorrencia_outros'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'area_outros'
-        )
-        .value = '';
-
+    indiceEdicao = null;
+    document.getElementById('local').value = '';
+    document.getElementById('ocorrencia').value = '';
+    document.getElementById('interruptor').value = '';
     limparCampoDescricao();
-
     resetarBotoesAcao();
+    document.getElementById('foto_base64').value = '';
+    document.getElementById('video_base64').value = '';
+    document.getElementById('photo-preview').style.display = 'none';
+    const btnSalvar = document.getElementById('btn-salvar');
+    btnSalvar.innerText = "➕ ADICIONAR REGISTRO";
+    document.getElementById('btn-cancelar-edicao').style.display = 'none';
 
-    document
-        .getElementById(
-            'foto_base64'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'video_base64'
-        )
-        .value = '';
-
-    document
-        .getElementById(
-            'photo-preview'
-        )
-        .style.display =
-        'none';
-
-    const btnSalvar =
-        document.getElementById(
-            'btn-salvar'
-        );
-
-    btnSalvar.innerText =
-        "➕ ADICIONAR";
-
-    document
-        .getElementById(
-            'btn-cancelar-edicao'
-        )
-        .style.display =
-        'none';
-
-    document
-        .querySelector(
-            '.center-section'
-        )
-        .style.display =
-        '';
-
-    document
-        .querySelector(
-            '.bottom-section'
-        )
-        .style.display =
-        '';
-
+    document.querySelector('.center-section').style.display = '';
+    document.querySelector('.bottom-section').style.display = '';
 }
 
-
-/* =========================================================
-   EXCLUIR
-   ========================================================= */
-
-async function excluirRegistro(
-    index
-) {
-
-    if (
-        confirm(
-            "EXCLUIR ITEM?"
-        )
-    ) {
-
-        registros.splice(
-            index,
-            1
-        );
-
-        await localforage.setItem(
-            'registros_caca_desperdicios',
-            registros
-        );
-
+async function excluirRegistro(index) {
+    if (confirm("EXCLUIR ITEM?")) {
+        registros.splice(index, 1);
+        await localforage.setItem('registros_caca_desperdicios', registros);
         atualizarLista();
-
     }
-
 }
-
 
 async function limparTudo() {
-
-    if (
-        confirm(
-            "APAGAR TUDO?"
-        )
-    ) {
-
+    if (confirm("APAGAR TUDO?")) {
         registros = [];
-
-        await localforage.setItem(
-            'registros_caca_desperdicios',
-            registros
-        );
-
+        await localforage.setItem('registros_caca_desperdicios', registros);
         cancelarEdicao();
-
         atualizarLista();
-
     }
-
 }
-
-
-/* =========================================================
-   LISTA
-   ========================================================= */
 
 function atualizarLista() {
-
-    const lista =
-        document.getElementById(
-            'lista-registros'
-        );
-
-    document
-        .getElementById(
-            'contador'
-        )
-        .innerText =
-        registros.length;
-
+    const lista = document.getElementById('lista-registros');
+    document.getElementById('contador').innerText = registros.length;
     lista.innerHTML = '';
+    registros.forEach((reg, index) => {
+        const item = document.createElement('div');
+        item.className = 'registro-item';
+        let numFormat = index + 1;
+        let htmlMidiaIcon = '';
+        
+        if (reg.video) {
+            let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+'; 
+            htmlMidiaIcon = `<div class="video-thumbnail-container" onclick="abrirViewerMidia(${index})" title="VER VÍDEO"><img src="${thumb}"><div class="play-icon">▶</div></div>`;
+        } else if (reg.foto) {
+            htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="VER FOTO">`;
+        }
 
-    registros.forEach(
-        (reg, index) => {
+        let interruptorHtml = reg.interruptor ? `<br><span style="color:#6f42c1; font-size:11px; font-weight:bold;">📍 CHAVE: ${reg.interruptor}</span>` : '';
 
-            const item =
-                document.createElement(
-                    'div'
-                );
-
-            item.className =
-                'registro-item';
-
-            let numFormat =
-                index + 1;
-
-            let htmlMidiaIcon =
-                '';
-
-            if (reg.video) {
-
-                let thumb =
-                    reg.foto ||
-                    'data:image/svg+xml;base64,' +
-                    'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
-
-                htmlMidiaIcon = `
-
-                    <div
-                        class="video-thumbnail-container"
-                        onclick="abrirViewerMidia(${index})"
-                        title="VER VÍDEO"
-                    >
-
-                        <img src="${thumb}">
-
-                        <div class="play-icon">
-                            ▶
-                        </div>
-
-                    </div>
-
-                `;
-
-            } else if (reg.foto) {
-
-                htmlMidiaIcon = `
-
-                    <img
-                        src="${reg.foto}"
-                        class="registro-miniatura"
-                        onclick="abrirViewerMidia(${index})"
-                        title="VER FOTO"
-                    >
-
-                `;
-
-            }
-
-            item.innerHTML = `
-
-                <div class="registro-conteudo">
-
-                    <div class="registro-texto">
-
-                        <strong>
-                            ${numFormat}. ${reg.area}
-                        </strong>
-
-                        ${
-                            reg.local
-                                ? '- ' + reg.local
-                                : ''
-                        }
-
-                        <br>
-
-                        <span
-                            style="
-                                color:var(--primary);
-                                font-size:13px;
-                                font-weight:bold;
-                            "
-                        >
-                            ${reg.ocorrencia || ''}
-                        </span>
-
-                        <br>
-
-                        <span
-                            style="
-                                color:#28a745;
-                                font-size:11px;
-                                font-weight:bold;
-                            "
-                        >
-                            AÇÃO:
-                            ${
-                                reg.acao ||
-                                'NÃO INFORMADA'
-                            }
-                        </span>
-
-                    </div>
-
-                    ${htmlMidiaIcon}
-
+        item.innerHTML = `
+            <div class="registro-conteudo">
+                <div class="registro-texto">
+                    <strong>${numFormat}. ${reg.area}</strong> ${reg.local ? '- ' + reg.local : ''} ${interruptorHtml} <br>
+                    <span style="color:var(--primary); font-size:13px; font-weight:bold;">${reg.ocorrencia || ''}</span><br>
+                    <span style="color:#28a745; font-size:11px; font-weight:bold;">AÇÃO: ${reg.acao || 'NÃO INFORMADA'}</span>
                 </div>
-
-                <div class="acoes-item">
-
-                    <button
-                        class="btn-warning"
-                        onclick="editarRegistro(${index})"
-                    >
-                        ✏️ EDITAR
-                    </button>
-
-                    <button
-                        class="btn-danger"
-                        onclick="excluirRegistro(${index})"
-                    >
-                        🗑 EXCLUIR
-                    </button>
-
-                </div>
-
-            `;
-
-            lista.appendChild(
-                item
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   NOME DO ARQUIVO
-   ========================================================= */
-
-function solicitarNomeArquivo(
-    extensao
-) {
-
-    let auditorSalvo =
-        localStorage.getItem(
-            'auditor_nome'
-        ) || "";
-
-    let nome = "";
-
-    while (
-        !nome ||
-        nome.trim() === ""
-    ) {
-
-        nome =
-            prompt(
-                `CONFIRME O NOME PARA EXPORTAR O ARQUIVO ${extensao}:`,
-                auditorSalvo
-            );
-
-        if (nome === null) {
-            return null;
-        }
-
-        if (
-            nome.trim() === ""
-        ) {
-
-            alert(
-                "⚠️ VOCÊ PRECISA DIGITAR UM NOME PARA CONTINUAR!"
-            );
-
-        }
-
-    }
-
-    nome =
-        nome.toUpperCase();
-
-    const data =
-        new Date();
-
-    const dd =
-        String(
-            data.getDate()
-        ).padStart(
-            2,
-            '0'
-        );
-
-    const mm =
-        String(
-            data.getMonth() + 1
-        ).padStart(
-            2,
-            '0'
-        );
-
-    const aa =
-        String(
-            data.getFullYear()
-        ).slice(-2);
-
-    const hh =
-        String(
-            data.getHours()
-        ).padStart(
-            2,
-            '0'
-        );
-
-    const min =
-        String(
-            data.getMinutes()
-        ).padStart(
-            2,
-            '0'
-        );
-
-    return (
-        `${nome.trim()}_${dd}${mm}${aa}_${hh}${min}`
-    );
-
-}
-
-
-/* =========================================================
-   EXPORTAÇÃO
-   ========================================================= */
-
-function acionarExportar(
-    tipo
-) {
-
-    if (
-        registros.length === 0
-    ) {
-
-        alert(
-            "NENHUM DADO PARA EXPORTAR."
-        );
-
-        return;
-
-    }
-
-    const nomeBase =
-        solicitarNomeArquivo(
-            tipo
-        );
-
-    if (!nomeBase) {
-        return;
-    }
-
-    fecharModalExportar();
-
-    if (
-        tipo === 'XLSX'
-    ) {
-
-        exportarXLSX(
-            nomeBase
-        );
-
-    } else if (
-        tipo === 'PPTX'
-    ) {
-
-        exportarPPTX(
-            nomeBase
-        );
-
-    } else if (
-        tipo === 'JSON'
-    ) {
-
-        exportarJSON(
-            nomeBase
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   XLSX
-   ========================================================= */
-
-function exportarXLSX(
-    nomeBase
-) {
-
-    let nomeArquivo =
-        nomeBase + '.xlsx';
-
-    let dadosExcel =
-        registros.map(
-            (r, i) => {
-
-                let tipoMidia =
-                    r.video
-                        ? "VÍDEO"
-                        : (
-                            r.foto
-                                ? "FOTO"
-                                : "NÃO TEM"
-                        );
-
-                return {
-
-                    "ITEM":
-                        i + 1,
-
-                    "DATA":
-                        r.data || "",
-
-                    "HORA":
-                        r.hora || "",
-
-                    "AUDITOR":
-                        r.auditor || "",
-
-                    "ÁREA":
-                        r.area || "",
-
-                    "LOCAL":
-                        r.local || "",
-
-                    "OCORRÊNCIA":
-                        r.ocorrencia || "",
-
-                    "DESCRIÇÃO":
-                        (
-                            r.descricao || ""
-                        ).replace(
-                            /(\r\n|\n|\r)/gm,
-                            " "
-                        ),
-
-                    "AÇÃO TOMADA":
-                        r.acao || "",
-
-                    "MÍDIA":
-                        tipoMidia
-
-                };
-
-            }
-        );
-
-    const worksheet =
-        XLSX.utils.json_to_sheet(
-            dadosExcel
-        );
-
-    const workbook =
-        XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(
-        workbook,
-        worksheet,
-        "Auditoria"
-    );
-
-    XLSX.writeFile(
-        workbook,
-        nomeArquivo
-    );
-
-}
-
-
-/* =========================================================
-   POWERPOINT
-   ========================================================= */
-
-function exportarPPTX(
-    nomeBase
-) {
-
-    let nomeArquivo =
-        nomeBase + '.pptx';
-
-    let pptx =
-        new PptxGenJS();
-
-    function getISOWeek(d) {
-
-        let t =
-            new Date(d);
-
-        t.setHours(
-            0,
-            0,
-            0,
-            0
-        );
-
-        t.setDate(
-            t.getDate() +
-            4 -
-            (
-                t.getDay() || 7
-            )
-        );
-
-        return Math.ceil(
-            (
-                (
-                    t -
-                    new Date(
-                        t.getFullYear(),
-                        0,
-                        1
-                    )
-                ) /
-                8.64e7 +
-                1
-            ) /
-            7
-        );
-
-    }
-
-    let kw =
-        getISOWeek(
-            new Date()
-        );
-
-    let slideAtual;
-
-    registros.forEach(
-        (reg, index) => {
-
-            if (
-                index % 4 === 0
-            ) {
-
-                slideAtual =
-                    pptx.addSlide();
-
-                slideAtual.addText(
-                    `RONDA KW ${kw} - DESPERDÍCIOS UTILITIES`,
-                    {
-                        x: 0.3,
-                        y: 0.2,
-                        w: 9,
-                        h: 0.4,
-                        fontSize: 24,
-                        bold: true
-                    }
-                );
-
-            }
-
-            let yBase =
-                1.05 +
-                (
-                    index % 4
-                ) *
-                1.12;
-
-            let textX =
-                0.3;
-
-            let textW =
-                7.0;
-
-            let areaUpper =
-                reg.area || "";
-
-            let localUpper =
-                reg.local || "";
-
-            let ocorrenciaUpper =
-                reg.ocorrencia ||
-                "NÃO CLASSIFICADA";
-
-            let descUpper =
-                reg.descricao || "";
-
-            let acaoUpper =
-                reg.acao ||
-                "NÃO INFORMADA";
-
-            let auditorUpper =
-                reg.auditor ||
-                "DESCONHECIDO";
-
-            let titulo =
-                localUpper
-                    ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}`
-                    : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
-
-            let displayDataHora =
-                reg.data || '';
-
-            if (
-                reg.hora &&
-                !displayDataHora.includes(
-                    reg.hora
-                )
-            ) {
-
-                displayDataHora +=
-                    ` ÀS ${reg.hora}`;
-
-            }
-
-            slideAtual.addText(
-                titulo,
-                {
-                    x: textX,
-                    y: yBase,
-                    w: textW,
-                    h: 0.25,
-                    fontSize: 14,
-                    bold: true
-                }
-            );
-
-            slideAtual.addText(
-                "OCORRÊNCIA: " +
-                ocorrenciaUpper,
-                {
-                    x: textX,
-                    y: yBase + 0.22,
-                    w: textW,
-                    h: 0.2,
-                    fontSize: 12,
-                    bold: true,
-                    color: '0056b3'
-                }
-            );
-
-            if (descUpper) {
-
-                slideAtual.addText(
-                    "DETALHE: " +
-                    descUpper,
-                    {
-                        x: textX,
-                        y: yBase + 0.40,
-                        w: textW,
-                        h: 0.2,
-                        fontSize: 11,
-                        color: '666666'
-                    }
-                );
-
-            }
-
-            slideAtual.addText(
-                "AÇÃO: " +
-                acaoUpper,
-                {
-                    x: textX,
-                    y: yBase + 0.58,
-                    w: textW,
-                    h: 0.2,
-                    fontSize: 11,
-                    bold: true,
-                    color: '28a745'
-                }
-            );
-
-            slideAtual.addText(
-                "REGISTRADO POR " +
-                auditorUpper +
-                " EM: " +
-                displayDataHora,
-                {
-                    x: textX,
-                    y: yBase + 0.76,
-                    w: textW,
-                    h: 0.2,
-                    fontSize: 9,
-                    italic: true
-                }
-            );
-
-            if (reg.video) {
-
-                let mediaOpts = {
-
-                    type: 'video',
-
-                    data:
-                        reg.video,
-
-                    x: 7.5,
-
-                    y: yBase,
-
-                    w: 1.8,
-
-                    h: 0.85
-
-                };
-
-                if (reg.foto) {
-                    mediaOpts.cover =
-                        reg.foto;
-                }
-
-                try {
-
-                    slideAtual.addMedia(
-                        mediaOpts
-                    );
-
-                } catch(e) {
-
-                    if (reg.foto) {
-
-                        slideAtual.addImage({
-
-                            data:
-                                reg.foto,
-
-                            x: 7.5,
-
-                            y: yBase,
-
-                            w: 1.8,
-
-                            h: 0.85,
-
-                            sizing: {
-                                type:
-                                    'contain'
-                            }
-
-                        });
-
-                    }
-
-                }
-
-                slideAtual.addText(
-                    "▶ VÍDEO ANEXADO",
-                    {
-                        x: 7.5,
-                        y:
-                            yBase +
-                            0.85,
-                        w: 1.8,
-                        h: 0.15,
-                        fontSize: 9,
-                        bold: true,
-                        color: 'dc3545',
-                        align: 'center'
-                    }
-                );
-
-            } else if (reg.foto) {
-
-                slideAtual.addImage({
-
-                    data:
-                        reg.foto,
-
-                    x: 7.5,
-
-                    y: yBase,
-
-                    w: 1.8,
-
-                    h: 1.0,
-
-                    sizing: {
-                        type:
-                            'contain'
-                    }
-
-                });
-
-            }
-
-            if (
-                index % 4 < 3
-            ) {
-
-                slideAtual.addShape(
-                    pptx.ShapeType.line,
-                    {
-                        x: 0.3,
-                        y:
-                            yBase +
-                            1.05,
-                        w: 9,
-                        h: 0,
-                        line: {
-                            color:
-                                'E0E0E0',
-                            width:
-                                1
-                        }
-                    }
-                );
-
-            }
-
-        }
-    );
-
-    pptx.writeFile({
-        fileName:
-            nomeArquivo
+                ${htmlMidiaIcon}
+            </div>
+            <div class="acoes-item">
+                <button class="btn-warning" onclick="editarRegistro(${index})">✏️ EDITAR</button>
+                <button class="btn-danger" onclick="excluirRegistro(${index})">🗑 EXCLUIR</button>
+            </div>
+        `;
+        lista.appendChild(item);
     });
-
 }
 
+function solicitarNomeArquivo(extensao) {
+    let auditorSalvo = localStorage.getItem('auditor_nome') || "";
+    let nome = "";
+    while (!nome || nome.trim() === "") {
+        nome = prompt(`CONFIRME O NOME PARA EXPORTAR O ARQUIVO ${extensao}:`, auditorSalvo);
+        if (nome === null) return null; 
+        if (nome.trim() === "") alert("⚠️ VOCÊ PRECISA DIGITAR UM NOME PARA CONTINUAR!");
+    }
+    nome = nome.toUpperCase(); 
+    const data = new Date();
+    const dd = String(data.getDate()).padStart(2, '0');
+    const mm = String(data.getMonth() + 1).padStart(2, '0');
+    const aa = String(data.getFullYear()).slice(-2); 
+    const hh = String(data.getHours()).padStart(2, '0');
+    const min = String(data.getMinutes()).padStart(2, '0');
+    return `${nome.trim()}_${dd}${mm}${aa}_${hh}${min}`;
+}
 
-/* =========================================================
-   JSON
-   ========================================================= */
+function acionarExportar(tipo) {
+    if (registros.length === 0) { alert("NENHUM DADO PARA EXPORTAR."); return; }
+    const nomeBase = solicitarNomeArquivo(tipo);
+    if (!nomeBase) return; 
+    fecharModalExportar();
+    if (tipo === 'XLSX') exportarXLSX(nomeBase);
+    else if (tipo === 'PPTX') exportarPPTX(nomeBase);
+    else if (tipo === 'JSON') exportarJSON(nomeBase);
+}
 
-function exportarJSON(
-    nomeBase
-) {
+function exportarXLSX(nomeBase) {
+    let nomeArquivo = nomeBase + '.xlsx';
+    let dadosExcel = registros.map((r, i) => {
+        let tipoMidia = r.video ? "VÍDEO" : (r.foto ? "FOTO" : "NÃO TEM");
+        return {
+            "ITEM": i + 1,
+            "DATA": r.data || "",
+            "HORA": r.hora || "",
+            "AUDITOR": r.auditor || "",
+            "ÁREA": r.area || "",
+            "LOCAL": r.local || "",
+            "INTERRUPTOR": r.interruptor || "",
+            "OCORRÊNCIA": r.ocorrencia || "",
+            "DESCRIÇÃO": (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " "),
+            "AÇÃO TOMADA": r.acao || "",
+            "MÍDIA": tipoMidia
+        };
+    });
+    const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoria");
+    XLSX.writeFile(workbook, nomeArquivo);
+}
 
-    let nomeArquivo =
-        nomeBase + '.json';
+function exportarPPTX(nomeBase) {
+    let nomeArquivo = nomeBase + '.pptx';
+    let pptx = new PptxGenJS();
+    function getISOWeek(d) {
+        let t = new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()+4-(t.getDay()||7));
+        return Math.ceil((((t-new Date(t.getFullYear(),0,1))/8.64e7)+1)/7);
+    }
+    let kw = getISOWeek(new Date());
+    
+    let slideAtual;
+    registros.forEach((reg, index) => {
+        if (index % 4 === 0) {
+            slideAtual = pptx.addSlide();
+            slideAtual.addText(`RONDA KW ${kw} - DESPERDÍCIOS UTILITIES`, { x: 0.3, y: 0.2, w: 9, h: 0.4, fontSize: 24, bold: true });
+        }
+        
+        let yBase = 1.05 + ((index % 4) * 1.12);
+        let textX = 0.3; let textW = 7.0; 
+        
+        let areaUpper = reg.area || "";
+        let localUpper = reg.local || "";
+        let ocorrenciaUpper = reg.ocorrencia || "NÃO CLASSIFICADA";
+        let descUpper = reg.descricao || "";
+        
+        if(reg.interruptor) {
+            descUpper = descUpper ? `CHAVE: ${reg.interruptor} | ${descUpper}` : `CHAVE: ${reg.interruptor}`;
+        }
+        
+        let acaoUpper = reg.acao || "NÃO INFORMADA";
+        let auditorUpper = reg.auditor || "DESCONHECIDO";
 
-    const blob =
-        new Blob(
-            [
-                JSON.stringify(
-                    registros,
-                    null,
-                    2
-                )
-            ],
-            {
-                type:
-                    "application/json"
-            }
-        );
+        let titulo = localUpper ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}` : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
+        let displayDataHora = reg.data || '';
+        if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` ÀS ${reg.hora}`;
 
-    const link =
-        document.createElement(
-            "a"
-        );
+        slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true });
+        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
+        if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 11, color: '666666' });
+        slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 11, bold: true, color: '28a745' });
+        slideAtual.addText("REGISTRADO POR " + auditorUpper + " EM: " + displayDataHora, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 9, italic: true });
 
-    link.href =
-        URL.createObjectURL(
-            blob
-        );
+        if (reg.video) {
+            let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
+            if (reg.foto) mediaOpts.cover = reg.foto;
+            try { slideAtual.addMedia(mediaOpts); } 
+            catch(e) { if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain' } }); }
+            slideAtual.addText("▶ VÍDEO ANEXADO", { x: 7.5, y: yBase + 0.85, w: 1.8, h: 0.15, fontSize: 9, bold: true, color: 'dc3545', align: 'center' });
+        } else if (reg.foto) {
+            slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
+        }
+        
+        if (index % 4 < 3) slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9, h: 0, line: { color: 'E0E0E0', width: 1 } });
+    });
+    pptx.writeFile({ fileName: nomeArquivo });
+}
 
-    link.download =
-        nomeArquivo;
-
+function exportarJSON(nomeBase) {
+    let nomeArquivo = nomeBase + '.json';
+    const blob = new Blob([JSON.stringify(registros, null, 2)], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = nomeArquivo;
     link.click();
-
 }
-
-
-/* =========================================================
-   COPIAR JSON
-   ========================================================= */
 
 function copiarJSON() {
-
-    if (
-        registros.length === 0
-    ) {
-
-        alert(
-            "NENHUM DADO PARA COPIAR."
-        );
-
-        return;
-
-    }
-
-    const jsonString =
-        JSON.stringify(
-            registros,
-            null,
-            2
-        );
-
-    navigator.clipboard
-        .writeText(
-            jsonString
-        )
-        .then(
-            () => {
-
-                alert(
-                    "✅ DADOS COPIADOS COM SUCESSO!\n\n" +
-                    "AGORA É SÓ DAR CTRL+V (COLAR) ONDE DESEJAR."
-                );
-
-            }
-        )
-        .catch(
-            err => {
-
-                alert(
-                    "ERRO AO COPIAR. SEU NAVEGADOR PODE ESTAR BLOQUEANDO.\n" +
-                    "ERRO: " +
-                    err
-                );
-
-            }
-        );
-
+    if (registros.length === 0) { alert("NENHUM DADO PARA COPIAR."); return; }
+    const jsonString = JSON.stringify(registros, null, 2);
+    navigator.clipboard.writeText(jsonString).then(() => {
+        alert("✅ DADOS COPIADOS COM SUCESSO!\n\nAGORA É SÓ DAR CTRL+V (COLAR) ONDE DESEJAR.");
+    }).catch(err => { alert("ERRO AO COPIAR.\nERRO: " + err); });
     fecharModalExportar();
-
 }
 
-
-/* =========================================================
-   IMPORTAR JSON
-   ========================================================= */
-
-function acionarImportarJSON() {
-
+function acionarImportarJSON() { 
     fecharModalImportar();
-
-    document
-        .getElementById(
-            'input-json'
-        )
-        .click();
-
+    document.getElementById('input-json').click(); 
 }
-
 
 async function importarJSON(e) {
-
-    const files =
-        e.target.files;
-
-    if (
-        !files ||
-        files.length === 0
-    ) {
-        return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const dados = JSON.parse(event.target.result);
+                    if (Array.isArray(dados)) {
+                        const dadosFormatados = dados.map(reg => ({
+                            ...reg,
+                            auditor: (reg.auditor || "").toUpperCase(),
+                            area: (reg.area || "").toUpperCase(),
+                            local: (reg.local || "").toUpperCase(),
+                            interruptor: (reg.interruptor || "").toUpperCase(),
+                            ocorrencia: (reg.ocorrencia || "").toUpperCase(),
+                            descricao: (reg.descricao || "").toUpperCase(),
+                            acao: (reg.acao || "").toUpperCase()
+                        }));
+                        registros = registros.concat(dadosFormatados);
+                    }
+                } catch (err) { alert("ERRO NO ARQUIVO: " + file.name); }
+                resolve();
+            };
+            reader.readAsText(file);
+        });
     }
-
-    for (
-        let i = 0;
-        i < files.length;
-        i++
-    ) {
-
-        const file =
-            files[i];
-
-        await new Promise(
-            (resolve) => {
-
-                const reader =
-                    new FileReader();
-
-                reader.onload =
-                    function(event) {
-
-                        try {
-
-                            const dados =
-                                JSON.parse(
-                                    event.target.result
-                                );
-
-                            if (
-                                Array.isArray(
-                                    dados
-                                )
-                            ) {
-
-                                const dadosFormatados =
-                                    dados.map(
-                                        reg => ({
-
-                                            ...reg,
-
-                                            auditor:
-                                                (
-                                                    reg.auditor ||
-                                                    ""
-                                                ).toUpperCase(),
-
-                                            area:
-                                                (
-                                                    reg.area ||
-                                                    ""
-                                                ).toUpperCase(),
-
-                                            local:
-                                                (
-                                                    reg.local ||
-                                                    ""
-                                                ).toUpperCase(),
-
-                                            ocorrencia:
-                                                (
-                                                    reg.ocorrencia ||
-                                                    ""
-                                                ).toUpperCase(),
-
-                                            descricao:
-                                                (
-                                                    reg.descricao ||
-                                                    ""
-                                                ).toUpperCase(),
-
-                                            acao:
-                                                (
-                                                    reg.acao ||
-                                                    ""
-                                                ).toUpperCase()
-
-                                        })
-                                    );
-
-                                registros =
-                                    registros.concat(
-                                        dadosFormatados
-                                    );
-
-                            }
-
-                        } catch (err) {
-
-                            alert(
-                                "ERRO NO ARQUIVO: " +
-                                file.name
-                            );
-
-                        }
-
-                        resolve();
-
-                    };
-
-                reader.readAsText(
-                    file
-                );
-
-            }
-        );
-
-    }
-
-    await localforage.setItem(
-        'registros_caca_desperdicios',
-        registros
-    );
-
+    await localforage.setItem('registros_caca_desperdicios', registros);
     atualizarLista();
-
-    e.target.value = '';
-
+    e.target.value = ''; 
 }
-
-
-/* =========================================================
-   COLAR JSON
-   ========================================================= */
 
 async function processarColarJSON() {
-
-    const texto =
-        document
-            .getElementById(
-                'texto-colar'
-            )
-            .value;
-
-    if (
-        !texto ||
-        texto.trim() === ''
-    ) {
-
-        alert(
-            "COLE O TEXTO ANTES DE IMPORTAR."
-        );
-
-        return;
-
-    }
-
+    const texto = document.getElementById('texto-colar').value;
+    if (!texto || texto.trim() === '') { alert("COLE O TEXTO ANTES DE IMPORTAR."); return; }
     try {
-
-        const dadosImportados =
-            JSON.parse(
-                texto
-            );
-
-        if (
-            Array.isArray(
-                dadosImportados
-            )
-        ) {
-
-            const dadosFormatados =
-                dadosImportados.map(
-                    reg => ({
-
-                        ...reg,
-
-                        auditor:
-                            (
-                                reg.auditor ||
-                                ""
-                            ).toUpperCase(),
-
-                        area:
-                            (
-                                reg.area ||
-                                ""
-                            ).toUpperCase(),
-
-                        local:
-                            (
-                                reg.local ||
-                                ""
-                            ).toUpperCase(),
-
-                        ocorrencia:
-                            (
-                                reg.ocorrencia ||
-                                ""
-                            ).toUpperCase(),
-
-                        descricao:
-                            (
-                                reg.descricao ||
-                                ""
-                            ).toUpperCase(),
-
-                        acao:
-                            (
-                                reg.acao ||
-                                ""
-                            ).toUpperCase()
-
-                    })
-                );
-
-            registros =
-                registros.concat(
-                    dadosFormatados
-                );
-
-            await localforage.setItem(
-                'registros_caca_desperdicios',
-                registros
-            );
-
+        const dadosImportados = JSON.parse(texto);
+        if (Array.isArray(dadosImportados)) {
+            const dadosFormatados = dadosImportados.map(reg => ({
+                ...reg,
+                auditor: (reg.auditor || "").toUpperCase(),
+                area: (reg.area || "").toUpperCase(),
+                local: (reg.local || "").toUpperCase(),
+                interruptor: (reg.interruptor || "").toUpperCase(),
+                ocorrencia: (reg.ocorrencia || "").toUpperCase(),
+                descricao: (reg.descricao || "").toUpperCase(),
+                acao: (reg.acao || "").toUpperCase()
+            }));
+            registros = registros.concat(dadosFormatados);
+            await localforage.setItem('registros_caca_desperdicios', registros);
             atualizarLista();
-
-            alert(
-                `SUCESSO! ${dadosFormatados.length} REGISTROS FORAM IMPORTADOS COM SUCESSO.`
-            );
-
+            alert(`SUCESSO! ${dadosFormatados.length} REGISTROS FORAM IMPORTADOS COM SUCESSO.`);
             fecharModalColar();
-
-        } else {
-
-            alert(
-                "O TEXTO COLADO NÃO POSSUI O FORMATO CORRETO DE LISTA."
-            );
-
-        }
-
-    } catch (erro) {
-
-        alert(
-            "ERRO AO LER O TEXTO. VERIFIQUE SE COPIOU O JSON INTEIRO.\n\n" +
-            "DETALHE: " +
-            erro
-        );
-
-    }
-
+        } else { alert("O TEXTO COLADO NÃO POSSUI O FORMATO CORRETO DE LISTA."); }
+    } catch (erro) { alert("ERRO AO LER O TEXTO.\nDETALHE: " + erro); }
 }
-
 </script>
 
-
 <script>
-
-if (
-    'serviceWorker' in navigator
-) {
-
-    window.addEventListener(
-        'load',
-        function() {
-
-            navigator.serviceWorker
-                .register(
-                    './sw.js'
-                )
-                .then(
-                    function(
-                        registration
-                    ) {
-
-                        console.log(
-                            'SERVICEWORKER REGISTRADO COM SUCESSO.'
-                        );
-
-                    },
-                    function(err) {
-
-                        console.log(
-                            'FALHA AO REGISTRAR O SERVICEWORKER: ',
-                            err
-                        );
-
-                    }
-                );
-
-        }
-    );
-
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').then(
+            function(registration) { console.log('SERVICEWORKER REGISTRADO COM SUCESSO.'); },
+            function(err) { console.log('FALHA AO REGISTRAR O SERVICEWORKER: ', err); }
+        );
+    });
 }
-
 </script>
 
 </body>
