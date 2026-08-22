@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REVISOR - CAÇA DESPERDÍCIOS</title>
+
+    <!-- BIBLIOTECA DE MEMÓRIA LOCAL (IMPEDE QUE APAGUE AO DAR F5) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #0056b3;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #333333;
+            --danger: #dc3545;
+            --success: #28a745;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --revisado: #e8f5e9; 
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* BARRA SUPERIOR */
+        .top-bar {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .top-bar h2 { margin: 0; font-size: 20px; }
+
+        .top-botoes { display: flex; gap: 10px; }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-warning { background-color: var(--warning); color: #000; }
+        .btn-success { background-color: var(--success); }
+        .btn-primary { background-color: var(--primary); border: 1px solid white;}
+        .btn-danger { background-color: var(--danger); }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-info { background-color: var(--info); }
+
+        button:hover { opacity: 0.9; }
+
+        /* LISTA DE REGISTROS */
+        .container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .status-lista {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #555;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+
+        .registro-item {
+            background: var(--card);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #ccc;
+            transition: 0.3s;
+        }
+
+        .registro-item.revisado {
+            background: var(--revisado);
+            border-left-color: var(--success);
+        }
+
+        .registro-info { flex: 1; line-height: 1.5; font-size: 14px; }
+        .registro-info strong { font-size: 16px; color: var(--primary); }
+        
+        .selo-revisado {
+            background-color: var(--success);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+
+        .video-thumbnail-container {
+            position: relative;
+            width: 80px; height: 80px;
+            margin-left: 15px;
+            flex-shrink: 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .video-thumbnail-container img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        .video-thumbnail-container .play-icon {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px;
+        }
+
+        .registro-midia {
+            width: 80px; height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-left: 15px;
+            flex-shrink: 0;
+        }
+
+        /* MODAL DE EDIÇÃO (TELA CHEIA) */
+        #editor-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: white;
+            z-index: 2000;
+            overflow-y: auto;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .input-group { display: flex; flex-direction: column; }
+        .input-group.full { grid-column: span 2; }
+
+        label { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 5px; }
+
+        input[type="text"], select, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        textarea { resize: vertical; min-height: 80px; }
+
+        /* ÁREA DA FOTO NO EDITOR */
+        .foto-editor-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+        }
+
+        .foto-preview-wrapper {
+            position: relative;
+            max-width: 100%;
+            display: none;
+        }
+
+        .foto-preview-editor {
+            max-width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 5px;
+            display: block;
+        }
+
+        .video-play-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            border-radius: 5px;
+            display: none; align-items: center; justify-content: center;
+            color: white; font-size: 40px; pointer-events: none;
+        }
+
+        /* MODAIS DE MÍDIA E CÂMERA */
+        #camera-modal, #midia-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            z-index: 3000;
+            text-align: center;
+            padding-top: 20px;
+        }
+
+        #video-preview { width: 100%; max-height: 60vh; background-color: black; }
+
+        .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; margin: 10px auto; }
+        .modal-botoes button { margin-top: 0; width: 100%; height: 45px;}
+
+        #midia-modal {
+            padding-top: 0;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            padding: 15px;
+        }
+        
+        .modal-box {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-align: left;
+        }
+        .botoes-menu-modal { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <div class="top-bar">
+        <h2>🛠️ CENTRAL DE REVISÃO</h2>
+        <div class="top-botoes">
+            <button class="btn-warning" onclick="document.getElementById('input-json').click()">📂 IMPORTAR JSON(S)</button>
+            <button class="btn-primary" onclick="exportarJSON()">💾 SALVAR NOVO JSON</button>
+            <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
+        </div>
+    </div>
+
+    <!-- LISTA DE REGISTROS -->
+    <div class="container">
+        <div class="status-lista">
+            <span>REGISTROS CARREGADOS: <span id="contador" style="color: var(--primary);">0</span></span>
+            <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="limparTudo()">🗑️ LIMPAR LISTA</button>
+        </div>
+        <div id="lista-registros">
+            <p style="text-align: center; color: #999; margin-top: 50px;">Nenhum dado importado. Clique em "IMPORTAR JSON(S)" para começar.</p>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO -->
+    <div id="editor-modal">
+        <div class="modal-header">
+            <h3 style="margin: 0;">✏️ EDITANDO REGISTRO</h3>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-secondary" onclick="fecharEditor()">❌ CANCELAR</button>
+                <button class="btn-success" onclick="salvarEdicao()">💾 SALVAR ALTERAÇÕES</button>
+            </div>
+        </div>
+
+        <div class="modal-body">
+            
+            <div class="input-group full">
+                <label>NOME DO AUDITOR:</label>
+                <input type="text" id="edit_auditor" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div class="input-group">
+                <label>ÁREA / SETOR:</label>
+                <input type="text" id="edit_area" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div class="input-group">
+                <label>LOCAL ESPECÍFICO:</label>
+                <input type="text" id="edit_local" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div class="input-group">
+                <label>OCORRÊNCIA:</label>
+                <input type="text" id="edit_ocorrencia" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div class="input-group">
+                <label>CHAVE / INTERRUPTOR:</label>
+                <input type="text" id="edit_interruptor" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div class="input-group full">
+                <label>DESCRIÇÃO DO PROBLEMA:</label>
+                <textarea id="edit_descricao" oninput="this.value = this.value.toUpperCase();"></textarea>
+            </div>
+
+            <div class="input-group full">
+                <label>AÇÃO TOMADA:</label>
+                <input type="text" id="edit_acao" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <!-- EDITOR DE MÍDIA COMPLETO -->
+            <div class="input-group full">
+                <label>MÍDIA (FOTO OU VÍDEO):</label>
+                <div class="foto-editor-container">
+                    
+                    <div id="edit_foto_preview_wrapper" class="foto-preview-wrapper">
+                        <img id="edit_foto_preview" class="foto-preview-editor" src="">
+                        <div id="edit_video_play_icon" class="video-play-overlay">▶</div>
+                    </div>
+                    
+                    <p id="edit_foto_aviso" style="margin: 0; font-size: 13px; color: #999;">Sem mídia no momento.</p>
+                    
+                    <button class="btn-primary" style="margin-top: 10px; width: 100%; max-width: 300px;" onclick="abrirModalMidiaEdicao()">
+                        📷 ALTERAR / ADICIONAR MÍDIA
+                    </button>
+                    <button class="btn-danger" id="btn-remover-foto" style="display: none; margin-top: 5px; width: 100%; max-width: 300px;" onclick="removerMidiaEdicao()">
+                        🗑️ REMOVER MÍDIA
+                    </button>
+                    
+                    <input type="hidden" id="edit_foto_base64">
+                    <input type="hidden" id="edit_video_base64">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL: OPÇÕES DE MÍDIA -->
+    <div id="midia-modal">
+        <div class="modal-box" style="text-align: center;">
+            <h3 style="margin-top: 0; color: var(--primary);">ADICIONAR MÍDIA</h3>
+            <p style="margin: 0; font-size: 13px; color: #666;">ESCOLHA A ORIGEM DA FOTO OU VÍDEO:</p>
+            <div class="botoes-menu-modal">
+                <button class="btn-success" onclick="iniciarCameraEdicao('foto')">📷 TIRAR FOTO</button>
+                <button class="btn-warning" style="color: var(--warning-text);" onclick="iniciarCameraEdicao('video')">🎥 GRAVAR VÍDEO</button>
+                <button class="btn-info" onclick="document.getElementById('input-nova-foto').click(); fecharModalMidiaEdicao();">📂 CARREGAR DA GALERIA</button>
+                <button class="btn-danger" onclick="fecharModalMidiaEdicao()">❌ CANCELAR</button>
+            </div>
+            <input type="file" id="input-nova-foto" accept="image/*,video/*" style="display: none;" onchange="carregarNovaMidia(event)">
+        </div>
+    </div>
+
+    <!-- MODAL DA CÂMERA DE MÍDIA -->
+    <div id="camera-modal">
+        <video id="video-preview" autoplay playsinline></video>
+        <p id="status-gravacao" style="color: red; font-weight: bold; display: none; margin: 5px 0;">🔴 GRAVANDO VÍDEO (MÁX 5S)...</p>
+        <div class="modal-botoes">
+            <button id="btn-tirar-foto" class="btn-success" onclick="capturarFotoEdicao()">📷 CAPTURAR FOTO</button>
+            <button id="btn-iniciar-gravacao" class="btn-warning" style="color: var(--warning-text);" onclick="iniciarGravacaoVideoEdicao()">🎥 GRAVAR VÍDEO</button>
+            <button id="btn-parar-gravacao" class="btn-danger" style="display: none;" onclick="pararGravacaoVideoEdicao()">⏹️ PARAR E SALVAR VÍDEO</button>
+            <button class="btn-danger" onclick="fecharCameraEdicao()">❌ CANCELAR</button>
+        </div>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <script>
+        let registros = [];
+        let indiceEditando = null;
+
+        // Váriaveis da Câmera
+        let streamDeVideoEdicao = null;
+        let mediaRecorderEdicao = null;
+        let pedacosGravadosEdicao = [];
+
+        // ==========================================
+        // INICIALIZAÇÃO - PUXANDO DADOS DA MEMÓRIA
+        // ==========================================
+        window.onload = async function() {
+            // Utilizamos uma chave diferente do App original para não misturar os dados se estiverem no mesmo PC
+            let dadosSalvos = await localforage.getItem('registros_revisor');
+            if (dadosSalvos) {
+                registros = dadosSalvos;
+                atualizarLista();
+            }
+        };
+
+        // ==========================================
+        // 1. IMPORTAÇÃO E EXPORTAÇÃO DE JSON
+        // ==========================================
+        async function importarJSON(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            let registrosAdicionados = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const dados = JSON.parse(e.target.result);
+                            if (Array.isArray(dados)) {
+                                registros = registros.concat(dados);
+                                registrosAdicionados += dados.length;
+                            } else {
+                                alert(`❌ O arquivo "${file.name}" não possui o formato correto de lista.`);
+                            }
+                        } catch (err) {
+                            alert(`❌ Erro ao ler o arquivo: ${file.name}`);
+                        }
+                        resolve();
+                    };
+                    reader.readAsText(file);
+                });
+            }
+
+            // SALVA NA MEMÓRIA IMEDIATAMENTE
+            await localforage.setItem('registros_revisor', registros);
+            atualizarLista();
+            
+            if(registrosAdicionados > 0) {
+                alert(`✅ Sucesso! ${registrosAdicionados} registros adicionados.\nTotal na lista: ${registros.length}`);
+            }
+            
+            event.target.value = '';
+        }
+
+        function exportarJSON() {
+            if (registros.length === 0) {
+                alert("⚠️ Não há dados para exportar.");
+                return;
+            }
+
+            const dataStr = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+            const nomeArquivo = `DADOS_REVISADOS_${dataStr}.json`;
+
+            const blob = new Blob([JSON.stringify(registros, null, 2)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = nomeArquivo;
+            link.click();
+        }
+
+        async function limparTudo() {
+            if(confirm("Tem certeza que deseja apagar todos os registros da tela?\n(Isso limpará a memória do navegador, mas os arquivos que você já exportou estão salvos no seu PC).")) {
+                registros = [];
+                await localforage.setItem('registros_revisor', registros); // Limpa da memória também
+                atualizarLista();
+            }
+        }
+
+        // ==========================================
+        // 1.5. FUNÇÃO RESOLVIDO (REMOVER REGISTRO)
+        // ==========================================
+        async function marcarComoResolvido(index) {
+            if(confirm("✅ Deseja marcar esta ocorrência como RESOLVIDA?\nO registro será removido da lista para não ser exportado novamente.")) {
+                registros.splice(index, 1);
+                await localforage.setItem('registros_revisor', registros); // Salva na memória
+                atualizarLista();
+            }
+        }
+
+        // ==========================================
+        // 2. RENDERIZAÇÃO DA LISTA
+        // ==========================================
+        function atualizarLista() {
+            const lista = document.getElementById('lista-registros');
+            document.getElementById('contador').innerText = registros.length;
+            lista.innerHTML = '';
+
+            if(registros.length === 0) {
+                lista.innerHTML = '<p style="text-align: center; color: #999; margin-top: 50px;">Nenhum dado importado. Clique em "IMPORTAR JSON(S)" para começar.</p>';
+                return;
+            }
+
+            registros.forEach((reg, index) => {
+                const item = document.createElement('div');
+                
+                let classeRevisado = reg.editado ? ' revisado' : '';
+                let seloHTML = reg.editado ? `<div class="selo-revisado">✅ REVISADO (${reg.data} às ${reg.hora})</div><br>` : '';
+
+                item.className = `registro-item${classeRevisado}`;
+                let numFormat = index + 1;
+                
+                let htmlMidiaIcon = '';
+                if (reg.video) {
+                    let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+'; 
+                    htmlMidiaIcon = `
+                    <div class="video-thumbnail-container" title="Tem Vídeo">
+                        <img src="${thumb}">
+                        <div class="play-icon">▶</div>
+                    </div>`;
+                } else if (reg.foto) {
+                    htmlMidiaIcon = `<img src="${reg.foto}" class="registro-midia" title="Tem Foto">`;
+                }
+
+                let intHTML = reg.interruptor ? ` | CHAVE: ${reg.interruptor}` : '';
+
+                item.innerHTML = `
+                    <div class="registro-info">
+                        ${seloHTML}
+                        <strong>${numFormat}. ${reg.area || ''}</strong> - ${reg.local || ''} ${intHTML}<br>
+                        <span style="color: #d32f2f; font-weight: bold;">${reg.ocorrencia || ''}</span><br>
+                        <span style="color: #666; font-size: 12px;">AÇÃO: ${reg.acao || ''}</span><br>
+                        <span style="color: #999; font-size: 11px;">Coletado por: ${reg.auditor || 'Desconhecido'}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        ${htmlMidiaIcon}
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn-primary" style="font-size: 11px; padding: 8px 10px;" onclick="abrirEditor(${index})">✏️ EDITAR</button>
+                            <button class="btn-success" style="font-size: 11px; padding: 8px 10px;" onclick="marcarComoResolvido(${index})">✅ RESOLVIDO</button>
+                        </div>
+                    </div>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        // ==========================================
+        // 3. LÓGICA DO EDITOR
+        // ==========================================
+        function abrirEditor(index) {
+            indiceEditando = index;
+            const reg = registros[index];
+
+            document.getElementById('edit_auditor').value = reg.auditor || '';
+            document.getElementById('edit_area').value = reg.area || '';
+            document.getElementById('edit_local').value = reg.local || '';
+            document.getElementById('edit_ocorrencia').value = reg.ocorrencia || '';
+            document.getElementById('edit_interruptor').value = reg.interruptor || '';
+            document.getElementById('edit_descricao').value = reg.descricao || '';
+            document.getElementById('edit_acao').value = reg.acao || '';
+            
+            document.getElementById('edit_foto_base64').value = reg.foto || '';
+            document.getElementById('edit_video_base64').value = reg.video || '';
+            
+            atualizarPreviewFotoEditor(reg.foto || '', !!reg.video);
+
+            document.getElementById('editor-modal').style.display = 'flex';
+        }
+
+        function fecharEditor() {
+            document.getElementById('editor-modal').style.display = 'none';
+            indiceEditando = null;
+        }
+
+        async function salvarEdicao() {
+            if (indiceEditando === null) return;
+
+            let dataAtual = new Date().toLocaleDateString('pt-BR');
+            let horaAtual = new Date().toLocaleTimeString('pt-BR');
+
+            registros[indiceEditando].auditor = document.getElementById('edit_auditor').value.toUpperCase().trim();
+            registros[indiceEditando].area = document.getElementById('edit_area').value.toUpperCase().trim();
+            registros[indiceEditando].local = document.getElementById('edit_local').value.toUpperCase().trim();
+            registros[indiceEditando].ocorrencia = document.getElementById('edit_ocorrencia').value.toUpperCase().trim();
+            registros[indiceEditando].interruptor = document.getElementById('edit_interruptor').value.toUpperCase().trim();
+            registros[indiceEditando].descricao = document.getElementById('edit_descricao').value.toUpperCase().trim();
+            registros[indiceEditando].acao = document.getElementById('edit_acao').value.toUpperCase().trim();
+            
+            registros[indiceEditando].foto = document.getElementById('edit_foto_base64').value;
+            registros[indiceEditando].video = document.getElementById('edit_video_base64').value;
+            
+            registros[indiceEditando].data = dataAtual;
+            registros[indiceEditando].hora = horaAtual;
+            registros[indiceEditando].editado = true; 
+
+            // SALVA NA MEMÓRIA
+            await localforage.setItem('registros_revisor', registros);
+
+            fecharEditor();
+            atualizarLista();
+        }
+
+        // ==========================================
+        // 4. LÓGICA DE MÍDIA NO EDITOR
+        // ==========================================
+        function abrirModalMidiaEdicao() {
+            document.getElementById('midia-modal').style.display = 'flex';
+        }
+
+        function fecharModalMidiaEdicao() {
+            document.getElementById('midia-modal').style.display = 'none';
+        }
+
+        async function iniciarCameraEdicao(modo) {
+            fecharModalMidiaEdicao();
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('video-preview');
+            modal.style.display = 'block';
+
+            if (modo === 'foto') {
+                document.getElementById('btn-tirar-foto').style.display = 'block';
+                document.getElementById('btn-iniciar-gravacao').style.display = 'none';
+            } else {
+                document.getElementById('btn-tirar-foto').style.display = 'none';
+                document.getElementById('btn-iniciar-gravacao').style.display = 'block';
+            }
+            
+            document.getElementById('btn-parar-gravacao').style.display = 'none';
+            document.getElementById('status-gravacao').style.display = 'none';
+
+            try {
+                streamDeVideoEdicao = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: true });
+                video.srcObject = streamDeVideoEdicao;
+                video.muted = true;
+            } catch (erro) {
+                alert("ERRO AO ACESSAR CÂMERA/MICROFONE: " + erro);
+                fecharCameraEdicao();
+            }
+        }
+
+        function fecharCameraEdicao() {
+            document.getElementById('camera-modal').style.display = 'none';
+            if (streamDeVideoEdicao) { streamDeVideoEdicao.getTracks().forEach(track => track.stop()); streamDeVideoEdicao = null; }
+            if (mediaRecorderEdicao && mediaRecorderEdicao.state === 'recording') mediaRecorderEdicao.stop();
+        }
+
+        function capturarFotoEdicao() {
+            const video = document.getElementById('video-preview');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth || 1280;
+            canvas.height = video.videoHeight || 720;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const fotoBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+            
+            document.getElementById('edit_foto_base64').value = fotoBase64;
+            document.getElementById('edit_video_base64').value = ''; 
+            atualizarPreviewFotoEditor(fotoBase64, false);
+            
+            fecharCameraEdicao();
+        }
+
+        function iniciarGravacaoVideoEdicao() {
+            pedacosGravadosEdicao = [];
+            try { mediaRecorderEdicao = new MediaRecorder(streamDeVideoEdicao, { mimeType: 'video/webm' }); } 
+            catch (e) { try { mediaRecorderEdicao = new MediaRecorder(streamDeVideoEdicao); } catch (err) { alert("NÃO SUPORTADO."); return; } }
+
+            mediaRecorderEdicao.ondataavailable = e => { if (e.data.size > 0) pedacosGravadosEdicao.push(e.data); };
+            mediaRecorderEdicao.onstop = () => {
+                const blob = new Blob(pedacosGravadosEdicao, { type: 'video/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => {
+                    document.getElementById('edit_video_base64').value = reader.result;
+                    atualizarPreviewFotoEditor(document.getElementById('edit_foto_base64').value, true);
+                };
+            };
+            mediaRecorderEdicao.start();
+            
+            document.getElementById('btn-tirar-foto').style.display = 'none';
+            document.getElementById('btn-iniciar-gravacao').style.display = 'none';
+            document.getElementById('btn-parar-gravacao').style.display = 'block';
+            document.getElementById('status-gravacao').innerText = '🔴 GRAVANDO VÍDEO (MÁX 5S)...';
+            document.getElementById('status-gravacao').style.display = 'block';
+            
+            setTimeout(() => { if (mediaRecorderEdicao && mediaRecorderEdicao.state === 'recording') pararGravacaoVideoEdicao(); }, 5000);
+        }
+
+        function pararGravacaoVideoEdicao() {
+            if (mediaRecorderEdicao && mediaRecorderEdicao.state === 'recording') {
+                try {
+                    const video = document.getElementById('video-preview');
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 720;
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    document.getElementById('edit_foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
+                } catch(e) {}
+                mediaRecorderEdicao.stop();
+            }
+            fecharCameraEdicao();
+        }
+
+        function carregarNovaMidia(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const result = e.target.result;
+
+                if (file.type.startsWith('image/')) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const MAX_WIDTH = 1280;
+                        let width = img.width; let height = img.height;
+
+                        if (width > height && width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } 
+                        else if (height > MAX_WIDTH) { width *= MAX_WIDTH / height; height = MAX_WIDTH; }
+
+                        canvas.width = width; canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const base64Reduzido = canvas.toDataURL('image/jpeg', 0.6);
+                        document.getElementById('edit_foto_base64').value = base64Reduzido;
+                        document.getElementById('edit_video_base64').value = '';
+                        atualizarPreviewFotoEditor(base64Reduzido, false);
+                    };
+                    img.src = result;
+                } else if (file.type.startsWith('video/')) {
+                    document.getElementById('edit_video_base64').value = result;
+                    extrairFrameVideoEdicao(result);
+                }
+            };
+            reader.readAsDataURL(file);
+            event.target.value = ''; 
+        }
+
+        function extrairFrameVideoEdicao(videoDataUrl) {
+            const video = document.createElement('video');
+            video.src = videoDataUrl; video.muted = true; video.playsInline = true;
+            video.onloadeddata = () => { video.currentTime = 1; };
+            video.onseeked = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                const frameBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                document.getElementById('edit_foto_base64').value = frameBase64;
+                atualizarPreviewFotoEditor(frameBase64, true);
+            };
+            video.onerror = () => {
+                let thumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+                document.getElementById('edit_foto_base64').value = thumb;
+                atualizarPreviewFotoEditor(thumb, true);
+            };
+        }
+
+        function removerMidiaEdicao() {
+            document.getElementById('edit_foto_base64').value = '';
+            document.getElementById('edit_video_base64').value = '';
+            atualizarPreviewFotoEditor('', false);
+        }
+
+        function atualizarPreviewFotoEditor(base64, temVideo) {
+            const wrapper = document.getElementById('edit_foto_preview_wrapper');
+            const preview = document.getElementById('edit_foto_preview');
+            const aviso = document.getElementById('edit_foto_aviso');
+            const btnRemover = document.getElementById('btn-remover-foto');
+            const playIcon = document.getElementById('edit_video_play_icon');
+
+            if (base64 && base64.trim() !== '') {
+                preview.src = base64;
+                wrapper.style.display = 'block';
+                aviso.style.display = 'none';
+                btnRemover.style.display = 'inline-block';
+                
+                if (temVideo) {
+                    playIcon.style.display = 'flex';
+                } else {
+                    playIcon.style.display = 'none';
+                }
+            } else {
+                preview.src = '';
+                wrapper.style.display = 'none';
+                aviso.style.display = 'block';
+                btnRemover.style.display = 'none';
+                playIcon.style.display = 'none';
+            }
+        }
+
+    </script>
+</body>
+</html>
