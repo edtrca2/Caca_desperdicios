@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Leitor Nativo / Redundância -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <style>
@@ -474,6 +475,15 @@
             gap: 10px;
             margin-top: 20px;
         }
+
+        /* Estilo especial para o Submenu */
+        #container_sub_ocorrencia {
+            background-color: #fdf5f6;
+            padding: 10px;
+            border: 1px dashed var(--danger);
+            border-radius: 5px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 
@@ -497,7 +507,7 @@
 
         <div>
             <label>ÁREA / SETOR:</label>
-            <select id="area" onchange="verificarAreaOutros()">
+            <select id="area" onchange="verificarCombos()">
                 <option value="" disabled selected>SELECIONE...</option>
                 <option value="ARMAÇÃO">ARMAÇÃO</option>
                 <option value="ESTAMPARIA">ESTAMPARIA</option>
@@ -521,7 +531,7 @@
 
         <div>
             <label>OCORRÊNCIA:</label>
-            <select id="ocorrencia" onchange="verificarOcorrenciaOutros()">
+            <select id="ocorrencia" onchange="verificarCombos()">
                 <option value="" disabled selected>SELECIONE...</option>
                 <option value="VAZAMENTOS DE AR">VAZAMENTOS DE AR</option>
                 <option value="VAZAMENTO DE ÁGUA">VAZAMENTO DE ÁGUA</option>
@@ -537,6 +547,20 @@
             <label>DESCRIÇÃO (Opcional):</label>
             <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">TOQUE PARA DIGITAR...</div>
             <input type="hidden" id="descricao">
+        </div>
+
+        <!-- =======================================================
+             NOVO SUBMENU INTELIGENTE (APARECE SÓ QUANDO NECESSÁRIO)
+             ======================================================= -->
+        <div id="container_sub_ocorrencia" style="display: none; grid-column: span 2;">
+            <label style="color: var(--danger);">TIPO DE VAZAMENTO (ARMAÇÃO):</label>
+            <select id="sub_ocorrencia" style="border-color: var(--danger);">
+                <option value="" disabled selected>SELECIONE O TIPO...</option>
+                <option value="VAZAMENTO NAS HIPS, RIPS, MANIPULADORES, ETC">VAZAMENTO NAS HIPS, RIPS, MANIPULADORES, ETC</option>
+                <option value="VAZAMENTO(S) NA(S) HIP(S)">VAZAMENTO(S) NA(S) HIP(S)</option>
+                <option value="VAZAMENTO(S) NA(S) RIP(S)">VAZAMENTO(S) NA(S) RIP(S)</option>
+                <option value="VAZAMENTO(S) NO(S) MANIPULADOR(ES)">VAZAMENTO(S) NO(S) MANIPULADOR(ES)</option>
+            </select>
         </div>
 
         <div style="grid-column: span 2;">
@@ -556,26 +580,21 @@
             </div>
         </div>
 
-        <!-- ========================================================
-             NOVO CAMPO CHAVE / INTERRUPTOR AO LADO DO BOTÃO DE MÍDIA 
-             ======================================================== -->
         <div style="grid-column: span 1;">
             <label>CHAVE / INTERRUPTOR:</label>
             <input type="text" id="interruptor" placeholder="ONDE FICA?" oninput="this.value = this.value.toUpperCase();">
         </div>
 
-        <!-- BOTÃO DE MÍDIA EMPURRADO PARA A DIREITA -->
         <div style="grid-column: span 1; display: flex; align-items: flex-end;">
             <button type="button" class="btn-secondary" onclick="abrirModalMidia()" style="margin: 0; width: 100%; height: 35px;">📷 MÍDIA</button>
         </div>
 
-    </div> <!-- FIM DO FORM GRID -->
+    </div> 
 
     <div style="display:flex; justify-content:center;">
         <img id="photo-preview" class="media-preview" src="" alt="Preview">
     </div>
 
-    <!-- BOTÃO ADICIONAR ISOLADO ABAIXO PARA EVITAR ERROS -->
     <div style="display:flex; gap:8px; margin-top:12px;">
         <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin:0; width: 100%;">➕ ADICIONAR REGISTRO</button>
     </div>
@@ -587,7 +606,6 @@
 
 </div>
 
-
 <div class="center-section">
     <div class="header-lista">
         <h3>REGISTROS (<span id="contador">0</span>)</h3>
@@ -596,13 +614,11 @@
     <div id="lista-registros"></div>
 </div>
 
-
 <div class="bottom-section">
     <button class="btn-primary" onclick="abrirModalExportar()">📤 EXPORTAR</button>
     <button class="btn-warning" style="color:var(--warning-text);" onclick="abrirModalImportar()">📂 IMPORTAR</button>
     <input type="file" id="input-json" accept=".json" multiple style="display:none;" onchange="importarJSON(event)">
 </div>
-
 
 <!-- MODAL LEITURA QR -->
 <div id="qr-camera-modal">
@@ -731,6 +747,35 @@ window.onload = async function() {
         atualizarLista();
     }
 };
+
+/* =======================================================
+   INTELIGÊNCIA LINGUÍSTICA (IGNORA ACENTOS NA COMPARAÇÃO)
+   ======================================================= */
+function removerAcentos(texto) {
+    return texto ? texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : "";
+}
+
+/* =======================================================
+   NOVA FUNÇÃO VERIFICAR COMBOS INTELIGENTES
+   ======================================================= */
+function verificarCombos() {
+    // 1. Verifica se precisa abrir campo "OUTROS"
+    const area = document.getElementById('area').value;
+    const ocorrencia = document.getElementById('ocorrencia').value;
+    
+    document.getElementById('area_outros').style.display = area === 'OUTROS' ? 'block' : 'none';
+    document.getElementById('ocorrencia_outros').style.display = ocorrencia === 'OUTROS' ? 'block' : 'none';
+
+    // 2. Verifica a regra: ARMAÇÃO + VAZAMENTOS DE AR = Abre Submenu
+    const containerSub = document.getElementById('container_sub_ocorrencia');
+    if (area === 'ARMAÇÃO' && ocorrencia === 'VAZAMENTOS DE AR') {
+        containerSub.style.display = 'block';
+    } else {
+        containerSub.style.display = 'none';
+        document.getElementById('sub_ocorrencia').value = '';
+    }
+}
+
 
 /* --- LEITOR QR CODE NATIVO E jsQR --- */
 async function abrirLeitorQR() {
@@ -962,6 +1007,9 @@ function restaurarBotaoQR(btnQR, textoOriginal) {
     btnQR.style.color = "#fff";
 }
 
+/* =======================================================
+   TRATAMENTO DE DADOS DO QR (NORMALIZADO)
+   ======================================================= */
 function preencherCamposViaQR(decodedText) {
     if (!decodedText) return;
     let texto = String(decodedText).replace(/\r/g, "").replace(/\n/g, " ").trim().replace(/\s*;\s*/g, ";");
@@ -973,44 +1021,47 @@ function preencherCamposViaQR(decodedText) {
         return;
     }
 
-    // ÁREA
+    // ÁREA COM INTELIGÊNCIA LINGUÍSTICA
     let areaQR = (partes[0] || "").trim().toUpperCase();
+    let areaNormalizada = removerAcentos(areaQR);
     let selectArea = document.getElementById('area');
-    let existeArea = Array.from(selectArea.options).some(o => o.value.toUpperCase() === areaQR);
-    if (existeArea) {
-        selectArea.value = areaQR;
-        document.getElementById('area_outros').style.display = 'none';
-        document.getElementById('area_outros').value = "";
+    
+    let opcaoArea = Array.from(selectArea.options).find(o => removerAcentos(o.value) === areaNormalizada);
+    
+    if (opcaoArea) {
+        selectArea.value = opcaoArea.value; 
     } else {
         selectArea.value = 'OUTROS';
         document.getElementById('area_outros').value = areaQR;
-        document.getElementById('area_outros').style.display = 'block';
     }
 
     // LOCAL
     document.getElementById('local').value = (partes[1] || "").trim().toUpperCase();
 
-    // OCORRÊNCIA
+    // OCORRÊNCIA COM INTELIGÊNCIA LINGUÍSTICA
     if (partes.length >= 3 && partes[2].trim() !== "") {
         let ocorrenciaQR = partes[2].trim().toUpperCase();
+        let ocorrenciaNormalizada = removerAcentos(ocorrenciaQR);
         let selectOcorrencia = document.getElementById('ocorrencia');
-        let existeOc = Array.from(selectOcorrencia.options).some(o => o.value.toUpperCase() === ocorrenciaQR);
-        if (existeOc) {
-            selectOcorrencia.value = ocorrenciaQR;
-            document.getElementById('ocorrencia_outros').style.display = 'none';
-            document.getElementById('ocorrencia_outros').value = "";
+        
+        let opcaoOc = Array.from(selectOcorrencia.options).find(o => removerAcentos(o.value) === ocorrenciaNormalizada);
+        
+        if (opcaoOc) {
+            selectOcorrencia.value = opcaoOc.value; 
         } else {
             selectOcorrencia.value = 'OUTROS';
             document.getElementById('ocorrencia_outros').value = ocorrenciaQR;
-            document.getElementById('ocorrencia_outros').style.display = 'block';
         }
     }
 
-    // CHAVE / INTERRUPTOR NOVO CAMPO DEDICADO
+    // RODA A VERIFICAÇÃO INTELIGENTE DE COMBOS PARA VER SE MOSTRA O SUBMENU
+    verificarCombos();
+
+    // CHAVE / INTERRUPTOR
     let mensagem = "✅ QR CODE LIDO COM SUCESSO!";
     if (partes.length >= 4 && partes[3].trim() !== "") {
         let infoInterruptor = partes.slice(3).join(";").trim().toUpperCase();
-        document.getElementById('interruptor').value = infoInterruptor; // Preenche o novo campo diretamente
+        document.getElementById('interruptor').value = infoInterruptor; 
         mensagem += "\n\n📍 ATENÇÃO!\n\nVÁ ATÉ O INTERRUPTOR:\n" + infoInterruptor;
     }
 
@@ -1059,14 +1110,7 @@ function preencherCampoDescricao(texto) {
     display.innerText = (texto && texto.trim() !== '') ? texto : 'TOQUE PARA DIGITAR...';
     display.style.color = (texto && texto.trim() !== '') ? '#333' : '#6c757d';
 }
-function verificarAreaOutros() {
-    const area = document.getElementById('area').value;
-    document.getElementById('area_outros').style.display = area === 'OUTROS' ? 'block' : 'none';
-}
-function verificarOcorrenciaOutros() {
-    const ocorrencia = document.getElementById('ocorrencia').value;
-    document.getElementById('ocorrencia_outros').style.display = ocorrencia === 'OUTROS' ? 'block' : 'none';
-}
+
 async function iniciarCamera(modo) {
     fecharModalMidia();
     const modal = document.getElementById('camera-modal');
@@ -1221,6 +1265,17 @@ async function salvarRegistro() {
     
     if (!areaVal || !ocorrenciaVal) { alert("SELECIONE ÁREA E OCORRÊNCIA!"); return; }
 
+    // ====== TRAVA DO SUBMENU DE VAZAMENTO ======
+    if (document.getElementById('container_sub_ocorrencia').style.display === 'block') {
+        let subOc = document.getElementById('sub_ocorrencia').value;
+        if (!subOc) {
+            alert("⚠️ SELECIONE O TIPO DE VAZAMENTO DE AR ANTES DE SALVAR!");
+            return;
+        }
+        ocorrenciaVal = ocorrenciaVal + " - " + subOc;
+    }
+    // ============================================
+
     let localVal = document.getElementById('local').value.trim();
     if (!localVal) { alert("PREENCHA O LOCAL ESPECÍFICO (EX: F40)!"); return; }
 
@@ -1230,7 +1285,7 @@ async function salvarRegistro() {
     let auditorUpper = auditorVal.toUpperCase();
     let areaUpper = areaVal.toUpperCase();
     let localUpper = localVal.toUpperCase();
-    let ocorrenciaUpper = ocorrenciaVal.toUpperCase();
+    let ocorrenciaUpper = ocorrenciaVal.toUpperCase(); // Já leva o texto do submenu colado
     let descUpper = document.getElementById('descricao').value.toUpperCase();
     let interruptorUpper = document.getElementById('interruptor').value.toUpperCase().trim();
     let acaoUpper = acaoSelecionada.value.toUpperCase();
@@ -1279,6 +1334,11 @@ async function salvarRegistro() {
     document.getElementById('local').value = '';
     document.getElementById('ocorrencia').value = '';
     document.getElementById('interruptor').value = '';
+    
+    // Zera o submenu também
+    document.getElementById('sub_ocorrencia').value = '';
+    document.getElementById('container_sub_ocorrencia').style.display = 'none';
+
     limparCampoDescricao();
     resetarBotoesAcao();
     document.getElementById('foto_base64').value = '';
@@ -1295,28 +1355,50 @@ function editarRegistro(index) {
     const reg = registros[index];
     indiceEdicao = index;
     
+    let areaSalva = reg.area.toUpperCase();
+    let ocorrenciaSalva = reg.ocorrencia.toUpperCase();
+    let subOcorrenciaSalva = "";
+
+    // LÓGICA REVERSA: Se a ocorrência salva já vier com o Submenu embutido, a gente corta para o form funcionar perfeito
+    if (areaSalva === 'ARMAÇÃO' && ocorrenciaSalva.startsWith('VAZAMENTOS DE AR - ')) {
+        subOcorrenciaSalva = ocorrenciaSalva.replace('VAZAMENTOS DE AR - ', '').trim();
+        ocorrenciaSalva = 'VAZAMENTOS DE AR';
+    }
+
     let selectArea = document.getElementById('area');
-    let existeArea = Array.from(selectArea.options).some(o => o.value.toUpperCase() === reg.area.toUpperCase());
-    if (existeArea) {
-        Array.from(selectArea.options).forEach(o => { if (o.value.toUpperCase() === reg.area.toUpperCase()) selectArea.value = o.value; });
+    let areaNormalizada = removerAcentos(areaSalva);
+    let opcaoArea = Array.from(selectArea.options).find(o => removerAcentos(o.value) === areaNormalizada);
+    
+    if (opcaoArea) {
+        selectArea.value = opcaoArea.value;
         document.getElementById('area_outros').style.display = 'none';
     } else {
         selectArea.value = 'OUTROS';
-        document.getElementById('area_outros').value = reg.area;
+        document.getElementById('area_outros').value = areaSalva;
         document.getElementById('area_outros').style.display = 'block';
     }
 
     document.getElementById('local').value = reg.local;
 
     let selectOcorrencia = document.getElementById('ocorrencia');
-    let existeOcorrencia = Array.from(selectOcorrencia.options).some(o => o.value.toUpperCase() === reg.ocorrencia.toUpperCase());
-    if (existeOcorrencia) {
-        Array.from(selectOcorrencia.options).forEach(o => { if (o.value.toUpperCase() === reg.ocorrencia.toUpperCase()) selectOcorrencia.value = o.value; });
+    let ocorrenciaNormalizada = removerAcentos(ocorrenciaSalva);
+    let opcaoOc = Array.from(selectOcorrencia.options).find(o => removerAcentos(o.value) === ocorrenciaNormalizada);
+
+    if (opcaoOc) {
+        selectOcorrencia.value = opcaoOc.value;
         document.getElementById('ocorrencia_outros').style.display = 'none';
     } else {
         selectOcorrencia.value = 'OUTROS';
-        document.getElementById('ocorrencia_outros').value = reg.ocorrencia;
+        document.getElementById('ocorrencia_outros').value = ocorrenciaSalva;
         document.getElementById('ocorrencia_outros').style.display = 'block';
+    }
+
+    // OBRIGA O APLICATIVO A AVALIAR AS REGRAS E ABRIR O SUBMENU SE PRECISAR
+    verificarCombos();
+
+    // Se o submenu tiver sido aberto, preenche o valor dele
+    if (subOcorrenciaSalva) {
+        document.getElementById('sub_ocorrencia').value = subOcorrenciaSalva;
     }
 
     document.getElementById('interruptor').value = reg.interruptor || '';
@@ -1345,6 +1427,10 @@ function cancelarEdicao() {
     document.getElementById('local').value = '';
     document.getElementById('ocorrencia').value = '';
     document.getElementById('interruptor').value = '';
+    
+    document.getElementById('sub_ocorrencia').value = '';
+    document.getElementById('container_sub_ocorrencia').style.display = 'none';
+
     limparCampoDescricao();
     resetarBotoesAcao();
     document.getElementById('foto_base64').value = '';
