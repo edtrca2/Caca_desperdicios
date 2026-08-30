@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REVISOR - CAÇA DESPERDÍCIOS</title>
 
-    <!-- BIBLIOTECA DE MEMÓRIA LOCAL (IMPEDE QUE APAGUE AO DAR F5) -->
+    <!-- BIBLIOTECA DE MEMÓRIA LOCAL -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         :root {
@@ -401,6 +404,13 @@
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
 
+    <!-- MODAL VISUALIZADOR MÍDIA -->
+    <div id="media-viewer-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; text-align:center;">
+        <span onclick="document.getElementById('media-viewer-modal').style.display='none'; document.getElementById('viewer-video').pause();" style="position:absolute; top:20px; right:30px; font-size:40px; color:white; cursor:pointer;">&times;</span>
+        <img id="viewer-img" style="display:none; max-width:90%; max-height:80vh; margin-top:50px;">
+        <video id="viewer-video" controls style="display:none; max-width:90%; max-height:80vh; margin-top:50px;"></video>
+    </div>
+
     <script>
         let registros = [];
         let indiceEditando = null;
@@ -414,7 +424,6 @@
         // INICIALIZAÇÃO - PUXANDO DADOS DA MEMÓRIA
         // ==========================================
         window.onload = async function() {
-            // Utilizamos uma chave diferente do App original para não misturar os dados se estiverem no mesmo PC
             let dadosSalvos = await localforage.getItem('registros_revisor');
             if (dadosSalvos) {
                 registros = dadosSalvos;
@@ -454,7 +463,6 @@
                 });
             }
 
-            // SALVA NA MEMÓRIA IMEDIATAMENTE
             await localforage.setItem('registros_revisor', registros);
             atualizarLista();
             
@@ -484,20 +492,31 @@
         async function limparTudo() {
             if(confirm("Tem certeza que deseja apagar todos os registros da tela?\n(Isso limpará a memória do navegador, mas os arquivos que você já exportou estão salvos no seu PC).")) {
                 registros = [];
-                await localforage.setItem('registros_revisor', registros); // Limpa da memória também
+                await localforage.setItem('registros_revisor', registros); 
                 atualizarLista();
             }
         }
 
         // ==========================================
-        // 1.5. FUNÇÃO RESOLVIDO (REMOVER REGISTRO)
+        // 1.5. FUNÇÕES DE REVISAR E EXCLUIR O REGISTRO
         // ==========================================
-        async function marcarComoResolvido(index) {
-            if(confirm("✅ Deseja marcar esta ocorrência como RESOLVIDA?\nO registro será removido da lista para não ser exportado novamente.")) {
+        
+        async function excluirRegistro(index) {
+            if(confirm("❌ Deseja realmente EXCLUIR este registro da lista?")) {
                 registros.splice(index, 1);
-                await localforage.setItem('registros_revisor', registros); // Salva na memória
+                await localforage.setItem('registros_revisor', registros);
                 atualizarLista();
             }
+        }
+
+        async function marcarComoRevisado(index) {
+            let dataAtual = new Date().toLocaleDateString('pt-BR');
+            // Só salva a data agora
+            registros[index].revisado_em = dataAtual;
+            registros[index].editado = true; // Flag para ficar com borda verde
+
+            await localforage.setItem('registros_revisor', registros);
+            atualizarLista();
         }
 
         // ==========================================
@@ -517,7 +536,8 @@
                 const item = document.createElement('div');
                 
                 let classeRevisado = reg.editado ? ' revisado' : '';
-                let seloHTML = reg.editado ? `<div class="selo-revisado">✅ REVISADO (${reg.data} às ${reg.hora})</div><br>` : '';
+                // O selo agora só exibe a data em que foi revisado
+                let seloHTML = reg.editado ? `<div class="selo-revisado">✅ REVISADO EM ${reg.revisado_em || ''}</div><br>` : '';
 
                 item.className = `registro-item${classeRevisado}`;
                 let numFormat = index + 1;
@@ -526,15 +546,23 @@
                 if (reg.video) {
                     let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+'; 
                     htmlMidiaIcon = `
-                    <div class="video-thumbnail-container" title="Tem Vídeo">
+                    <div class="video-thumbnail-container" title="Tem Vídeo" onclick="abrirViewerMidiaEdicao(${index})">
                         <img src="${thumb}">
                         <div class="play-icon">▶</div>
                     </div>`;
                 } else if (reg.foto) {
-                    htmlMidiaIcon = `<img src="${reg.foto}" class="registro-midia" title="Tem Foto">`;
+                    htmlMidiaIcon = `<img src="${reg.foto}" class="registro-midia" title="Tem Foto" onclick="abrirViewerMidiaEdicao(${index})" style="cursor: pointer;">`;
                 }
 
                 let intHTML = reg.interruptor ? ` | CHAVE: ${reg.interruptor}` : '';
+                
+                // Monta a frase "Registrado por... Revisado em..."
+                let horaDisplay = reg.hora ? `às ${reg.hora}` : '';
+                let textoAssinatura = `Registrado por ${reg.auditor || 'Desconhecido'} em: ${reg.data || ''} ${horaDisplay}.`;
+                
+                if (reg.revisado_em) {
+                    textoAssinatura += `<br><strong style="color: var(--success); font-size: 12px;">✅ REVISADO EM ${reg.revisado_em}</strong>`;
+                }
 
                 item.innerHTML = `
                     <div class="registro-info">
@@ -542,13 +570,14 @@
                         <strong>${numFormat}. ${reg.area || ''}</strong> - ${reg.local || ''} ${intHTML}<br>
                         <span style="color: #d32f2f; font-weight: bold;">${reg.ocorrencia || ''}</span><br>
                         <span style="color: #666; font-size: 12px;">AÇÃO: ${reg.acao || ''}</span><br>
-                        <span style="color: #999; font-size: 11px;">Coletado por: ${reg.auditor || 'Desconhecido'}</span>
+                        <span style="color: #999; font-size: 11px;">${textoAssinatura}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 15px;">
                         ${htmlMidiaIcon}
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <button class="btn-primary" style="font-size: 11px; padding: 8px 10px;" onclick="abrirEditor(${index})">✏️ EDITAR</button>
-                            <button class="btn-success" style="font-size: 11px; padding: 8px 10px;" onclick="marcarComoResolvido(${index})">✅ RESOLVIDO</button>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <button class="btn-primary" style="font-size: 11px; padding: 6px 10px;" onclick="abrirEditor(${index})">✏️ EDITAR</button>
+                            <button class="btn-success" style="font-size: 11px; padding: 6px 10px;" onclick="marcarComoRevisado(${index})">✅ REVISADO</button>
+                            <button class="btn-danger" style="font-size: 11px; padding: 6px 10px;" onclick="excluirRegistro(${index})">❌ EXCLUIR</button>
                         </div>
                     </div>
                 `;
@@ -587,9 +616,6 @@
         async function salvarEdicao() {
             if (indiceEditando === null) return;
 
-            let dataAtual = new Date().toLocaleDateString('pt-BR');
-            let horaAtual = new Date().toLocaleTimeString('pt-BR');
-
             registros[indiceEditando].auditor = document.getElementById('edit_auditor').value.toUpperCase().trim();
             registros[indiceEditando].area = document.getElementById('edit_area').value.toUpperCase().trim();
             registros[indiceEditando].local = document.getElementById('edit_local').value.toUpperCase().trim();
@@ -601,8 +627,9 @@
             registros[indiceEditando].foto = document.getElementById('edit_foto_base64').value;
             registros[indiceEditando].video = document.getElementById('edit_video_base64').value;
             
-            registros[indiceEditando].data = dataAtual;
-            registros[indiceEditando].hora = horaAtual;
+            // Cria o carimbo de revisão automaticamente ao salvar a edição (Somente a Data)
+            let dataAtual = new Date().toLocaleDateString('pt-BR');
+            registros[indiceEditando].revisado_em = dataAtual;
             registros[indiceEditando].editado = true; 
 
             // SALVA NA MEMÓRIA
@@ -613,7 +640,7 @@
         }
 
         // ==========================================
-        // 4. LÓGICA DE MÍDIA NO EDITOR
+        // 4. LÓGICA COMPLETA DE MÍDIA NO EDITOR
         // ==========================================
         function abrirModalMidiaEdicao() {
             document.getElementById('midia-modal').style.display = 'flex';
@@ -800,6 +827,107 @@
             }
         }
 
+        function abrirViewerMidiaEdicao(index) {
+            const reg = registros[index];
+            const modal = document.getElementById('media-viewer-modal');
+            const img = document.getElementById('viewer-img');
+            const video = document.getElementById('viewer-video');
+            
+            if (reg.video) { 
+                video.src = reg.video; video.style.display = 'inline-block'; img.style.display = 'none'; img.src = '';
+                setTimeout(() => video.play(), 200);
+            } else if (reg.foto) { 
+                img.src = reg.foto; img.style.display = 'inline-block'; video.style.display = 'none'; video.src = ''; 
+            }
+            modal.style.display = 'block';
+        }
+
+        // ==========================================
+        // 5. ATUALIZAÇÃO DA EXPORTAÇÃO (XLSX E PPTX)
+        // ==========================================
+        function exportarXLSX(nomeBase) {
+            let dadosExcel = registros.map((r, i) => {
+                let tipoMidia = r.video ? "VÍDEO" : (r.foto ? "FOTO" : "NÃO TEM");
+                return {
+                    "ITEM": i + 1,
+                    "DATA (COLETA)": r.data || "",
+                    "HORA (COLETA)": r.hora || "",
+                    "AUDITOR": r.auditor || "",
+                    "ÁREA": r.area || "",
+                    "LOCAL": r.local || "",
+                    "INTERRUPTOR": r.interruptor || "",
+                    "OCORRÊNCIA": r.ocorrencia || "",
+                    "DESCRIÇÃO": (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " "),
+                    "AÇÃO TOMADA": r.acao || "",
+                    "REVISADO EM": r.revisado_em || "NÃO REVISADO",
+                    "MÍDIA": tipoMidia
+                };
+            });
+            const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoria");
+            XLSX.writeFile(workbook, nomeBase + '.xlsx');
+        }
+
+        function exportarPPTX(nomeBase) {
+            let pptx = new PptxGenJS();
+            function getISOWeek(d) {
+                let t = new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()+4-(t.getDay()||7));
+                return Math.ceil((((t-new Date(t.getFullYear(),0,1))/8.64e7)+1)/7);
+            }
+            let kw = getISOWeek(new Date());
+            
+            let slideAtual;
+            registros.forEach((reg, index) => {
+                if (index % 4 === 0) {
+                    slideAtual = pptx.addSlide();
+                    slideAtual.addText(`RONDA KW ${kw} - DESPERDÍCIOS UTILITIES`, { x: 0.3, y: 0.2, w: 9, h: 0.4, fontSize: 24, bold: true });
+                }
+                
+                let yBase = 1.05 + ((index % 4) * 1.12);
+                let textX = 0.3; let textW = 7.0; 
+                
+                let areaUpper = reg.area || "";
+                let localUpper = reg.local || "";
+                let ocorrenciaUpper = reg.ocorrencia || "NÃO CLASSIFICADA";
+                let descUpper = reg.descricao || "";
+                if(reg.interruptor) descUpper = descUpper ? `CHAVE: ${reg.interruptor} | ${descUpper}` : `CHAVE: ${reg.interruptor}`;
+                let acaoUpper = reg.acao || "NÃO INFORMADA";
+                let auditorUpper = reg.auditor || "DESCONHECIDO";
+
+                let titulo = localUpper ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}` : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
+                
+                // MANTÉM A DATA ORIGINAL E INCLUI A ASSINATURA DE REVISÃO SE EXISTIR
+                let displayDataHora = reg.data || '';
+                if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` ÀS ${reg.hora}`;
+                
+                let txtRodape = "REGISTRADO POR " + auditorUpper + " EM: " + displayDataHora;
+                if (reg.revisado_em) {
+                    txtRodape += ". REVISADO EM " + reg.revisado_em.toUpperCase();
+                }
+
+                slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true });
+                slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
+                if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 11, color: '666666' });
+                slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 11, bold: true, color: '28a745' });
+                
+                // AQUI ENTRA A FRASE COMPLETA
+                slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 9, italic: true });
+
+                if (reg.video) {
+                    let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
+                    if (reg.foto) mediaOpts.cover = reg.foto;
+                    try { slideAtual.addMedia(mediaOpts); } 
+                    catch(e) { if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain' } }); }
+                    slideAtual.addText("▶ VÍDEO ANEXADO", { x: 7.5, y: yBase + 0.85, w: 1.8, h: 0.15, fontSize: 9, bold: true, color: 'dc3545', align: 'center' });
+                } else if (reg.foto) {
+                    slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } });
+                }
+                
+                if (index % 4 < 3) slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9, h: 0, line: { color: 'E0E0E0', width: 1 } });
+            });
+            pptx.writeFile({ fileName: nomeBase + '.pptx' });
+        }
     </script>
 </body>
 </html>
