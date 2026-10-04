@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Leitor Nativo / Redundância -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <style>
@@ -26,6 +25,7 @@
             --warning-text: #212529;
             --info: #17a2b8;
             --purple: #6f42c1;
+            --revisado: #e8f5e9;
         }
 
         body {
@@ -130,9 +130,7 @@
             flex-wrap: wrap;
         }
 
-        .radio-group input[type="radio"] {
-            display: none;
-        }
+        .radio-group input[type="radio"] { display: none; }
 
         .radio-group .radio-btn {
             flex: 1 1 calc(50% - 6px);
@@ -193,11 +191,7 @@
             margin-bottom: 10px;
         }
 
-        .header-lista h3 {
-            margin: 0;
-            font-size: 16px;
-            color: #444;
-        }
+        .header-lista h3 { margin: 0; font-size: 16px; color: #444; }
 
         .registro-item {
             background: white;
@@ -208,6 +202,23 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
+            border-left: 5px solid #ccc;
+        }
+
+        .registro-item.revisado {
+            background: var(--revisado);
+            border-left-color: var(--success);
+        }
+
+        .selo-revisado {
+            background-color: var(--success);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: inline-block;
         }
 
         .registro-conteudo {
@@ -279,211 +290,56 @@
         }
 
         /* Modais */
-        #camera-modal,
-        #qr-camera-modal,
-        #media-viewer-modal,
-        #descricao-modal,
-        #colar-modal,
-        #exportar-modal,
-        #importar-modal,
-        #midia-modal {
+        #camera-modal, #qr-camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-modal, #importar-modal, #midia-modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.95);
             z-index: 2000;
             text-align: center;
             padding-top: 20px;
         }
 
-        /* LEITOR QR */
-        #qr-camera-modal {
-            padding: 0;
-            background: #000;
-            z-index: 5000;
-        }
+        #qr-camera-modal { padding: 0; background: #000; z-index: 5000; }
+        #qr-camera-video { width: 100%; height: 100%; object-fit: cover; background: #000; }
 
-        #qr-camera-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            background: #000;
-        }
-
-        .qr-camera-top {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 15px;
-            box-sizing: border-box;
-            z-index: 10;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0));
-        }
-
-        .qr-camera-titulo {
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .qr-camera-status {
-            color: white;
-            font-size: 13px;
-            margin-top: 6px;
-        }
+        .qr-camera-top { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; box-sizing: border-box; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0)); }
+        .qr-camera-titulo { color: white; font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .qr-camera-status { color: white; font-size: 13px; margin-top: 6px; }
 
         .qr-moldura {
-            position: absolute;
-            width: 65vw;
-            height: 65vw;
-            max-width: 300px;
-            max-height: 300px;
-            border: 3px solid #00ff66;
-            border-radius: 18px;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            box-sizing: border-box;
-            z-index: 5;
-            box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), 0 0 20px rgba(0,255,102,0.5);
+            position: absolute; width: 65vw; height: 65vw; max-width: 300px; max-height: 300px;
+            border: 3px solid #00ff66; border-radius: 18px; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            box-sizing: border-box; z-index: 5; box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), 0 0 20px rgba(0,255,102,0.5);
         }
 
-        .qr-moldura::before,
-        .qr-moldura::after {
-            content: "";
-            position: absolute;
-            background: #00ff66;
-        }
-
+        .qr-moldura::before, .qr-moldura::after { content: ""; position: absolute; background: #00ff66; }
         .qr-moldura::before { width: 40%; height: 3px; left: 30%; top: -3px; }
         .qr-moldura::after { width: 3px; height: 40%; left: -3px; top: 30%; }
 
-        .qr-camera-bottom {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px 15px 25px 15px;
-            box-sizing: border-box;
-            z-index: 10;
-            background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
-        }
+        .qr-camera-bottom { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px 25px 15px; box-sizing: border-box; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0)); }
+        .qr-camera-bottom button { max-width: 400px; margin: 8px auto; height: 48px; }
 
-        .qr-camera-bottom button {
-            max-width: 400px;
-            margin: 8px auto;
-            height: 48px;
-        }
+        .qr-linha-leitura { position: absolute; left: 8%; width: 84%; height: 2px; background: #00ff66; top: 50%; z-index: 6; animation: qrLinha 1.7s infinite ease-in-out; box-shadow: 0 0 8px #00ff66; }
 
-        .qr-linha-leitura {
-            position: absolute;
-            left: 8%;
-            width: 84%;
-            height: 2px;
-            background: #00ff66;
-            top: 50%;
-            z-index: 6;
-            animation: qrLinha 1.7s infinite ease-in-out;
-            box-shadow: 0 0 8px #00ff66;
-        }
-
-        @keyframes qrLinha {
-            0% { transform: translateY(-120px); opacity: 0.3; }
-            50% { transform: translateY(120px); opacity: 1; }
-            100% { transform: translateY(-120px); opacity: 0.3; }
-        }
+        @keyframes qrLinha { 0% { transform: translateY(-120px); opacity: 0.3; } 50% { transform: translateY(120px); opacity: 1; } 100% { transform: translateY(-120px); opacity: 0.3; } }
 
         #qr-canvas { display: none; }
 
-        #media-viewer-modal .fechar-btn {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 35px;
-            color: white;
-            cursor: pointer;
-            z-index: 10;
-        }
+        #media-viewer-modal .fechar-btn { position: absolute; top: 15px; right: 20px; font-size: 35px; color: white; cursor: pointer; z-index: 10; }
+        #viewer-img, #viewer-video { max-width: 95%; max-height: 80vh; margin-top: 50px; border-radius: 8px; }
+        #video-preview { width: 100%; max-height: 60vh; background-color: black; }
 
-        #viewer-img,
-        #viewer-video {
-            max-width: 95%;
-            max-height: 80vh;
-            margin-top: 50px;
-            border-radius: 8px;
-        }
+        .media-preview { display: none; width: auto; max-height: 60px; object-fit: contain; margin-top: 10px; border-radius: 5px; }
 
-        #video-preview {
-            width: 100%;
-            max-height: 60vh;
-            background-color: black;
-        }
+        .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; margin: 10px auto; }
+        .modal-botoes button { margin-top: 0; width: 100%; height: 45px; }
 
-        .media-preview {
-            display: none;
-            width: auto;
-            max-height: 60px;
-            object-fit: contain;
-            margin-top: 10px;
-            border-radius: 5px;
-        }
+        .modal-box { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: left; }
+        .modal-box textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; resize: none; margin-top: 10px; }
+        .botoes-menu-modal { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
 
-        .modal-botoes {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-            width: 90%;
-            margin: 10px auto;
-        }
-
-        .modal-botoes button {
-            margin-top: 0;
-            width: 100%;
-            height: 45px;
-        }
-
-        .modal-box {
-            background: white;
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            text-align: left;
-        }
-
-        .modal-box textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-            resize: none;
-            margin-top: 10px;
-        }
-
-        .botoes-menu-modal {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        /* Estilo especial para o Submenu */
-        #container_sub_ocorrencia {
-            background-color: #fdf5f6;
-            padding: 10px;
-            border: 1px dashed var(--danger);
-            border-radius: 5px;
-            margin-top: 5px;
-        }
+        #container_sub_ocorrencia { background-color: #fdf5f6; padding: 10px; border: 1px dashed var(--danger); border-radius: 5px; margin-top: 5px; }
     </style>
 </head>
 
@@ -549,9 +405,6 @@
             <input type="hidden" id="descricao">
         </div>
 
-        <!-- =======================================================
-             NOVO SUBMENU INTELIGENTE (APARECE SÓ QUANDO NECESSÁRIO)
-             ======================================================= -->
         <div id="container_sub_ocorrencia" style="display: none; grid-column: span 2;">
             <label style="color: var(--danger);">TIPO DE VAZAMENTO (ARMAÇÃO):</label>
             <select id="sub_ocorrencia" style="border-color: var(--danger);">
@@ -748,25 +601,17 @@ window.onload = async function() {
     }
 };
 
-/* =======================================================
-   INTELIGÊNCIA LINGUÍSTICA (IGNORA ACENTOS NA COMPARAÇÃO)
-   ======================================================= */
 function removerAcentos(texto) {
     return texto ? texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : "";
 }
 
-/* =======================================================
-   NOVA FUNÇÃO VERIFICAR COMBOS INTELIGENTES
-   ======================================================= */
 function verificarCombos() {
-    // 1. Verifica se precisa abrir campo "OUTROS"
     const area = document.getElementById('area').value;
     const ocorrencia = document.getElementById('ocorrencia').value;
     
     document.getElementById('area_outros').style.display = area === 'OUTROS' ? 'block' : 'none';
     document.getElementById('ocorrencia_outros').style.display = ocorrencia === 'OUTROS' ? 'block' : 'none';
 
-    // 2. Verifica a regra: ARMAÇÃO + VAZAMENTOS DE AR = Abre Submenu
     const containerSub = document.getElementById('container_sub_ocorrencia');
     if (area === 'ARMAÇÃO' && ocorrencia === 'VAZAMENTOS DE AR') {
         containerSub.style.display = 'block';
@@ -776,8 +621,6 @@ function verificarCombos() {
     }
 }
 
-
-/* --- LEITOR QR CODE NATIVO E jsQR --- */
 async function abrirLeitorQR() {
     const modal = document.getElementById('qr-camera-modal');
     const video = document.getElementById('qr-camera-video');
@@ -1007,9 +850,6 @@ function restaurarBotaoQR(btnQR, textoOriginal) {
     btnQR.style.color = "#fff";
 }
 
-/* =======================================================
-   TRATAMENTO DE DADOS DO QR (NORMALIZADO)
-   ======================================================= */
 function preencherCamposViaQR(decodedText) {
     if (!decodedText) return;
     let texto = String(decodedText).replace(/\r/g, "").replace(/\n/g, " ").trim().replace(/\s*;\s*/g, ";");
@@ -1021,7 +861,6 @@ function preencherCamposViaQR(decodedText) {
         return;
     }
 
-    // ÁREA COM INTELIGÊNCIA LINGUÍSTICA
     let areaQR = (partes[0] || "").trim().toUpperCase();
     let areaNormalizada = removerAcentos(areaQR);
     let selectArea = document.getElementById('area');
@@ -1035,10 +874,8 @@ function preencherCamposViaQR(decodedText) {
         document.getElementById('area_outros').value = areaQR;
     }
 
-    // LOCAL
     document.getElementById('local').value = (partes[1] || "").trim().toUpperCase();
 
-    // OCORRÊNCIA COM INTELIGÊNCIA LINGUÍSTICA
     if (partes.length >= 3 && partes[2].trim() !== "") {
         let ocorrenciaQR = partes[2].trim().toUpperCase();
         let ocorrenciaNormalizada = removerAcentos(ocorrenciaQR);
@@ -1054,10 +891,8 @@ function preencherCamposViaQR(decodedText) {
         }
     }
 
-    // RODA A VERIFICAÇÃO INTELIGENTE DE COMBOS PARA VER SE MOSTRA O SUBMENU
     verificarCombos();
 
-    // CHAVE / INTERRUPTOR
     let mensagem = "✅ QR CODE LIDO COM SUCESSO!";
     if (partes.length >= 4 && partes[3].trim() !== "") {
         let infoInterruptor = partes.slice(3).join(";").trim().toUpperCase();
@@ -1068,7 +903,6 @@ function preencherCamposViaQR(decodedText) {
     alert(mensagem);
 }
 
-/* --- DEMAIS FUNÇÕES DO APP --- */
 function abrirModalDescricao() {
     const modal = document.getElementById('descricao-modal');
     const textarea = document.getElementById('descricao-texto');
@@ -1265,7 +1099,6 @@ async function salvarRegistro() {
     
     if (!areaVal || !ocorrenciaVal) { alert("SELECIONE ÁREA E OCORRÊNCIA!"); return; }
 
-    // ====== TRAVA DO SUBMENU DE VAZAMENTO ======
     if (document.getElementById('container_sub_ocorrencia').style.display === 'block') {
         let subOc = document.getElementById('sub_ocorrencia').value;
         if (!subOc) {
@@ -1274,7 +1107,6 @@ async function salvarRegistro() {
         }
         ocorrenciaVal = ocorrenciaVal + " - " + subOc;
     }
-    // ============================================
 
     let localVal = document.getElementById('local').value.trim();
     if (!localVal) { alert("PREENCHA O LOCAL ESPECÍFICO (EX: F40)!"); return; }
@@ -1285,7 +1117,7 @@ async function salvarRegistro() {
     let auditorUpper = auditorVal.toUpperCase();
     let areaUpper = areaVal.toUpperCase();
     let localUpper = localVal.toUpperCase();
-    let ocorrenciaUpper = ocorrenciaVal.toUpperCase(); // Já leva o texto do submenu colado
+    let ocorrenciaUpper = ocorrenciaVal.toUpperCase(); 
     let descUpper = document.getElementById('descricao').value.toUpperCase();
     let interruptorUpper = document.getElementById('interruptor').value.toUpperCase().trim();
     let acaoUpper = acaoSelecionada.value.toUpperCase();
@@ -1328,14 +1160,22 @@ async function salvarRegistro() {
         video: document.getElementById('video_base64').value 
     };
 
-    if (ehEdicao) { registros[indiceEdicao] = novoReg; cancelarEdicao(); } 
+    if (ehEdicao) {
+        // Mantém as flags de revisão se estiver apenas editando pelo app principal (incomum, mas seguro)
+        if(registros[indiceEdicao].editado) {
+            novoReg.editado = registros[indiceEdicao].editado;
+            novoReg.revisado_em = registros[indiceEdicao].revisado_em;
+            novoReg.revisor = registros[indiceEdicao].revisor;
+        }
+        registros[indiceEdicao] = novoReg; 
+        cancelarEdicao(); 
+    } 
     else { registros.push(novoReg); }
     
     document.getElementById('local').value = '';
     document.getElementById('ocorrencia').value = '';
     document.getElementById('interruptor').value = '';
     
-    // Zera o submenu também
     document.getElementById('sub_ocorrencia').value = '';
     document.getElementById('container_sub_ocorrencia').style.display = 'none';
 
@@ -1359,7 +1199,6 @@ function editarRegistro(index) {
     let ocorrenciaSalva = reg.ocorrencia.toUpperCase();
     let subOcorrenciaSalva = "";
 
-    // LÓGICA REVERSA: Se a ocorrência salva já vier com o Submenu embutido, a gente corta para o form funcionar perfeito
     if (areaSalva === 'ARMAÇÃO' && ocorrenciaSalva.startsWith('VAZAMENTOS DE AR - ')) {
         subOcorrenciaSalva = ocorrenciaSalva.replace('VAZAMENTOS DE AR - ', '').trim();
         ocorrenciaSalva = 'VAZAMENTOS DE AR';
@@ -1393,10 +1232,8 @@ function editarRegistro(index) {
         document.getElementById('ocorrencia_outros').style.display = 'block';
     }
 
-    // OBRIGA O APLICATIVO A AVALIAR AS REGRAS E ABRIR O SUBMENU SE PRECISAR
     verificarCombos();
 
-    // Se o submenu tiver sido aberto, preenche o valor dele
     if (subOcorrenciaSalva) {
         document.getElementById('sub_ocorrencia').value = subOcorrenciaSalva;
     }
@@ -1467,7 +1304,12 @@ function atualizarLista() {
     lista.innerHTML = '';
     registros.forEach((reg, index) => {
         const item = document.createElement('div');
-        item.className = 'registro-item';
+        
+        let classeRevisado = reg.editado ? ' revisado' : '';
+        let nomeRevSelo = reg.revisor ? reg.revisor.toUpperCase() : 'DESCONHECIDO';
+        let seloHTML = reg.editado ? `<div class="selo-revisado">✅ REVISADO POR ${nomeRevSelo} EM ${reg.revisado_em || ''}</div>` : '';
+
+        item.className = `registro-item${classeRevisado}`;
         let numFormat = index + 1;
         let htmlMidiaIcon = '';
         
@@ -1483,6 +1325,7 @@ function atualizarLista() {
         item.innerHTML = `
             <div class="registro-conteudo">
                 <div class="registro-texto">
+                    ${seloHTML}
                     <strong>${numFormat}. ${reg.area}</strong> ${reg.local ? '- ' + reg.local : ''} ${interruptorHtml} <br>
                     <span style="color:var(--primary); font-size:13px; font-weight:bold;">${reg.ocorrencia || ''}</span><br>
                     <span style="color:#28a745; font-size:11px; font-weight:bold;">AÇÃO: ${reg.acao || 'NÃO INFORMADA'}</span>
@@ -1541,6 +1384,8 @@ function exportarXLSX(nomeBase) {
             "OCORRÊNCIA": r.ocorrencia || "",
             "DESCRIÇÃO": (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " "),
             "AÇÃO TOMADA": r.acao || "",
+            "REVISOR": r.revisor || "NÃO REVISADO",
+            "REVISADO EM": r.revisado_em || "-",
             "MÍDIA": tipoMidia
         };
     });
@@ -1582,14 +1427,21 @@ function exportarPPTX(nomeBase) {
         let auditorUpper = reg.auditor || "DESCONHECIDO";
 
         let titulo = localUpper ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}` : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
+        
         let displayDataHora = reg.data || '';
         if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` ÀS ${reg.hora}`;
+        
+        let txtRodape = "REGISTRADO POR " + auditorUpper + " EM: " + displayDataHora;
+        if (reg.revisado_em) {
+            let nomeRev = reg.revisor ? reg.revisor.toUpperCase() : "DESCONHECIDO";
+            txtRodape += ". REVISADO POR " + nomeRev + " EM " + reg.revisado_em.toUpperCase();
+        }
 
         slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true });
         slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
         if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 11, color: '666666' });
         slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 11, bold: true, color: '28a745' });
-        slideAtual.addText("REGISTRADO POR " + auditorUpper + " EM: " + displayDataHora, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 9, italic: true });
+        slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 9, italic: true });
 
         if (reg.video) {
             let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
