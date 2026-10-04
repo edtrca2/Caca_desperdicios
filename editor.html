@@ -45,11 +45,13 @@
             align-items: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             z-index: 10;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .top-bar h2 { margin: 0; font-size: 20px; }
 
-        .top-botoes { display: flex; gap: 10px; }
+        .top-botoes { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
         button {
             padding: 10px 15px;
@@ -285,8 +287,10 @@
     <div class="top-bar">
         <h2>🛠️ CENTRAL DE REVISÃO</h2>
         <div class="top-botoes">
+            <input type="text" id="nome_revisor" placeholder="REVISOR (EX: EDSON)" oninput="this.value = this.value.toUpperCase(); localStorage.setItem('revisor_nome', this.value);" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 13px; font-weight: bold; width: 180px; text-align: center; color: #0056b3;">
             <button class="btn-warning" onclick="document.getElementById('input-json').click()">📂 IMPORTAR JSON(S)</button>
             <button class="btn-primary" onclick="exportarJSON()">💾 SALVAR NOVO JSON</button>
+            <button class="btn-primary" onclick="exportarPPTX()" style="background-color: #d84b2a; border-color: #d84b2a;">📺 EXPORTAR PPTX</button>
             <input type="file" id="input-json" accept=".json" multiple style="display: none;" onchange="importarJSON(event)">
         </div>
     </div>
@@ -424,6 +428,11 @@
         // INICIALIZAÇÃO - PUXANDO DADOS DA MEMÓRIA
         // ==========================================
         window.onload = async function() {
+            let revisorSalvo = localStorage.getItem('revisor_nome');
+            if (revisorSalvo) {
+                document.getElementById('nome_revisor').value = revisorSalvo;
+            }
+
             let dadosSalvos = await localforage.getItem('registros_revisor');
             if (dadosSalvos) {
                 registros = dadosSalvos;
@@ -510,8 +519,15 @@
         }
 
         async function marcarComoRevisado(index) {
+            let revisor = document.getElementById('nome_revisor').value.trim();
+            if (!revisor) {
+                alert("⚠️ PREENCHA O 'NOME DO REVISOR' NO TOPO DA TELA ANTES DE REVISAR!");
+                document.getElementById('nome_revisor').focus();
+                return;
+            }
+
             let dataAtual = new Date().toLocaleDateString('pt-BR');
-            // Só salva a data agora
+            registros[index].revisor = revisor;
             registros[index].revisado_em = dataAtual;
             registros[index].editado = true; // Flag para ficar com borda verde
 
@@ -536,8 +552,10 @@
                 const item = document.createElement('div');
                 
                 let classeRevisado = reg.editado ? ' revisado' : '';
-                // O selo agora só exibe a data em que foi revisado
-                let seloHTML = reg.editado ? `<div class="selo-revisado">✅ REVISADO EM ${reg.revisado_em || ''}</div><br>` : '';
+                
+                // O selo agora exibe NOME DO REVISOR e a DATA
+                let nomeRevSelo = reg.revisor ? reg.revisor.toUpperCase() : 'DESCONHECIDO';
+                let seloHTML = reg.editado ? `<div class="selo-revisado">✅ REVISADO POR ${nomeRevSelo} EM ${reg.revisado_em || ''}</div><br>` : '';
 
                 item.className = `registro-item${classeRevisado}`;
                 let numFormat = index + 1;
@@ -556,12 +574,13 @@
 
                 let intHTML = reg.interruptor ? ` | CHAVE: ${reg.interruptor}` : '';
                 
-                // Monta a frase "Registrado por... Revisado em..."
                 let horaDisplay = reg.hora ? `às ${reg.hora}` : '';
                 let textoAssinatura = `Registrado por ${reg.auditor || 'Desconhecido'} em: ${reg.data || ''} ${horaDisplay}.`;
                 
+                // Atualiza a frase da assinatura
                 if (reg.revisado_em) {
-                    textoAssinatura += `<br><strong style="color: var(--success); font-size: 12px;">✅ REVISADO EM ${reg.revisado_em}</strong>`;
+                    let nomeRevText = reg.revisor ? reg.revisor.toUpperCase() : 'DESCONHECIDO';
+                    textoAssinatura += `<br><strong style="color: var(--success); font-size: 12px;">✅ REVISADO POR ${nomeRevText} EM ${reg.revisado_em}</strong>`;
                 }
 
                 item.innerHTML = `
@@ -615,6 +634,13 @@
 
         async function salvarEdicao() {
             if (indiceEditando === null) return;
+            
+            let revisor = document.getElementById('nome_revisor').value.trim();
+            if (!revisor) {
+                alert("⚠️ PREENCHA O 'NOME DO REVISOR' NO TOPO DA TELA ANTES DE SALVAR A EDIÇÃO!");
+                document.getElementById('nome_revisor').focus();
+                return;
+            }
 
             registros[indiceEditando].auditor = document.getElementById('edit_auditor').value.toUpperCase().trim();
             registros[indiceEditando].area = document.getElementById('edit_area').value.toUpperCase().trim();
@@ -627,8 +653,8 @@
             registros[indiceEditando].foto = document.getElementById('edit_foto_base64').value;
             registros[indiceEditando].video = document.getElementById('edit_video_base64').value;
             
-            // Cria o carimbo de revisão automaticamente ao salvar a edição (Somente a Data)
             let dataAtual = new Date().toLocaleDateString('pt-BR');
+            registros[indiceEditando].revisor = revisor;
             registros[indiceEditando].revisado_em = dataAtual;
             registros[indiceEditando].editado = true; 
 
@@ -845,7 +871,11 @@
         // ==========================================
         // 5. ATUALIZAÇÃO DA EXPORTAÇÃO (XLSX E PPTX)
         // ==========================================
-        function exportarXLSX(nomeBase) {
+        function exportarXLSX() {
+            if (registros.length === 0) return;
+            const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+            let nomeBase = `DADOS_REVISADOS_${dataHoje}`;
+
             let dadosExcel = registros.map((r, i) => {
                 let tipoMidia = r.video ? "VÍDEO" : (r.foto ? "FOTO" : "NÃO TEM");
                 return {
@@ -859,7 +889,8 @@
                     "OCORRÊNCIA": r.ocorrencia || "",
                     "DESCRIÇÃO": (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " "),
                     "AÇÃO TOMADA": r.acao || "",
-                    "REVISADO EM": r.revisado_em || "NÃO REVISADO",
+                    "REVISOR": r.revisor || "NÃO REVISADO",
+                    "REVISADO EM": r.revisado_em || "-",
                     "MÍDIA": tipoMidia
                 };
             });
@@ -869,7 +900,11 @@
             XLSX.writeFile(workbook, nomeBase + '.xlsx');
         }
 
-        function exportarPPTX(nomeBase) {
+        function exportarPPTX() {
+            if (registros.length === 0) { alert("⚠️ Não há dados para exportar."); return; }
+            const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+            let nomeBase = `PPTX_REVISADOS_${dataHoje}`;
+
             let pptx = new PptxGenJS();
             function getISOWeek(d) {
                 let t = new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()+4-(t.getDay()||7));
@@ -897,21 +932,21 @@
 
                 let titulo = localUpper ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}` : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
                 
-                // MANTÉM A DATA ORIGINAL E INCLUI A ASSINATURA DE REVISÃO SE EXISTIR
                 let displayDataHora = reg.data || '';
                 if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` ÀS ${reg.hora}`;
                 
                 let txtRodape = "REGISTRADO POR " + auditorUpper + " EM: " + displayDataHora;
+                
+                // IMPRIME A ASSINATURA DE REVISÃO CORRETA NO RODAPÉ DO SLIDE
                 if (reg.revisado_em) {
-                    txtRodape += ". REVISADO EM " + reg.revisado_em.toUpperCase();
+                    let nomeRev = reg.revisor ? reg.revisor.toUpperCase() : "DESCONHECIDO";
+                    txtRodape += ". REVISADO POR " + nomeRev + " EM " + reg.revisado_em.toUpperCase();
                 }
 
                 slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 14, bold: true });
                 slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 12, bold: true, color: '0056b3' });
                 if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 11, color: '666666' });
                 slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 11, bold: true, color: '28a745' });
-                
-                // AQUI ENTRA A FRASE COMPLETA
                 slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 9, italic: true });
 
                 if (reg.video) {
