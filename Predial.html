@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VISTORIA DE MANUTENÇÃO PREDIAL</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--primary:#0056b3;--bg:#e9ecef;--card:#fff;--text:#333;--danger:#dc3545;--success:#28a745;--warning:#ffc107;--info:#17a2b8;--purple:#6f42c1}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.top-section{flex:none;background:#fff;padding:10px 12px;border-bottom:2px solid #222;z-index:2}
+.center-section{flex:1;min-height:0;overflow-y:auto;padding:12px}
+.bottom-section{flex:none;background:#fff;padding:8px 12px;border-top:2px solid #222;display:flex;flex-wrap:wrap;gap:8px}
+.bottom-section button{flex:1 1 calc(50% - 8px)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+h2{text-align:center;color:var(--primary);margin:0 0 10px;font-size:18px}
+label{display:block;margin-bottom:3px;font-weight:700;font-size:11px;color:#444}
+input[type=text],input[type=number],select,textarea{width:100%;padding:8px;border:1px solid #ccc;border-radius:5px;font:inherit;font-size:13px;background:#fff}
+input[type=text],input[type=number],select{height:36px}
+textarea{height:54px;resize:vertical}
+button{width:100%;padding:8px;border:0;border-radius:5px;font-size:14px;font-weight:700;color:white;cursor:pointer;min-height:40px}
+button:disabled{opacity:.55;cursor:not-allowed}
+.btn-primary{background:var(--primary)}.btn-success{background:var(--success)}.btn-danger{background:var(--danger)}.btn-secondary{background:#6c757d}.btn-warning{background:var(--warning);color:#212529}.btn-info{background:var(--info)}.btn-purple{background:var(--purple)}
+.header-lista{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #ddd;padding-bottom:8px;margin-bottom:10px;gap:10px}
+.header-lista h3{margin:0;font-size:16px;color:#444}
+.registro-item{background:#fff;border-radius:8px;padding:10px;margin-bottom:10px;box-shadow:0 1px 3px #0002;display:flex;flex-direction:column;gap:6px;border-left:5px solid var(--primary)}
+.registro-texto{font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.registro-fotos-thumb{display:flex;gap:6px;overflow-x:auto;padding:4px 0}
+.thumb-wrap{position:relative;width:58px;height:58px;flex:none;cursor:pointer}
+.thumb-wrap img{width:58px;height:58px;object-fit:cover;border-radius:5px;border:1px solid #ccc}
+.play-icon{position:absolute;inset:0;background:#0006;border-radius:5px;display:flex;align-items:center;justify-content:center;color:white;font-size:19px;pointer-events:none}
+.acoes-item{display:flex;gap:8px;margin-top:4px}.acoes-item button{font-size:12px;min-height:34px}
+.preview-midias-form{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+.preview-item-form{position:relative;width:58px;height:58px}
+.preview-item-form img{width:100%;height:100%;object-fit:cover;border-radius:5px;border:1px solid #ccc}
+.btn-excluir-preview{position:absolute;top:-6px;right:-6px;background:red;color:white;border-radius:50%;width:21px;height:21px;min-height:21px;padding:0;font-size:12px}
+.modal{display:none;position:fixed;inset:0;background:#000e;z-index:1000;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.modal-box{background:#fff;width:100%;max-width:420px;padding:18px;border-radius:9px;text-align:center;max-height:calc(100dvh - 32px);overflow:auto}
+.modal-box h3{margin-top:0;color:var(--primary)}
+.botoes-menu-modal{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+#camera-modal{background:#000;padding:0}
+#camera-content{width:100%;max-width:720px;margin:auto;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+#video-preview{display:block;width:100%;max-height:60vh;object-fit:contain;background:#000}
+.modal-botoes{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-botoes button{min-height:44px}
+#media-viewer-modal{background:#000f}
+#viewer-img,#viewer-video{display:block;max-width:96%;max-height:78dvh;margin:42px auto 0;border-radius:8px}
+.fechar-btn{position:fixed;top:8px;right:18px;font-size:38px;color:white;cursor:pointer;z-index:3}
+.hint{font-size:12px;color:#666;line-height:1.4}
+@media(max-height:700px){.top-section{padding:7px 10px}.form-grid{gap:5px}textarea{height:42px}.top-section h2{font-size:16px;margin-bottom:6px}}
+</style>
+</head>
+<body>
+<div class="top-section">
+<h2>VISTORIA DE MANUTENÇÃO PREDIAL</h2>
+<div class="form-grid">
+<div><label for="auditor">NOME DO INSPETOR:</label><input type="text" id="auditor" placeholder="INSPETOR..."></div>
+<div><label for="kw">KW (SEMANA):</label><input type="number" id="kw" placeholder="EX.: 42" min="1" max="53"></div>
+
+<div style="grid-column:span 2"><label for="empresa">EMPRESA RESPONSÁVEL:</label>
+<select id="empresa"><option value="">SELECIONE...</option>
+<option>LEADEC LIMPEZA</option><option>LEADEC MANUTENÇÃO</option><option>LEADEC MANUTENÇÃO MECÂNICA</option><option>LEADEC MANUTENÇÃO ELÉTRICA</option><option>LEADEC MANUTENÇÃO ELETRÔNICA</option><option>PINESE</option><option>EP</option><option>HBR</option><option>CASA DE MÁQUINAS</option><option>OUTROS</option></select>
+<input type="text" id="empresa_outros" placeholder="ESPECIFIQUE A EMPRESA..." hidden style="margin-top:5px"></div>
+
+<div style="grid-column:span 2"><label for="area">ÁREA / SETOR:</label>
+<select id="area"><option value="">SELECIONE...</option>
+<option>CASA DE MÁQUINAS TÉRREO</option><option>CASA DE MÁQUINAS 1 ANDAR</option><option>CASA DE MÁQUINAS PORÃO</option><option>CASA DE MÁQUINAS ÁREA EXTERNA</option><option>CAIXA DE ÁGUA POTÁVEL</option><option>CAIXA DE ÁGUA INDUSTRIAL</option><option>CAIXA DE ÁGUA REUSO</option><option>CASA DE BOMBAS POTÁVEL</option><option>CASA DE BOMBAS INDUSTRIAL</option><option>CASAS DE BOMBAS ABRANDADA</option><option>DEPÓSITO DE PRODUTOS QUÍMICOS</option><option>CENTRAL HIDRÁULICA ALA 1</option><option>CENTRAL HIDRÁULICA ALA 3</option><option>CENTRAL HIDRÁULICA ALA 4</option><option>CORREDOR DA CAIXA DE REUSO</option><option>ÁREA EXTERNA 23X/270</option><option>SALA DE COMPRESSORES 23X</option><option>SALA DE COMPRESSORES 270</option><option>UTILIDADES 23X</option><option>UTILIDADES VW270</option><option>OUTROS</option></select>
+<input type="text" id="area_outros" placeholder="ESPECIFIQUE A ÁREA..." hidden style="margin-top:5px"></div>
+
+<div style="grid-column:span 2"><label for="criticidade">CRITICIDADE DA PENDÊNCIA:</label>
+<select id="criticidade">
+<option value="BAIXA">BAIXA</option>
+<option value="MÉDIA" selected>MÉDIA</option>
+<option value="ALTA">ALTA</option>
+<option value="CRÍTICA">CRÍTICA</option>
+</select></div>
+
+<div style="grid-column:span 2"><label for="descricao">DESCRIÇÃO DA PENDÊNCIA DE MANUTENÇÃO:</label><textarea id="descricao" placeholder="DIGITE A DESCRIÇÃO..."></textarea></div>
+<div style="grid-column:span 2"><button type="button" class="btn-secondary" id="btn-midia">📷 MÍDIA (<span id="cont-midia">0</span>/4)</button></div>
+</div>
+<div id="preview-container" class="preview-midias-form"></div>
+<div style="display:flex;gap:8px;margin-top:10px"><button class="btn-primary" id="btn-salvar">➕ ADICIONAR PENDÊNCIA</button></div>
+<button class="btn-secondary" id="btn-cancelar-edicao" hidden style="margin-top:8px">❌ CANCELAR EDIÇÃO</button>
+</div>
+
+<div class="center-section">
+<div class="header-lista"><h3>PENDÊNCIAS (<span id="contador">0</span>)</h3><button class="btn-danger" id="btn-limpar" style="width:auto;min-height:32px;font-size:11px">🗑 LIMPAR TUDO</button></div>
+<div id="lista-registros"></div>
+</div>
+<div class="bottom-section"><button class="btn-primary" id="btn-abrir-exportar">📤 EXPORTAR</button><button class="btn-warning" id="btn-abrir-importar">📂 IMPORTAR</button><input type="file" id="input-json" accept=".json,application/json" multiple hidden></div>
+
+<div class="modal" id="midia-modal"><div class="modal-box">
+<h3>ADICIONAR MÍDIA</h3><p class="hint">ESCOLHA A ORIGEM DA FOTO OU VÍDEO:</p>
+<div class="botoes-menu-modal">
+<button class="btn-success" id="btn-camera-foto">📷 TIRAR FOTO</button>
+<button class="btn-warning" id="btn-camera-video">🎥 GRAVAR VÍDEO (ATÉ 5S)</button>
+<button class="btn-info" id="btn-galeria">📂 CARREGAR DA GALERIA</button>
+<button class="btn-danger" id="btn-fechar-midia">❌ CANCELAR</button>
+</div>
+<input type="file" id="input-galeria" accept="image/*,video/*" hidden>
+</div></div>
+
+<div class="modal" id="camera-modal"><div id="camera-content">
+<video id="video-preview" autoplay playsinline muted></video>
+<p id="status-gravacao" style="color:#ff5252;font-weight:bold;display:none;margin:0">🔴 GRAVANDO VÍDEO (MÁX. 5S)...</p>
+<div class="modal-botoes">
+<button id="btn-tirar-foto" class="btn-success">📷 CAPTURAR FOTO</button>
+<button id="btn-iniciar-gravacao" class="btn-warning">🎥 GRAVAR</button>
+<button id="btn-parar-gravacao" class="btn-danger" hidden>⏹ PARAR E SALVAR</button>
+<button id="btn-fechar-camera" class="btn-secondary">❌ CANCELAR</button>
+</div><canvas id="canvas" hidden></canvas>
+</div></div>
+
+<div class="modal" id="media-viewer-modal"><span class="fechar-btn" id="btn-fechar-viewer">&times;</span><img id="viewer-img" hidden><video id="viewer-video" controls playsinline hidden></video></div>
+
+<div class="modal" id="exportar-modal"><div class="modal-box"><h3>EXPORTAR DADOS</h3><p class="hint">ESCOLHA O FORMATO DO ARQUIVO:</p><div class="botoes-menu-modal">
+<button class="btn-primary" id="btn-export-pptx">📺 POWERPOINT (.PPTX)</button><button class="btn-success" id="btn-export-xlsx">📊 EXCEL (.XLSX)</button><button class="btn-info" id="btn-export-json">💾 ARQUIVO (.JSON)</button><button class="btn-secondary" id="btn-copiar-json">📋 COPIAR TEXTO (JSON)</button><button class="btn-danger" id="btn-fechar-exportar">❌ CANCELAR</button>
+</div></div></div>
+<div class="modal" id="importar-modal"><div class="modal-box"><h3 style="color:#b58100">IMPORTAR DADOS</h3><p class="hint">ESCOLHA COMO DESEJA IMPORTAR O JSON:</p><div class="botoes-menu-modal">
+<button class="btn-warning" id="btn-importar-arquivo">📁 IMPORTAR JSON (.JSON)</button><button class="btn-warning" id="btn-abrir-colar">📥 COLAR TEXTO JSON</button><button class="btn-danger" id="btn-fechar-importar">❌ CANCELAR</button>
+</div></div></div>
+<div class="modal" id="colar-modal"><div class="modal-box"><h3 style="color:#b58100">COLAR TEXTO JSON</h3><p class="hint">COLE AQUI O CÓDIGO QUE VOCÊ COPIOU:</p><textarea id="texto-colar" rows="8" style="height:160px"></textarea><div style="display:flex;gap:10px;margin-top:12px"><button class="btn-danger" id="btn-cancelar-colar">CANCELAR</button><button class="btn-success" id="btn-processar-colar">IMPORTAR</button></div></div></div>
+
+<script>
+'use strict';
+const STORE_KEY='registros_manutencao_predial_v2';
+let registros=[], indiceEdicao=null, midiasForm=[];
+let streamDeVideo=null, mediaRecorder=null, pedacosGravados=[], timerGravacao=null, modoCamera='foto';
+const $=id=>document.getElementById(id);
+const PLACEHOLDER_VIDEO='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="#343a40"/><text x="50%" y="55%" font-size="30" text-anchor="middle" fill="white">▶</text></svg>');
+
+function escapeHTML(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function getISOWeek(d){const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));const yearStart=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil((((x-yearStart)/86400000)+1)/7);}
+function showModal(id){$(id).style.display='flex';}
+function hideModal(id){$(id).style.display='none';}
+function saveStore(){return (window.localforage?localforage.setItem(STORE_KEY,registros):Promise.resolve());}
+async function loadStore(){try{const d=window.localforage?await localforage.getItem(STORE_KEY):null;if(Array.isArray(d))registros=d;}catch(e){alert('Não foi possível ler os registros salvos: '+e.message);}atualizarLista();}
+window.addEventListener('load',async()=>{try{$('auditor').value=localStorage.getItem('mp_auditor')||'';}catch(e){}$('kw').value=getISOWeek(new Date());await loadStore();});
+$('auditor').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();try{localStorage.setItem('mp_auditor',e.target.value);}catch(e){}});
+$('descricao').addEventListener('input',e=>{const p=e.target.selectionStart;e.target.value=e.target.value.toUpperCase();try{e.target.setSelectionRange(p,p);}catch(err){}});
+$('empresa').addEventListener('change',()=>{$('empresa_outros').hidden=$('empresa').value!=='OUTROS';});
+$('area').addEventListener('change',()=>{$('area_outros').hidden=$('area').value!=='OUTROS';});
+
+$('btn-midia').onclick=()=>{if(midiasForm.length>=4){alert('Limite de 4 mídias por pendência atingido.');return;}showModal('midia-modal');};
+$('btn-fechar-midia').onclick=()=>hideModal('midia-modal');
+$('btn-camera-foto').onclick=()=>iniciarCamera('foto');
+$('btn-camera-video').onclick=()=>iniciarCamera('video');
+$('btn-galeria').onclick=()=>{hideModal('midia-modal');$('input-galeria').click();};
+$('input-galeria').addEventListener('change',processarMidiaGaleria);
+$('btn-tirar-foto').onclick=capturarFoto;
+$('btn-iniciar-gravacao').onclick=iniciarGravacaoVideo;
+$('btn-parar-gravacao').onclick=pararGravacaoVideo;
+$('btn-fechar-camera').onclick=fecharCamera;
+$('btn-fechar-viewer').onclick=fecharViewerMidia;
+$('btn-salvar').onclick=salvarRegistro;
+$('btn-cancelar-edicao').onclick=cancelarEdicao;
+$('btn-limpar').onclick=limparTudo;
+$('btn-abrir-exportar').onclick=()=>showModal('exportar-modal');
+$('btn-fechar-exportar').onclick=()=>hideModal('exportar-modal');
+$('btn-abrir-importar').onclick=()=>showModal('importar-modal');
+$('btn-fechar-importar').onclick=()=>hideModal('importar-modal');
+$('btn-importar-arquivo').onclick=()=>{hideModal('importar-modal');$('input-json').click();};
+$('input-json').addEventListener('change',importarJSON);
+$('btn-abrir-colar').onclick=()=>{hideModal('importar-modal');$('texto-colar').value='';showModal('colar-modal');};
+$('btn-cancelar-colar').onclick=()=>hideModal('colar-modal');
+$('btn-processar-colar').onclick=processarColarJSON;
+$('btn-export-json').onclick=()=>acionarExportar('JSON');
+$('btn-export-xlsx').onclick=()=>acionarExportar('XLSX');
+$('btn-export-pptx').onclick=()=>acionarExportar('PPTX');
+$('btn-copiar-json').onclick=copiarJSON;
+
+async function iniciarCamera(modo){
+ if(midiasForm.length>=4){hideModal('midia-modal');alert('Limite de 4 mídias por pendência atingido.');return;}
+ modoCamera=modo;hideModal('midia-modal');
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('Este navegador não disponibiliza acesso à câmera.');return;}
+ try{
+  const constraints={video:{facingMode:{ideal:'environment'}},audio:modo==='video'};
+  streamDeVideo=await navigator.mediaDevices.getUserMedia(constraints);
+  const v=$('video-preview');v.srcObject=streamDeVideo;v.muted=true;
+  await v.play().catch(()=>{});
+  $('btn-tirar-foto').hidden=modo!=='foto';
+  $('btn-iniciar-gravacao').hidden=modo!=='video';
+  $('btn-parar-gravacao').hidden=true;$('status-gravacao').style.display='none';
+  showModal('camera-modal');
+ }catch(err){
+  pararTracks();
+  alert('Não foi possível abrir a câmera: '+(err.message||err));
+  showModal('midia-modal');
+ }
+}
+function pararTracks(){if(streamDeVideo){streamDeVideo.getTracks().forEach(t=>t.stop());streamDeVideo=null;}$('video-preview').srcObject=null;}
+function fecharCamera(){if(timerGravacao){clearTimeout(timerGravacao);timerGravacao=null;}if(mediaRecorder&&mediaRecorder.state==='recording'){try{mediaRecorder.onstop=null;mediaRecorder.stop();}catch(e){}}pararTracks();hideModal('camera-modal');$('status-gravacao').style.display='none';$('btn-parar-gravacao').hidden=true;}
+function capturarFoto(){
+ const v=$('video-preview');if(!v.videoWidth||!v.videoHeight){alert('A câmera ainda está iniciando.');return;}
+ const c=$('canvas');const scale=Math.min(1,1600/v.videoWidth);c.width=Math.round(v.videoWidth*scale);c.height=Math.round(v.videoHeight*scale);
+ const ctx=c.getContext('2d');ctx.drawImage(v,0,0,c.width,c.height);
+ adicionarNovaMidia(c.toDataURL('image/jpeg',.72),'');fecharCamera();
+}
+function iniciarGravacaoVideo(){
+ if(!streamDeVideo){alert('A câmera não está aberta.');return;}
+ if(!window.MediaRecorder){alert('Navegador não suporta gravação de vídeo.');return;}
+ pedacosGravados=[];
+ const tipos=['video/webm;codecs=vp8,opus','video/webm','video/mp4'];
+ let opcoes={};for(const t of tipos){try{if(MediaRecorder.isTypeSupported(t)){opcoes={mimeType:t};break;}}catch(e){}}
+ try{mediaRecorder=new MediaRecorder(streamDeVideo,opcoes);}catch(e){alert('Erro ao iniciar gravador: '+e.message);return;}
+ mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)pedacosGravados.push(e.data);};
+ mediaRecorder.onstop=async()=>{
+  if(timerGravacao){clearTimeout(timerGravacao);timerGravacao=null;}
+  const blob=new Blob(pedacosGravados,{type:mediaRecorder.mimeType||'video/webm'});
+  if(!blob.size){alert('Vídeo vazio.');return;}
+  const cover=capturarCapa();
+  try{const data=await blobToDataURL(blob);adicionarNovaMidia(cover,data);}catch(e){alert('Erro ao processar vídeo: '+e.message);}
+ };
+ try{mediaRecorder.start(250);}catch(e){alert('Falha ao iniciar: '+e.message);return;}
+ $('btn-iniciar-gravacao').hidden=true;$('btn-parar-gravacao').hidden=false;$('status-gravacao').style.display='block';
+ timerGravacao=setTimeout(()=>{if(mediaRecorder&&mediaRecorder.state==='recording')pararGravacaoVideo();},5000);
+}
+function capturarCapa(){try{const v=$('video-preview'),c=$('canvas');if(!v.videoWidth)return PLACEHOLDER_VIDEO;c.width=Math.min(v.videoWidth,800);c.height=Math.round(c.width*v.videoHeight/v.videoWidth);c.getContext('2d').drawImage(v,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.55);}catch(e){return PLACEHOLDER_VIDEO;}}
+function pararGravacaoVideo(){if(timerGravacao){clearTimeout(timerGravacao);timerGravacao=null;}if(mediaRecorder&&mediaRecorder.state==='recording'){$('btn-parar-gravacao').hidden=true;mediaRecorder.stop();}pararTracks();hideModal('camera-modal');}
+function blobToDataURL(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(blob);});}
+async function processarMidiaGaleria(e){
+ const file=e.target.files&&e.target.files[0];e.target.value='';if(!file)return;
+ if(midiasForm.length>=4){alert('Limite de 4 mídias atingido.');return;}
+ try{
+  const data=await blobToDataURL(file);
+  if(file.type.startsWith('image/'))adicionarNovaMidia(await reduzirImagem(data),'');
+  else{const frame=await extrairFrameVideo(data);adicionarNovaMidia(frame,data);}
+ }catch(err){alert('Erro ao carregar mídia.');}
+}
+function reduzirImagem(data){return new Promise(resolve=>{const im=new Image();im.onload=()=>{try{const max=1800,scale=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.78));}catch(e){resolve(data);}};im.onerror=()=>resolve(data);im.src=data;});}
+function extrairFrameVideo(data){return new Promise(resolve=>{const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='metadata';v.onloadedmetadata=()=>{try{v.currentTime=Math.min(1,Math.max(0,(v.duration||1)/2));}catch(e){resolve(PLACEHOLDER_VIDEO);}};v.onseeked=()=>{try{const c=document.createElement('canvas');c.width=Math.min(v.videoWidth||640,640);c.height=Math.round(c.width*(v.videoHeight||480)/(v.videoWidth||640));c.getContext('2d').drawImage(v,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.6));}catch(e){resolve(PLACEHOLDER_VIDEO);}finally{v.removeAttribute('src');v.load();}};v.onerror=()=>resolve(PLACEHOLDER_VIDEO);v.src=data;});}
+function adicionarNovaMidia(fotoB64,videoB64){if(midiasForm.length>=4)return;midiasForm.push({foto_base64:fotoB64||'',video_base64:videoB64||''});renderizarPreviewsForm();}
+function removerMidiaForm(i){midiasForm.splice(i,1);renderizarPreviewsForm();}
+function renderizarPreviewsForm(){
+ $('cont-midia').textContent=midiasForm.length;const c=$('preview-container');c.replaceChildren();
+ midiasForm.forEach((m,i)=>{const d=document.createElement('div');d.className='preview-item-form';const im=document.createElement('img');im.src=m.foto_base64||PLACEHOLDER_VIDEO;d.appendChild(im);if(m.video_base64){const play=document.createElement('div');play.className='play-icon';play.textContent='▶';d.appendChild(play);}const b=document.createElement('button');b.className='btn-excluir-preview';b.type='button';b.textContent='×';b.onclick=()=>removerMidiaForm(i);d.appendChild(b);c.appendChild(d);});
+}
+function abrirViewerMidia(regIndex,midiaIndex){const m=registros[regIndex]?.midias?.[midiaIndex];if(!m)return;const im=$('viewer-img'),v=$('viewer-video');v.pause();v.removeAttribute('src');v.load();if(m.video_base64){im.hidden=true;v.hidden=false;v.src=m.video_base64;showModal('media-viewer-modal');v.play().catch(()=>{});}else{v.hidden=true;im.hidden=false;im.src=m.foto_base64;showModal('media-viewer-modal');}}
+function fecharViewerMidia(){const v=$('viewer-video');v.pause();v.removeAttribute('src');v.load();hideModal('media-viewer-modal');}
+
+async function salvarRegistro(){
+ const auditor=$('auditor').value.trim().toUpperCase();
+ let empresa=$('empresa').value, area=$('area').value;
+ if(empresa==='OUTROS')empresa=$('empresa_outros').value.trim();
+ if(area==='OUTROS')area=$('area_outros').value.trim();
+ const criticidade=$('criticidade').value;
+ const descricao=$('descricao').value.trim().toUpperCase(),kw=$('kw').value;
+
+ if(!auditor){alert('INFORME O NOME DO INSPETOR!');$('auditor').focus();return;}
+ if(!empresa||!area){alert('SELECIONE A EMPRESA E A ÁREA!');return;}
+ if(!descricao){alert('PREENCHA A DESCRIÇÃO DA PENDÊNCIA!');$('descricao').focus();return;}
+
+ const edicao=indiceEdicao!==null,anterior=edicao?registros[indiceEdicao]:null,agora=new Date();
+ const reg={
+  data:anterior?.data||agora.toLocaleDateString('pt-BR'),
+  hora:anterior?.hora||agora.toLocaleTimeString('pt-BR'),
+  auditor,kw,
+  empresa:empresa.toUpperCase(),
+  area:area.toUpperCase(),
+  criticidade:criticidade.toUpperCase(),
+  descricao,
+  midias:midiasForm.map(m=>({...m}))
+ };
+ if(edicao)registros[indiceEdicao]=reg;else registros.push(reg);
+ try{await saveStore();}catch(e){alert('Erro ao salvar localmente.');}
+ $('descricao').value='';midiasForm=[];renderizarPreviewsForm();cancelarEdicao(false);atualizarLista();
+ if(!edicao)$('lista-registros').lastElementChild?.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+function editarRegistro(i){
+ const r=registros[i];if(!r)return;indiceEdicao=i;$('kw').value=r.kw||'';
+ preencherSelectOuOutro('empresa','empresa_outros',r.empresa);
+ preencherSelectOuOutro('area','area_outros',r.area);
+ $('criticidade').value=r.criticidade||'MÉDIA';
+ $('auditor').value=r.auditor||$('auditor').value;
+ $('descricao').value=r.descricao||'';
+ midiasForm=Array.isArray(r.midias)?r.midias.map(m=>({...m})):[];renderizarPreviewsForm();
+ $('btn-salvar').textContent='💾 ATUALIZAR PENDÊNCIA';$('btn-cancelar-edicao').hidden=false;$('btn-cancelar-edicao').style.display='block';
+ document.querySelector('.center-section').style.display='none';document.querySelector('.bottom-section').style.display='none';window.scrollTo(0,0);
+}
+
+function preencherSelectOuOutro(selectId,outroId,valor){const s=$(selectId),o=$(outroId),existe=Array.from(s.options).some(x=>x.value===valor||x.text===valor);if(existe){s.value=valor;o.value='';o.hidden=true;}else{s.value='OUTROS';o.value=valor||'';o.hidden=false;}}
+function cancelarEdicao(limpar=true){indiceEdicao=null;if(limpar){$('descricao').value='';midiasForm=[];renderizarPreviewsForm();}$('btn-salvar').textContent='➕ ADICIONAR PENDÊNCIA';$('btn-cancelar-edicao').hidden=true;$('btn-cancelar-edicao').style.display='none';document.querySelector('.center-section').style.display='';document.querySelector('.bottom-section').style.display='';}
+async function excluirRegistro(i){if(!confirm('Excluir esta pendência?'))return;registros.splice(i,1);await saveStore();atualizarLista();}
+async function limparTudo(){if(!registros.length){alert('Não há registros.');return;}if(!confirm('APAGAR TODAS AS PENDÊNCIAS?'))return;registros=[];await saveStore();cancelarEdicao();atualizarLista();}
+
+function atualizarLista(){
+ const lista=$('lista-registros');lista.replaceChildren();$('contador').textContent=registros.length;
+ registros.forEach((r,i)=>{
+  const item=document.createElement('div');item.className='registro-item';
+  let corCriticidade='var(--primary)';
+  if(r.criticidade==='ALTA')corCriticidade='var(--warning)';
+  if(r.criticidade==='CRÍTICA')corCriticidade='var(--danger)';
+  item.style.borderLeftColor=corCriticidade;
+
+  const texto=document.createElement('div');texto.className='registro-texto';
+  texto.innerHTML='<strong>📍 '+escapeHTML(r.area)+'</strong> <span style="background:'+corCriticidade+';color:#212529;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold">'+escapeHTML(r.criticidade)+'</span><br><strong>#Item '+(i+1)+'</strong> — <span style="color:var(--primary);font-weight:bold">'+escapeHTML(r.empresa)+'</span><br><span>'+escapeHTML(r.descricao)+'</span><br><small>'+escapeHTML(r.data||'')+' '+escapeHTML(r.hora||'')+' · KW '+escapeHTML(r.kw||'')+' · Inspetor: '+escapeHTML(r.auditor||'')+'</small>';
+  item.appendChild(texto);
+
+  if(Array.isArray(r.midias)&&r.midias.length){
+   const thumbs=document.createElement('div');thumbs.className='registro-fotos-thumb';
+   r.midias.forEach((m,j)=>{
+    const w=document.createElement('div');w.className='thumb-wrap';
+    const im=document.createElement('img');im.src=m.foto_base64||PLACEHOLDER_VIDEO;w.appendChild(im);
+    if(m.video_base64){const p=document.createElement('div');p.className='play-icon';p.textContent='▶';w.appendChild(p);}
+    w.onclick=()=>abrirViewerMidia(i,j);thumbs.appendChild(w);
+   });
+   item.appendChild(thumbs);
+  }
+  const a=document.createElement('div');a.className='acoes-item';
+  const ed=document.createElement('button');ed.className='btn-warning';ed.textContent='✏️ EDITAR';ed.onclick=()=>editarRegistro(i);
+  const ex=document.createElement('button');ex.className='btn-danger';ex.textContent='🗑 EXCLUIR';ex.onclick=()=>excluirRegistro(i);
+  a.append(ed,ex);item.appendChild(a);lista.appendChild(item);
+ });
+}
+
+function ordenarArea(){return [...registros].sort((a,b)=>(a.area||'').localeCompare(b.area||'','pt-BR'));}
+function solicitarNomeArquivo(ext){const nome=prompt('CONFIRME O NOME DO ARQUIVO '+ext+':','MANUTENCAO_KW'+($('kw').value||'XX'));if(!nome||!nome.trim())return null;return nome.trim().replace(/[\\/:*?"<>|]/g,'_').toUpperCase();}
+function acionarExportar(tipo){if(!registros.length){alert('NENHUM REGISTRO PARA EXPORTAR.');return;}const nome=solicitarNomeArquivo(tipo);if(!nome)return;hideModal('exportar-modal');try{if(tipo==='JSON')exportarJSON(nome);else if(tipo==='XLSX')exportarXLSX(nome);else if(tipo==='PPTX')exportarPPTX(nome);}catch(e){alert('Erro: '+e.message);}}
+function baixarBlob(blob,nome){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
+function exportarJSON(nome){baixarBlob(new Blob([JSON.stringify(ordenarArea(),null,2)],{type:'application/json;charset=utf-8'}),nome+'.json');}
+
+function exportarXLSX(nome){
+ if(!window.XLSX){alert('Biblioteca do Excel indisponível.');return;}
+ const dados=ordenarArea().map((r,i)=>({
+  'ID':i+1,
+  'ÁREA / SETOR':r.area||'',
+  'CRITICIDADE':r.criticidade||'',
+  'EMPRESA RESPONSÁVEL':r.empresa||'',
+  'DESCRIÇÃO DA PENDÊNCIA':(r.descricao||'').replace(/[\r\n]+/g,' '),
+  'KW':r.kw||'',
+  'DATA':r.data||'',
+  'HORA':r.hora||'',
+  'INSPETOR':r.auditor||'',
+  'QTD MÍDIAS':r.midias?.length||0
+ }));
+ const ws=XLSX.utils.json_to_sheet(dados),wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,'Pendências');
+ XLSX.writeFile(wb,nome+'.xlsx');
+}
+
+async function exportarPPTX(nome){
+ if(!window.PptxGenJS){alert('Biblioteca do PowerPoint indisponível.');return;}
+ const pptx=new PptxGenJS();
+ pptx.layout='LAYOUT_WIDE';
+ pptx.author='Vistoria de Manutenção Predial';
+ const lista=ordenarArea();
+ const POR_SLIDE=4;
+ const W=13.333, H=7.5;
+ for(let inicio=0;inicio<lista.length;inicio+=POR_SLIDE){
+  const slide=pptx.addSlide();
+  slide.background={color:'FFFFFF'};
+  const grupo=lista.slice(inicio,inicio+POR_SLIDE);
+  
+  slide.addText('VISTORIA DE MANUTENÇÃO PREDIAL — KW '+($('kw').value||'XX'),{x:.35,y:.16,w:12.6,h:.34,fontSize:18,bold:true,color:'0056B3',margin:0,fit:'shrink'});
+  slide.addText('REGISTROS '+(inicio+1)+' A '+(inicio+grupo.length)+'  |  TOTAL: '+grupo.length+' PENDÊNCIA(S) NESTE SLIDE',{x:.36,y:.54,w:12.5,h:.22,fontSize:9,color:'666666',margin:0,fit:'shrink'});
+  
+  const y0=.88, rowH=1.53;
+  grupo.forEach((r,j)=>{
+   const y=y0+j*rowH, n=inicio+j+1;
+   slide.addShape(pptx.ShapeType.rect,{x:.32,y:y,w:12.68,h:1.43,line:{color:'C9D3E0',width:1},fill:{color:j%2===0?'F5F8FC':'FFFFFF'}});
+   slide.addShape(pptx.ShapeType.rect,{x:.32,y:y,w:.62,h:1.43,line:{color:'0056B3',transparency:100},fill:{color:'E5EFFB'}});
+   slide.addText(String(n).padStart(2,'0'),{x:.37,y:y+.12,w:.52,h:.32,fontSize:15,bold:true,color:'0056B3',align:'center',valign:'mid',margin:0,fit:'shrink'});
+
+   const fotos=(r.midias||[]).filter(x=>x&&(x.foto_base64||x.video_base64)).slice(0,4);
+   let textW=11.55, startX=12.9;
+   const imgW=1.6, imgH=1.35, gap=0.06;
+
+   if(fotos.length>0){
+    const totalImgWidth=(fotos.length*imgW)+((fotos.length-1)*gap);
+    startX=12.9-totalImgWidth;
+    textW=startX-1.05-0.15;
+   }
+
+   slide.addText((r.area||'ÁREA NÃO INFORMADA')+'  [CRITICIDADE: '+(r.criticidade||'MÉDIA')+']',{x:1.05,y:y+.09,w:textW,h:.24,fontSize:11,bold:true,color:'0056B3',margin:0,fit:'shrink'});
+   slide.addText((r.descricao||'SEM DESCRIÇÃO').replace(/[\r\n]+/g,' '),{x:1.05,y:y+.39,w:textW,h:.55,fontSize:10,color:'222222',margin:0.02,valign:'top',fit:'shrink',breakLine:false});
+
+   const meta='EMPRESA: '+(r.empresa||'')+'  |  KW '+(r.kw||$('kw').value||'XX')+'  |  '+(r.data||'')+' '+(r.hora||'')+'  |  INSPETOR: '+(r.auditor||'');
+   slide.addText(meta,{x:1.05,y:y+1.08,w:textW,h:.18,fontSize:8,color:'666666',italic:true,margin:0,fit:'shrink'});
+
+   fotos.forEach((m,k)=>{
+    const imgX=startX+(k*(imgW+gap)),imgY=y+.04;
+    if(m.foto_base64){try{slide.addImage({data:m.foto_base64,x:imgX,y:imgY,w:imgW,h:imgH,sizing:{type:'cover'}});}catch(e){}}
+    else if(m.video_base64)slide.addText('▶ VÍDEO',{x:imgX,y:imgY+.55,w:imgW,h:.2,fontSize:8,bold:true,color:'6F42C1',align:'center',margin:0});
+   });
+  });
+  slide.addText('Página '+(Math.floor(inicio/POR_SLIDE)+1),{x:11.85,y:7.18,w:1.05,h:.14,fontSize:8,color:'888888',align:'right',margin:0});
+ }
+ await pptx.writeFile({fileName:nome+'.pptx'});
+}
+
+async function copiarJSON(){if(!registros.length){alert('Nenhum dado.');return;}const t=JSON.stringify(ordenarArea(),null,2);try{await navigator.clipboard.writeText(t);alert('Copiado com sucesso!');}catch(e){alert('Erro ao copiar.');}hideModal('exportar-modal');}
+function normalizarRegistros(dados){return dados.filter(r=>r&&typeof r==='object'&&!Array.isArray(r)).map(r=>({...r,auditor:String(r.auditor||'').toUpperCase(),area:String(r.area||'').toUpperCase(),empresa:String(r.empresa||'').toUpperCase(),criticidade:String(r.criticidade||'MÉDIA').toUpperCase(),descricao:String(r.descricao||'').toUpperCase(),midias:Array.isArray(r.midias)?r.midias.filter(m=>m&&typeof m==='object').slice(0,4):[]}));}
+async function importarJSON(e){const files=Array.from(e.target.files||[]);e.target.value='';if(!files.length)return;let total=0;for(const f of files){try{const dados=JSON.parse(await f.text());if(!Array.isArray(dados))throw new Error('Formato inválido.');const norm=normalizarRegistros(dados);registros=registros.concat(norm);total+=norm.length;}catch(err){alert('Erro no arquivo: '+err.message);}}await saveStore();atualizarLista();if(total)alert('Importado com sucesso: '+total+' registro(s).');}
+async function processarColarJSON(){const t=$('texto-colar').value.trim();if(!t){alert('Cole o texto.');return;}try{const dados=JSON.parse(t);if(!Array.isArray(dados))throw new Error('Formato inválido.');const n=normalizarRegistros(dados);registros=registros.concat(n);await saveStore();atualizarLista();hideModal('colar-modal');alert('Sucesso! '+n.length+' importado(s).');}catch(e){alert('Erro ao processar JSON: '+e.message);}}
+
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m&&m.id!=='camera-modal'){if(m.id==='media-viewer-modal')fecharViewerMidia();else hideModal(m.id);}}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('camera-modal').style.display==='flex')fecharCamera();if($('media-viewer-modal').style.display==='flex')fecharViewerMidia();}});
+window.addEventListener('pagehide',()=>{if(timerGravacao)clearTimeout(timerGravacao);pararTracks();});
+</script>
+</body>
+</html>
