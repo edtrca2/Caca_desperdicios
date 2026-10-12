@@ -58,49 +58,28 @@ button:disabled{opacity:.55;cursor:not-allowed}
 <div class="top-section">
 <h2>VISTORIA DE MANUTENÇÃO PREDIAL</h2>
 <div class="form-grid">
-<div><label for="auditor">INSPETOR / RESPONSÁVEL:</label><input type="text" id="auditor" placeholder="NOME..."></div>
-<div><label for="kw">SEMANA / KW:</label><input type="number" id="kw" placeholder="EX.: 42" min="1" max="53"></div>
+<div><label for="auditor">NOME DO INSPETOR:</label><input type="text" id="auditor" placeholder="INSPETOR..."></div>
+<div><label for="kw">KW (SEMANA):</label><input type="number" id="kw" placeholder="EX.: 42" min="1" max="53"></div>
 
-<div style="grid-column:span 2"><label for="subsistema">SUBSISTEMA / ÁREA:</label>
-<select id="subsistema">
-<option value="">SELECIONE...</option>
-<option>FACHADA E ENVOLTÓRIA</option>
-<option>COBERTURA E CALHAS</option>
-<option>ESTRUTURA E ALVENARIA</option>
-<option>PISOS E REVESTIMENTOS</option>
-<option>ESQUADRIAS E PORTAS</option>
-<option>INSTALAÇÕES HIDRÁULICAS / ESGOTO</option>
-<option>INSTALAÇÕES ELÉTRICAS / ILUMINAÇÃO</option>
-<option>SISTEMA DE INCÊNDIO (SPDA / HIDRANTES)</option>
-<option>CLIMATIZAÇÃO / EXAUSTÃO</option>
-<option>IMPERMEABILIZAÇÃO</option>
-<option>ÁREAS COMUNS / EXTERNAS</option>
-<option>OUTROS</option>
-</select>
-<input type="text" id="subsistema_outros" placeholder="ESPECIFIQUE O SUBSISTEMA..." hidden style="margin-top:5px"></div>
+<div style="grid-column:span 2"><label for="empresa">EMPRESA RESPONSÁVEL:</label>
+<select id="empresa"><option value="">SELECIONE...</option>
+<option>LEADEC LIMPEZA</option><option>LEADEC MANUTENÇÃO</option><option>LEADEC MANUTENÇÃO MECÂNICA</option><option>LEADEC MANUTENÇÃO ELÉTRICA</option><option>LEADEC MANUTENÇÃO ELETRÔNICA</option><option>PINESE</option><option>EP</option><option>HBR</option><option>CASA DE MÁQUINAS</option><option>OUTROS</option></select>
+<input type="text" id="empresa_outros" placeholder="ESPECIFIQUE A EMPRESA..." hidden style="margin-top:5px"></div>
 
-<div><label for="criticidade">CRITICIDADE:</label>
+<div style="grid-column:span 2"><label for="area">ÁREA / SETOR:</label>
+<select id="area"><option value="">SELECIONE...</option>
+<option>CASA DE MÁQUINAS TÉRREO</option><option>CASA DE MÁQUINAS 1 ANDAR</option><option>CASA DE MÁQUINAS PORÃO</option><option>CASA DE MÁQUINAS ÁREA EXTERNA</option><option>CAIXA DE ÁGUA POTÁVEL</option><option>CAIXA DE ÁGUA INDUSTRIAL</option><option>CAIXA DE ÁGUA REUSO</option><option>CASA DE BOMBAS POTÁVEL</option><option>CASA DE BOMBAS INDUSTRIAL</option><option>CASAS DE BOMBAS ABRANDADA</option><option>DEPÓSITO DE PRODUTOS QUÍMICOS</option><option>CENTRAL HIDRÁULICA ALA 1</option><option>CENTRAL HIDRÁULICA ALA 3</option><option>CENTRAL HIDRÁULICA ALA 4</option><option>CORREDOR DA CAIXA DE REUSO</option><option>ÁREA EXTERNA 23X/270</option><option>SALA DE COMPRESSORES 23X</option><option>SALA DE COMPRESSORES 270</option><option>UTILIDADES 23X</option><option>UTILIDADES VW270</option><option>OUTROS</option></select>
+<input type="text" id="area_outros" placeholder="ESPECIFIQUE A ÁREA..." hidden style="margin-top:5px"></div>
+
+<div style="grid-column:span 2"><label for="criticidade">CRITICIDADE DA PENDÊNCIA:</label>
 <select id="criticidade">
-<option value="BAIXA">BAIXA (CORRETIVA PROGRAMADA)</option>
-<option value="MÉDIA" selected>MÉDIA (ATENÇÃO)</option>
-<option value="ALTA">ALTA (URGENTE / RISCO)</option>
-<option value="CRÍTICA">CRÍTICA (INTERDIÇÃO / SEGURANÇA)</option>
+<option value="BAIXA">BAIXA</option>
+<option value="MÉDIA" selected>MÉDIA</option>
+<option value="ALTA">ALTA</option>
+<option value="CRÍTICA">CRÍTICA</option>
 </select></div>
 
-<div><label for="responsavel">EQUIPE / RESPONSÁVEL:</label>
-<select id="responsavel">
-<option value="">SELECIONE...</option>
-<option>MANUTENÇÃO PREDIAL PRÓPRIA</option>
-<option>EMPRESA TERCEIRIZADA - CIVIL</option>
-<option>EMPRESA TERCEIRIZADA - ELÉTRICA</option>
-<option>EMPRESA TERCEIRIZADA - HIDRÁULICA</option>
-<option>EMPRESA TERCEIRIZADA - CLIMATIZAÇÃO</option>
-<option>SEGURANÇA DO TRABALHO</option>
-<option>OUTROS</option>
-</select>
-<input type="text" id="responsavel_outros" placeholder="ESPECIFIQUE O RESPONSÁVEL..." hidden style="margin-top:5px"></div>
-
-<div style="grid-column:span 2"><label for="descricao">DESCRIÇÃO DA ANOMALIA / PENDÊNCIA:</label><textarea id="descricao" placeholder="DESCREVA O PROBLEMA ENCONTRADO E O LOCAL EXATO..."></textarea></div>
+<div style="grid-column:span 2"><label for="descricao">DESCRIÇÃO DA PENDÊNCIA DE MANUTENÇÃO:</label><textarea id="descricao" placeholder="DIGITE A DESCRIÇÃO..."></textarea></div>
 <div style="grid-column:span 2"><button type="button" class="btn-secondary" id="btn-midia">📷 MÍDIA (<span id="cont-midia">0</span>/4)</button></div>
 </div>
 <div id="preview-container" class="preview-midias-form"></div>
@@ -139,7 +118,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 <div class="modal" id="media-viewer-modal"><span class="fechar-btn" id="btn-fechar-viewer">&times;</span><img id="viewer-img" hidden><video id="viewer-video" controls playsinline hidden></video></div>
 
 <div class="modal" id="exportar-modal"><div class="modal-box"><h3>EXPORTAR DADOS</h3><p class="hint">ESCOLHA O FORMATO DO ARQUIVO:</p><div class="botoes-menu-modal">
-<button class="btn-primary" id="btn-export-pptx">📺 RELATÓRIO POWERPOINT (.PPTX)</button><button class="btn-success" id="btn-export-xlsx">📊 PLANILHA EXCEL (.XLSX)</button><button class="btn-info" id="btn-export-json">💾 BACKUP (.JSON)</button><button class="btn-secondary" id="btn-copiar-json">📋 COPIAR TEXTO (JSON)</button><button class="btn-danger" id="btn-fechar-exportar">❌ CANCELAR</button>
+<button class="btn-primary" id="btn-export-pptx">📺 POWERPOINT (.PPTX)</button><button class="btn-success" id="btn-export-xlsx">📊 EXCEL (.XLSX)</button><button class="btn-info" id="btn-export-json">💾 ARQUIVO (.JSON)</button><button class="btn-secondary" id="btn-copiar-json">📋 COPIAR TEXTO (JSON)</button><button class="btn-danger" id="btn-fechar-exportar">❌ CANCELAR</button>
 </div></div></div>
 <div class="modal" id="importar-modal"><div class="modal-box"><h3 style="color:#b58100">IMPORTAR DADOS</h3><p class="hint">ESCOLHA COMO DESEJA IMPORTAR O JSON:</p><div class="botoes-menu-modal">
 <button class="btn-warning" id="btn-importar-arquivo">📁 IMPORTAR JSON (.JSON)</button><button class="btn-warning" id="btn-abrir-colar">📥 COLAR TEXTO JSON</button><button class="btn-danger" id="btn-fechar-importar">❌ CANCELAR</button>
@@ -148,7 +127,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 
 <script>
 'use strict';
-const STORE_KEY='registros_manutencao_predial_v1';
+const STORE_KEY='registros_manutencao_predial_v2';
 let registros=[], indiceEdicao=null, midiasForm=[];
 let streamDeVideo=null, mediaRecorder=null, pedacosGravados=[], timerGravacao=null, modoCamera='foto';
 const $=id=>document.getElementById(id);
@@ -163,8 +142,8 @@ async function loadStore(){try{const d=window.localforage?await localforage.getI
 window.addEventListener('load',async()=>{try{$('auditor').value=localStorage.getItem('mp_auditor')||'';}catch(e){}$('kw').value=getISOWeek(new Date());await loadStore();});
 $('auditor').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase();try{localStorage.setItem('mp_auditor',e.target.value);}catch(e){}});
 $('descricao').addEventListener('input',e=>{const p=e.target.selectionStart;e.target.value=e.target.value.toUpperCase();try{e.target.setSelectionRange(p,p);}catch(err){}});
-$('subsistema').addEventListener('change',()=>{$('subsistema_outros').hidden=$('subsistema').value!=='OUTROS';});
-$('responsavel').addEventListener('change',()=>{$('responsavel_outros').hidden=$('responsavel').value!=='OUTROS';});
+$('empresa').addEventListener('change',()=>{$('empresa_outros').hidden=$('empresa').value!=='OUTROS';});
+$('area').addEventListener('change',()=>{$('area_outros').hidden=$('area').value!=='OUTROS';});
 
 $('btn-midia').onclick=()=>{if(midiasForm.length>=4){alert('Limite de 4 mídias por pendência atingido.');return;}showModal('midia-modal');};
 $('btn-fechar-midia').onclick=()=>hideModal('midia-modal');
@@ -265,14 +244,14 @@ function fecharViewerMidia(){const v=$('viewer-video');v.pause();v.removeAttribu
 
 async function salvarRegistro(){
  const auditor=$('auditor').value.trim().toUpperCase();
- let subsistema=$('subsistema').value, responsavel=$('responsavel').value;
- if(subsistema==='OUTROS')subsistema=$('subsistema_outros').value.trim();
- if(responsavel==='OUTROS')responsavel=$('responsavel_outros').value.trim();
+ let empresa=$('empresa').value, area=$('area').value;
+ if(empresa==='OUTROS')empresa=$('empresa_outros').value.trim();
+ if(area==='OUTROS')area=$('area_outros').value.trim();
  const criticidade=$('criticidade').value;
  const descricao=$('descricao').value.trim().toUpperCase(),kw=$('kw').value;
 
  if(!auditor){alert('INFORME O NOME DO INSPETOR!');$('auditor').focus();return;}
- if(!subsistema||!responsavel){alert('SELECIONE O SUBSISTEMA E O RESPONSÁVEL!');return;}
+ if(!empresa||!area){alert('SELECIONE A EMPRESA E A ÁREA!');return;}
  if(!descricao){alert('PREENCHA A DESCRIÇÃO DA PENDÊNCIA!');$('descricao').focus();return;}
 
  const edicao=indiceEdicao!==null,anterior=edicao?registros[indiceEdicao]:null,agora=new Date();
@@ -280,9 +259,9 @@ async function salvarRegistro(){
   data:anterior?.data||agora.toLocaleDateString('pt-BR'),
   hora:anterior?.hora||agora.toLocaleTimeString('pt-BR'),
   auditor,kw,
-  subsistema:subsistema.toUpperCase(),
+  empresa:empresa.toUpperCase(),
+  area:area.toUpperCase(),
   criticidade:criticidade.toUpperCase(),
-  responsavel:responsavel.toUpperCase(),
   descricao,
   midias:midiasForm.map(m=>({...m}))
  };
@@ -294,8 +273,8 @@ async function salvarRegistro(){
 
 function editarRegistro(i){
  const r=registros[i];if(!r)return;indiceEdicao=i;$('kw').value=r.kw||'';
- preencherSelectOuOutro('subsistema','subsistema_outros',r.subsistema);
- preencherSelectOuOutro('responsavel','responsavel_outros',r.responsavel);
+ preencherSelectOuOutro('empresa','empresa_outros',r.empresa);
+ preencherSelectOuOutro('area','area_outros',r.area);
  $('criticidade').value=r.criticidade||'MÉDIA';
  $('auditor').value=r.auditor||$('auditor').value;
  $('descricao').value=r.descricao||'';
@@ -319,7 +298,7 @@ function atualizarLista(){
   item.style.borderLeftColor=corCriticidade;
 
   const texto=document.createElement('div');texto.className='registro-texto';
-  texto.innerHTML='<strong>🏗️ '+escapeHTML(r.subsistema)+'</strong> <span style="background:'+corCriticidade+';color:#212529;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold">'+escapeHTML(r.criticidade)+'</span><br><strong>#Item '+(i+1)+'</strong> — <span style="color:var(--primary);font-weight:bold">'+escapeHTML(r.responsavel)+'</span><br><span>'+escapeHTML(r.descricao)+'</span><br><small>'+escapeHTML(r.data||'')+' '+escapeHTML(r.hora||'')+' · KW '+escapeHTML(r.kw||'')+' · Inspetor: '+escapeHTML(r.auditor||'')+'</small>';
+  texto.innerHTML='<strong>📍 '+escapeHTML(r.area)+'</strong> <span style="background:'+corCriticidade+';color:#212529;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold">'+escapeHTML(r.criticidade)+'</span><br><strong>#Item '+(i+1)+'</strong> — <span style="color:var(--primary);font-weight:bold">'+escapeHTML(r.empresa)+'</span><br><span>'+escapeHTML(r.descricao)+'</span><br><small>'+escapeHTML(r.data||'')+' '+escapeHTML(r.hora||'')+' · KW '+escapeHTML(r.kw||'')+' · Inspetor: '+escapeHTML(r.auditor||'')+'</small>';
   item.appendChild(texto);
 
   if(Array.isArray(r.midias)&&r.midias.length){
@@ -339,19 +318,19 @@ function atualizarLista(){
  });
 }
 
-function ordenarSubsistema(){return [...registros].sort((a,b)=>(a.subsistema||'').localeCompare(b.subsistema||'','pt-BR'));}
-function solicitarNomeArquivo(ext){const nome=prompt('CONFIRME O NOME DO ARQUIVO '+ext+':','MANUTENCAO_PREDIAL_KW'+($('kw').value||'XX'));if(!nome||!nome.trim())return null;return nome.trim().replace(/[\\/:*?"<>|]/g,'_').toUpperCase();}
+function ordenarArea(){return [...registros].sort((a,b)=>(a.area||'').localeCompare(b.area||'','pt-BR'));}
+function solicitarNomeArquivo(ext){const nome=prompt('CONFIRME O NOME DO ARQUIVO '+ext+':','MANUTENCAO_KW'+($('kw').value||'XX'));if(!nome||!nome.trim())return null;return nome.trim().replace(/[\\/:*?"<>|]/g,'_').toUpperCase();}
 function acionarExportar(tipo){if(!registros.length){alert('NENHUM REGISTRO PARA EXPORTAR.');return;}const nome=solicitarNomeArquivo(tipo);if(!nome)return;hideModal('exportar-modal');try{if(tipo==='JSON')exportarJSON(nome);else if(tipo==='XLSX')exportarXLSX(nome);else if(tipo==='PPTX')exportarPPTX(nome);}catch(e){alert('Erro: '+e.message);}}
 function baixarBlob(blob,nome){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
-function exportarJSON(nome){baixarBlob(new Blob([JSON.stringify(ordenarSubsistema(),null,2)],{type:'application/json;charset=utf-8'}),nome+'.json');}
+function exportarJSON(nome){baixarBlob(new Blob([JSON.stringify(ordenarArea(),null,2)],{type:'application/json;charset=utf-8'}),nome+'.json');}
 
 function exportarXLSX(nome){
  if(!window.XLSX){alert('Biblioteca do Excel indisponível.');return;}
- const dados=ordenarSubsistema().map((r,i)=>({
+ const dados=ordenarArea().map((r,i)=>({
   'ID':i+1,
-  'SUBSISTEMA/ÁREA':r.subsistema||'',
+  'ÁREA / SETOR':r.area||'',
   'CRITICIDADE':r.criticidade||'',
-  'EQUIPE RESPONSÁVEL':r.responsavel||'',
+  'EMPRESA RESPONSÁVEL':r.empresa||'',
   'DESCRIÇÃO DA PENDÊNCIA':(r.descricao||'').replace(/[\r\n]+/g,' '),
   'KW':r.kw||'',
   'DATA':r.data||'',
@@ -369,7 +348,7 @@ async function exportarPPTX(nome){
  const pptx=new PptxGenJS();
  pptx.layout='LAYOUT_WIDE';
  pptx.author='Vistoria de Manutenção Predial';
- const lista=ordenarSubsistema();
+ const lista=ordenarArea();
  const POR_SLIDE=4;
  const W=13.333, H=7.5;
  for(let inicio=0;inicio<lista.length;inicio+=POR_SLIDE){
@@ -377,7 +356,7 @@ async function exportarPPTX(nome){
   slide.background={color:'FFFFFF'};
   const grupo=lista.slice(inicio,inicio+POR_SLIDE);
   
-  slide.addText('RELATÓRIO DE VISTORIA — MANUTENÇÃO PREDIAL (KW '+($('kw').value||'XX')+')',{x:.35,y:.16,w:12.6,h:.34,fontSize:18,bold:true,color:'0056B3',margin:0,fit:'shrink'});
+  slide.addText('VISTORIA DE MANUTENÇÃO PREDIAL — KW '+($('kw').value||'XX'),{x:.35,y:.16,w:12.6,h:.34,fontSize:18,bold:true,color:'0056B3',margin:0,fit:'shrink'});
   slide.addText('REGISTROS '+(inicio+1)+' A '+(inicio+grupo.length)+'  |  TOTAL: '+grupo.length+' PENDÊNCIA(S) NESTE SLIDE',{x:.36,y:.54,w:12.5,h:.22,fontSize:9,color:'666666',margin:0,fit:'shrink'});
   
   const y0=.88, rowH=1.53;
@@ -397,10 +376,10 @@ async function exportarPPTX(nome){
     textW=startX-1.05-0.15;
    }
 
-   slide.addText((r.subsistema||'ÁREA NÃO INFORMADA')+'  [CRITICIDADE: '+(r.criticidade||'MÉDIA')+']',{x:1.05,y:y+.09,w:textW,h:.24,fontSize:11,bold:true,color:'0056B3',margin:0,fit:'shrink'});
+   slide.addText((r.area||'ÁREA NÃO INFORMADA')+'  [CRITICIDADE: '+(r.criticidade||'MÉDIA')+']',{x:1.05,y:y+.09,w:textW,h:.24,fontSize:11,bold:true,color:'0056B3',margin:0,fit:'shrink'});
    slide.addText((r.descricao||'SEM DESCRIÇÃO').replace(/[\r\n]+/g,' '),{x:1.05,y:y+.39,w:textW,h:.55,fontSize:10,color:'222222',margin:0.02,valign:'top',fit:'shrink',breakLine:false});
 
-   const meta='RESPONSÁVEL: '+(r.responsavel||'')+'  |  KW '+(r.kw||$('kw').value||'XX')+'  |  '+(r.data||'')+' '+(r.hora||'')+'  |  INSPETOR: '+(r.auditor||'');
+   const meta='EMPRESA: '+(r.empresa||'')+'  |  KW '+(r.kw||$('kw').value||'XX')+'  |  '+(r.data||'')+' '+(r.hora||'')+'  |  INSPETOR: '+(r.auditor||'');
    slide.addText(meta,{x:1.05,y:y+1.08,w:textW,h:.18,fontSize:8,color:'666666',italic:true,margin:0,fit:'shrink'});
 
    fotos.forEach((m,k)=>{
@@ -414,8 +393,8 @@ async function exportarPPTX(nome){
  await pptx.writeFile({fileName:nome+'.pptx'});
 }
 
-async function copiarJSON(){if(!registros.length){alert('Nenhum dado.');return;}const t=JSON.stringify(ordenarSubsistema(),null,2);try{await navigator.clipboard.writeText(t);alert('Copiado com sucesso!');}catch(e){alert('Erro ao copiar.');}hideModal('exportar-modal');}
-function normalizarRegistros(dados){return dados.filter(r=>r&&typeof r==='object'&&!Array.isArray(r)).map(r=>({...r,auditor:String(r.auditor||'').toUpperCase(),subsistema:String(r.subsistema||'').toUpperCase(),responsavel:String(r.responsavel||'').toUpperCase(),criticidade:String(r.criticidade||'MÉDIA').toUpperCase(),descricao:String(r.descricao||'').toUpperCase(),midias:Array.isArray(r.midias)?r.midias.filter(m=>m&&typeof m==='object').slice(0,4):[]}));}
+async function copiarJSON(){if(!registros.length){alert('Nenhum dado.');return;}const t=JSON.stringify(ordenarArea(),null,2);try{await navigator.clipboard.writeText(t);alert('Copiado com sucesso!');}catch(e){alert('Erro ao copiar.');}hideModal('exportar-modal');}
+function normalizarRegistros(dados){return dados.filter(r=>r&&typeof r==='object'&&!Array.isArray(r)).map(r=>({...r,auditor:String(r.auditor||'').toUpperCase(),area:String(r.area||'').toUpperCase(),empresa:String(r.empresa||'').toUpperCase(),criticidade:String(r.criticidade||'MÉDIA').toUpperCase(),descricao:String(r.descricao||'').toUpperCase(),midias:Array.isArray(r.midias)?r.midias.filter(m=>m&&typeof m==='object').slice(0,4):[]}));}
 async function importarJSON(e){const files=Array.from(e.target.files||[]);e.target.value='';if(!files.length)return;let total=0;for(const f of files){try{const dados=JSON.parse(await f.text());if(!Array.isArray(dados))throw new Error('Formato inválido.');const norm=normalizarRegistros(dados);registros=registros.concat(norm);total+=norm.length;}catch(err){alert('Erro no arquivo: '+err.message);}}await saveStore();atualizarLista();if(total)alert('Importado com sucesso: '+total+' registro(s).');}
 async function processarColarJSON(){const t=$('texto-colar').value.trim();if(!t){alert('Cole o texto.');return;}try{const dados=JSON.parse(t);if(!Array.isArray(dados))throw new Error('Formato inválido.');const n=normalizarRegistros(dados);registros=registros.concat(n);await saveStore();atualizarLista();hideModal('colar-modal');alert('Sucesso! '+n.length+' importado(s).');}catch(e){alert('Erro ao processar JSON: '+e.message);}}
 
