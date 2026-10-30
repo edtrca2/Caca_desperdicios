@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VÍDEO-TUTORIAL INTERATIVO — CAÇA DESPERDÍCIOS</title>
+    <style>
+        :root {
+            --primary: #0056b3;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --purple: #6f42c1;
+            --bg: #1e242b;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: #fff;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .player-header {
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        .player-header h2 { margin: 0 0 6px 0; font-size: 20px; color: #66b2ff; }
+        .player-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .btn-ctrl {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-play { background: var(--success); }
+        .btn-stop { background: var(--danger); }
+
+        /* Legenda de Áudio */
+        .legenda-box {
+            max-width: 520px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            border-left: 4px solid var(--warning);
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            line-height: 1.45;
+            min-height: 68px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Tela Simulada do Celular */
+        .phone-mockup {
+            max-width: 520px;
+            width: 100%;
+            background: #e9ecef;
+            color: #333;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 4px solid #444;
+            position: relative;
+        }
+        .mock-top {
+            background: #fff;
+            padding: 12px;
+            border-bottom: 2px solid #222;
+        }
+        .mock-top h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            font-size: 15px;
+            text-align: center;
+        }
+        .mock-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .mock-field {
+            display: flex;
+            flex-direction: column;
+        }
+        .mock-field label {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            color: #555;
+        }
+        .mock-input {
+            height: 30px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 12px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .destaque-foco {
+            outline: 3px solid var(--warning) !important;
+            box-shadow: 0 0 12px rgba(255, 193, 7, 0.9);
+            transform: scale(1.02);
+        }
+        .mock-sub {
+            grid-column: span 2;
+            background: #fdf5f6;
+            border: 1px dashed var(--danger);
+            padding: 8px;
+            border-radius: 5px;
+            display: none;
+        }
+        .mock-list {
+            padding: 12px;
+            min-height: 230px;
+        }
+        .mock-area-bar {
+            background: var(--primary);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .mock-card {
+            background: #fff;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 5px solid #ccc;
+            font-size: 12px;
+            transition: 0.3s;
+        }
+        .mock-card.dup {
+            background: #fff5f5;
+            border: 2px solid var(--danger);
+            border-left: 6px solid var(--danger);
+        }
+        .mock-card.rev {
+            background: #e8f5e9;
+            border: 1px solid var(--success);
+            border-left: 6px solid var(--success);
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 4px;
+            margin-right: 4px;
+        }
+        .b-dup { background: var(--danger); }
+        .b-rev { background: var(--success); }
+        .mock-modal-export {
+            display: none;
+            background: rgba(0,0,0,0.85);
+            position: absolute;
+            inset: 0;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        .export-box {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+            text-align: center;
+        }
+        .mock-btn {
+            padding: 8px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 11px;
+            color: #fff;
+            text-align: center;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-header">
+        <h2>🎬 Simulador Guiado com Áudio</h2>
+        <p style="margin: 0 0 10px 0; font-size: 13px; color: #ccc;">Clique em Iniciar para assistir à simulação narrada passo a passo:</p>
+        <div class="player-controls">
+            <button class="btn-ctrl btn-play" onclick="iniciarSimulacao()">▶ INICIAR SIMULAÇÃO COM ÁUDIO</button>
+            <button class="btn-ctrl btn-stop" onclick="pararSimulacao()">⏹ PARAR / REINICIAR</button>
+        </div>
+    </div>
+
+    <div class="legenda-box" id="legenda">
+        🔊 Toque em "INICIAR SIMULAÇÃO COM ÁUDIO" acima para começar o treinamento.
+    </div>
+
+    <div class="phone-mockup">
+        <div class="mock-top">
+            <h3>🛠️ CAÇA DESPERDÍCIOS & REVISÃO</h3>
+            <div class="mock-grid">
+                <div class="mock-field">
+                    <label>AUDITOR (COLETA):</label>
+                    <div class="mock-input" id="sim-auditor"></div>
+                </div>
+                <div class="mock-field">
+                    <label style="color: var(--success);">REVISOR (REVISÃO):</label>
+                    <div class="mock-input" id="sim-revisor" style="border-color: var(--success); font-weight: bold; color: var(--success);"></div>
+                </div>
+                <div class="mock-field">
+                    <label>ÁREA / SETOR:</label>
+                    <div class="mock-input" id="sim-area">SELECIONE...</div>
+                </div>
+                <div class="mock-field">
+                    <label>LOCAL ESPECÍFICO:</label>
+                    <div class="mock-input" id="sim-local"></div>
+                </div>
+                <div class="mock-field" style="grid-column: span 2;">
+                    <label>OCORRÊNCIA:</label>
+                    <div class="mock-input" id="sim-ocorrencia">SELECIONE...</div>
+                </div>
+                <div class="mock-sub" id="sim-sub">
+                    <label style="color: var(--danger); font-size: 10px; font-weight: bold;">TIPO DE VAZAMENTO (ARMAÇÃO):</label>
+                    <div class="mock-input" id="sim-sub-val" style="border-color: var(--danger); margin-top: 3px;">VAZAMENTO(S) NA(S) HIP(S)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mock-list">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong style="font-size: 13px;">REGISTROS (<span id="sim-count">0</span>)</strong>
+                <span id="sim-btn-dup" style="background: var(--warning); color: #000; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">🧹 LIMPAR DUPLICADAS</span>
+            </div>
+            <div id="sim-lista-cards">
+                <p style="text-align: center; color: #888; font-size: 12px; margin-top: 40px;">Aguardando início da simulação...</p>
+            </div>
+        </div>
+
+        <!-- Modal Simulado de Exportação -->
+        <div class="mock-modal-export" id="sim-modal-export">
+            <div class="export-box">
+                <h4 style="margin: 0 0 8px 0; color: var(--purple);">📦 EXPORTADOR INTELIGENTE POR ÁREA</h4>
+                <p style="font-size: 11px; color: #555; margin: 0 0 10px 0;">Gera automaticamente 1 arquivo separado para cada área:</p>
+                <div class="mock-btn" id="sim-btn-zip" style="background: var(--purple);">📦 PACOTE .ZIP (1 PPTX POR ÁREA)</div>
+                <div class="mock-btn" style="background: var(--primary);">🎯 EXPORTAR ÁREA ÚNICA: ARMAÇÃO.PPTX</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rodando = false;
+
+        function falar(texto) {
+            document.getElementById('legenda').innerText = "🗣️ " + texto;
+            return new Promise((resolve) => {
+                if (!('speechSynthesis' in window)) {
+                    setTimeout(resolve, 4000);
+                    return;
+                }
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(texto);
+                utter.lang = 'pt-BR';
+                utter.rate = 1.05;
+                utter.onend = () => setTimeout(resolve, 500);
+                utter.onerror = () => setTimeout(resolve, 3000);
+                window.speechSynthesis.speak(utter);
+            });
+        }
+
+        function limparDestaques() {
+            document.querySelectorAll('.destaque-foco').forEach(el => el.classList.remove('destaque-foco'));
+        }
+
+        function resetarTela() {
+            limparDestaques();
+            document.getElementById('sim-auditor').innerText = '';
+            document.getElementById('sim-revisor').innerText = '';
+            document.getElementById('sim-area').innerText = 'SELECIONE...';
+            document.getElementById('sim-local').innerText = '';
+            document.getElementById('sim-ocorrencia').innerText = 'SELECIONE...';
+            document.getElementById('sim-sub').style.display = 'none';
+            document.getElementById('sim-count').innerText = '0';
+            document.getElementById('sim-modal-export').style.display = 'none';
+            document.getElementById('sim-lista-cards').innerHTML = '<p style="text-align: center; color: #888; font-size: 12px; margin-top: 40px;">Aguardando início da simulação...</p>';
+        }
+
+        function pararSimulacao() {
+            rodando = false;
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            resetarTela();
+            document.getElementById('legenda').innerText = "⏹ Simulação parada. Clique em Iniciar quando quiser assistir novamente.";
+        }
+
+        async function iniciarSimulacao() {
+            pararSimulacao();
+            rodando = true;
+
+            // CENA 1: COLETA
+            document.getElementById('sim-auditor').classList.add('destaque-foco');
+            document.getElementById('sim-auditor').innerText = 'MAGINA';
+            await falar("Bem-vindo ao treinamento do Caça Desperdícios Integrado. Na etapa de coleta em campo, o auditor preenche seu nome e pode ler o QR Code do local ou selecionar os dados manualmente.");
+            if (!rodando) return;
+
+            // CENA 2: SUBMENU ARMAÇÃO
+            limparDestaques();
+            document.getElementById('sim-area').innerText = 'ARMAÇÃO';
+            document.getElementById('sim-local').innerText = 'COLUNA B38 PTD';
+            document.getElementById('sim-ocorrencia').innerText = 'VAZAMENTOS DE AR';
+            document.getElementById('sim-sub').style.display = 'block';
+            document.getElementById('sim-sub').classList.add('destaque-foco');
+            await falar("Quando a área for Armação e a ocorrência for Vazamentos de Ar, o aplicativo abre automaticamente este submenu vermelho para especificar se o vazamento é nas HIPs, RIPs ou Manipuladores.");
+            if (!rodando) return;
+
+            // CENA 3: IMPORTAÇÃO E DUPLICATAS
+            limparDestaques();
+            document.getElementById('sim-revisor').innerText = 'EDSON';
+            document.getElementById('sim-revisor').classList.add('destaque-foco');
+            document.getElementById('sim-count').innerText = '3';
+            document.getElementById('sim-lista-cards').innerHTML = `
+                <div class="mock-area-bar"><span>📍 ÁREA: ARMAÇÃO</span><span>2 itens</span></div>
+                <div class="mock-card dup" id="card-1">
+                    <span class="badge b-dup">⚠️ DUPLICADO (MESMO LOCAL E TEMA)</span><br>
+                    <strong>#1 - COLUNA B38 PTD</strong><br>
+                    <span style="color:#d32f2f; font-weight:bold;">VAZAMENTOS DE AR - VAZAMENTO(S) NA(S) HIP(S)</span><br>
+                    <small>Registrado por MAGINA em 30/08/2026 às 09:59:54</small>
+                </div>
+                <div class="mock-card dup" id="card-2">
+                    <span class="badge b-dup">⚠️ DUPLICADO (MESMO LOCAL E TEMA)</span><br>
+                    <strong>#2 - COLUNA B38 PTD</strong><br>
+                    <span style="color:#d32f2f; font-weight:bold;">VAZAMENTOS DE AR - VAZAMENTO(S) NA(S) HIP(S)</span><br>
+                    <small>Registrado por RODRIGO em 30/08/2026 às 10:15:00</small>
+                </div>
+                <div class="mock-area-bar"><span>📍 ÁREA: PINTURA</span><span>1 item</span></div>
+                <div class="mock-card">
+                    <strong>#3 - CABINE 02</strong><br>
+                    <span style="color:#d32f2f; font-weight:bold;">LUZ ACESA</span>
+                </div>
+            `;
+            await falar("Na fase de revisão, você digita seu nome no campo Revisor e importa os arquivos JSON da equipe. O sistema agrupa tudo por área e marca em vermelho os registros duplicados que possuem o mesmo local e o mesmo tema.");
+            if (!rodando) return;
+
+            // CENA 4: MARCAR COMO REVISADO
+            limparDestaques();
+            const card1 = document.getElementById('card-1');
+            card1.className = 'mock-card rev destaque-foco';
+            card1.innerHTML = `
+                <span class="badge b-dup">⚠️ DUPLICADO</span>
+                <span class="badge b-rev">✅ REVISADO POR EDSON EM 29/10/2026 às 22:05:10</span><br>
+                <strong>#1 - COLUNA B38 PTD</strong><br>
+                <span style="color:#d32f2f; font-weight:bold;">VAZAMENTOS DE AR - VAZAMENTO(S) NA(S) HIP(S)</span><br>
+                <small>Registrado por MAGINA. <strong>REVISADO POR EDSON EM 29/10/2026 às 22:05:10</strong></small>
+            `;
+            await falar("Ao clicar em Revisado ou salvar uma edição, o item ganha o selo verde com o nome do revisor, a data e a hora exata. Se ele já tinha revisão anterior, a data antiga é apagada e atualizada para a atual.");
+            if (!rodando) return;
+
+            // CENA 5: LIMPAR DUPLICADAS ELIMINANDO O NÃO REVISADO
+            limparDestaques();
+            document.getElementById('sim-btn-dup').classList.add('destaque-foco');
+            const card2 = document.getElementById('card-2');
+            if (card2) card2.remove();
+            document.getElementById('sim-count').innerText = '2';
+            card1.innerHTML = `
+                <span class="badge b-rev">✅ REVISADO POR EDSON EM 29/10/2026 às 22:05:10</span><br>
+                <strong>#1 - COLUNA B38 PTD</strong><br>
+                <span style="color:#d32f2f; font-weight:bold;">VAZAMENTOS DE AR - VAZAMENTO(S) NA(S) HIP(S)</span><br>
+                <small>Registrado por MAGINA. <strong>REVISADO POR EDSON EM 29/10/2026 às 22:05:10</strong></small>
+            `;
+            await falar("Quando você clica no botão Limpar Duplicadas, o sistema compara os itens idênticos e elimina automaticamente aquele que não tinha revisão, preservando o registro que você revisou.");
+            if (!rodando) return;
+
+            // CENA 6: EXPORTADOR POR ÁREA
+            limparDestaques();
+            document.getElementById('sim-modal-export').style.display = 'flex';
+            document.getElementById('sim-btn-zip').classList.add('destaque-foco');
+            await falar("Por fim, no Exportador Inteligente por Área, você pode baixar um pacote ZIP que gera automaticamente um PowerPoint, Excel ou JSON separado para cada área da fábrica, facilitando a distribuição do serviço para cada trabalhador.");
+            if (!rodando) return;
+
+            limparDestaques();
+            document.getElementById('legenda').innerText = "✅ Treinamento concluído! Clique em Iniciar se quiser repetir.";
+            rodando = false;
+        }
+    </script>
+</body>
+</html>
