@@ -287,6 +287,7 @@
             flex: 1;
             font-size: 13px;
             line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         .registro-miniatura {
@@ -321,7 +322,7 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.45);
             border-radius: 5px;
             display: flex;
             align-items: center;
@@ -696,6 +697,7 @@ let qrAnimationFrame = null;
 let qrUltimoTexto = "";
 let qrUltimaLeitura = 0;
 let qrDetectorNativo = null;
+let qrDetectando = false;
 
 window.onload = async function() {
     let auditorSalvo = localStorage.getItem('auditor_nome');
@@ -712,29 +714,35 @@ window.onload = async function() {
         registros = dadosUnificados;
     } else if (Array.isArray(dadosAntigosRevisor) && dadosAntigosRevisor.length > 0) {
         registros = dadosAntigosRevisor;
-        await salvarMemoria();
     } else if (Array.isArray(dadosAntigosColeta) && dadosAntigosColeta.length > 0) {
         registros = dadosAntigosColeta;
-        await salvarMemoria();
     }
 
-    registros = registros.map(normalizarRegistro);
     await salvarMemoria();
     processarEOrdenarLista();
 };
 
 function gerarIdRegistro() {
-    return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'reg-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    return (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'reg-' + Date.now() + '-' + Math.random().toString(36).slice(2);
 }
+
 function normalizarRegistro(r) {
-    const x = (r && typeof r === 'object' && !Array.isArray(r)) ? {...r} : {};
+    const x = (r && typeof r === 'object' && !Array.isArray(r)) ? { ...r } : {};
     x.id = String(x.id || gerarIdRegistro());
-    for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor','data','hora','revisado_em']) x[k] = x[k] == null ? '' : String(x[k]);
-    x.foto = typeof x.foto === 'string' ? x.foto : '';
-    x.video = typeof x.video === 'string' ? x.video : '';
+    for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor','data','hora','revisado_em']) {
+        x[k] = x[k] == null ? '' : String(x[k]).trim();
+    }
+    for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor']) {
+        x[k] = x[k].toUpperCase();
+    }
+    x.foto = (typeof x.foto === 'string' && x.foto.startsWith('data:image/')) ? x.foto : '';
+    x.video = (typeof x.video === 'string' && x.video.startsWith('data:video/')) ? x.video : '';
     x.editado = Boolean(x.revisado_em || x.editado);
     return x;
 }
+
 async function salvarMemoria() {
     registros = registros.map(normalizarRegistro);
     await localforage.setItem(STORAGE_KEY, registros);
@@ -757,6 +765,30 @@ function obterTimestampAtual() {
     const data = agora.toLocaleDateString('pt-BR');
     const hora = agora.toLocaleTimeString('pt-BR');
     return `${data} às ${hora}`;
+}
+
+function parseDataHoraBR(valor) {
+    if (valor == null || valor === '') return 0;
+    const texto = String(valor).trim();
+    const br = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\D+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (br) {
+        const dia = Number(br[1]), mes = Number(br[2]), ano = Number(br[3]);
+        const hora = Number(br[4] || 0), minuto = Number(br[5] || 0), segundo = Number(br[6] || 0);
+        if (mes < 1 || mes > 12 || dia < 1 || hora > 23 || minuto > 59 || segundo > 59) return 0;
+        const data = new Date(ano, mes - 1, dia, hora, minuto, segundo);
+        if (data.getFullYear() !== ano || data.getMonth() !== mes - 1 || data.getDate() !== dia) return 0;
+        return data.getTime();
+    }
+    const iso = texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/);
+    if (iso) {
+        const ano = Number(iso[1]), mes = Number(iso[2]), dia = Number(iso[3]);
+        const hora = Number(iso[4] || 0), minuto = Number(iso[5] || 0), segundo = Number(iso[6] || 0);
+        const valida = new Date(Date.UTC(ano, mes - 1, dia));
+        if (valida.getUTCFullYear() !== ano || valida.getUTCMonth() !== mes - 1 || valida.getUTCDate() !== dia || hora > 23 || minuto > 59 || segundo > 59) return 0;
+        const timestamp = Date.parse(texto);
+        return Number.isFinite(timestamp) ? timestamp : 0;
+    }
+    return 0;
 }
 
 function removerAcentos(texto) {
@@ -818,29 +850,48 @@ function processarEOrdenarLista() {
 }
 
 // ==========================================
-// LIMPEZA DE DUPLICADAS (PRIORIZA REVISADOS)
+// LIMPEZA DE DUPLICADAS (PRIORIZA REVISADOS COM PARSER BR)
 // ==========================================
 async function limparDuplicadas() {
     const grupos = new Map();
-    registros.forEach(r => { const k = chaveIdentidade(r); if (k) grupos.set(k, [...(grupos.get(k)||[]), r]); });
-    const duplicados = [...grupos.values()].filter(g => g.length > 1);
-    if (!duplicados.length) { alert('Nenhum registro com a mesma Área + Local + Ocorrência foi encontrado.'); return; }
-    const total = duplicados.reduce((n,g)=>n+g.length-1,0);
-    if (!confirm(`Foram encontrados ${total} possíveis duplicados. A limpeza manterá o registro com revisão mais recente; quando não houver revisão, manterá o mais recente pela posição atual. Deseja continuar?`)) return;
-    const idsRemover = new Set();
-    duplicados.forEach(g => {
-        const ordenados = [...g].sort((a,b) => {
-            const ta = Date.parse(a.revisado_em || '') || 0, tb = Date.parse(b.revisado_em || '') || 0;
-            return tb-ta;
-        });
-        ordenados.slice(1).forEach(r=>idsRemover.add(r.id));
+    registros.forEach(r => {
+        const k = chaveIdentidade(r);
+        if (k) grupos.set(k, [...(grupos.get(k) || []), r]);
     });
-    registros = registros.filter(r=>!idsRemover.has(r.id));
-    await salvarMemoria(); processarEOrdenarLista();
-    alert(`${idsRemover.size} possível(is) duplicado(s) removido(s). Confira os registros antes de continuar.`);
+
+    const duplicados = [...grupos.values()].filter(g => g.length > 1);
+    if (!duplicados.length) {
+        alert("ℹ️ Nenhum item duplicado (Mesma Área + Local + Ocorrência) foi encontrado.");
+        return;
+    }
+
+    const totalRemover = duplicados.reduce((n, g) => n + g.length - 1, 0);
+    if (!confirm(`Foram encontrados ${totalRemover} registro(s) duplicado(s).\nO sistema eliminará os itens sem revisão e manterá o item revisado mais recente.\nDeseja continuar?`)) {
+        return;
+    }
+
+    // Usa referência do objeto: IDs repetidos em arquivos importados não podem
+    // fazer o sistema apagar também o registro que deveria ser preservado.
+    const remover = new Set();
+    duplicados.forEach(grupo => {
+        const ordenados = [...grupo].sort((a, b) => {
+            const revisadoA = Boolean(a.editado || a.revisado_em);
+            const revisadoB = Boolean(b.editado || b.revisado_em);
+            if (revisadoA !== revisadoB) return revisadoB ? 1 : -1;
+            const tempoRevA = parseDataHoraBR(a.revisado_em);
+            const tempoRevB = parseDataHoraBR(b.revisado_em);
+            if (tempoRevA !== tempoRevB) return tempoRevB - tempoRevA;
+            const tempoColA = parseDataHoraBR(`${a.data || ''} ${a.hora || ''}`);
+            const tempoColB = parseDataHoraBR(`${b.data || ''} ${b.hora || ''}`);
+            return tempoColB - tempoColA;
+        });
+        ordenados.slice(1).forEach(registro => remover.add(registro));
+    });
+    registros = registros.filter(registro => !remover.has(registro));
+    await salvarMemoria();
+    processarEOrdenarLista();
+    alert(`✅ Limpeza concluída! ${remover.size} duplicata(s) eliminada(s), preservando os itens revisados e mais recentes.`);
 }
-
-
 
 // ==========================================
 // MARCAR COMO REVISADO (SOBRESCREVE DATA/HORA)
@@ -853,7 +904,6 @@ async function marcarComoRevisado(index) {
         return;
     }
 
-    // Apaga a data anterior e grava a data e hora atual da última revisão
     registros[index].revisor = revisor;
     registros[index].revisado_em = obterTimestampAtual();
     registros[index].editado = true;
@@ -895,7 +945,9 @@ async function abrirLeitorQR() {
         prepararBarcodeDetector();
         iniciarLoopLeituraQR();
     } catch (erro) {
-        qrScannerAtivo = false; fecharStreamQR(); video.srcObject = null;
+        qrScannerAtivo = false;
+        fecharStreamQR();
+        video.srcObject = null;
         modal.style.display = 'none';
         btn.innerText = "🔳 LER QR CODE DO LOCAL";
         if (confirm("Não foi possível abrir a câmera ao vivo. Deseja ler uma foto do QR Code da galeria?")) {
@@ -911,27 +963,30 @@ function prepararBarcodeDetector() {
     }
 }
 
-let qrDetectando = false;
 function iniciarLoopLeituraQR() {
     if (!qrScannerAtivo) return;
     const video = document.getElementById('qr-camera-video');
-    const proximo = () => { qrDetectando = false; if (qrScannerAtivo) qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR); };
+    const proximo = () => {
+        qrDetectando = false;
+        if (qrScannerAtivo) qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR);
+    };
     if (qrDetectando) return;
     if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
-        qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR); return;
+        qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR);
+        return;
     }
     qrDetectando = true;
     if (qrDetectorNativo) {
         qrDetectorNativo.detect(video).then(barcodes => {
             if (qrScannerAtivo && barcodes?.length && barcodes[0].rawValue) processarQRDetectado(barcodes[0].rawValue);
             else if (qrScannerAtivo) tentarJSQRVideo();
-        }).catch(() => { if (qrScannerAtivo) tentarJSQRVideo(); }).finally(proximo);
+        }).catch(() => {
+            if (qrScannerAtivo) tentarJSQRVideo();
+        }).finally(proximo);
     } else {
         try { tentarJSQRVideo(); } finally { proximo(); }
     }
 }
-
-
 
 function tentarJSQRVideo() {
     if (!qrScannerAtivo) return;
@@ -1015,12 +1070,16 @@ function preencherCamposViaQR(decodedText) {
     try {
         const obj = JSON.parse(decodedText);
         if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
-            partes = [obj.area, obj.local, obj.ocorrencia, obj.interruptor].map(v => v == null ? '' : String(v));
+            partes = [obj.area, obj.local, obj.ocorrencia, obj.interruptor].map(v => v == null ? '' : String(v).trim());
         }
     } catch (_) {}
-    if (!partes) partes = String(decodedText).replace(/\r/g, '').replace(/\n/g, ' ').trim().split(';').map(item => item.trim());
 
-    if (partes.length < 2) {
+    if (!partes) {
+        partes = String(decodedText).replace(/\r/g, '').replace(/\n/g, ' ').trim().split(';').map(item => item.trim());
+        while (partes.length > 0 && partes[partes.length - 1] === "") partes.pop();
+    }
+
+    if (partes.length < 2 || (!partes[0] && !partes[1])) {
         alert("❌ FORMATO INVÁLIDO NO QR CODE.\nEsperado: ÁREA;LOCAL;OCORRÊNCIA;INTERRUPTOR");
         return;
     }
@@ -1142,7 +1201,8 @@ async function iniciarCamera(modo) {
 function fecharCamera() {
     document.getElementById('camera-modal').style.display = 'none';
     if (streamDeVideo) { streamDeVideo.getTracks().forEach(track => track.stop()); streamDeVideo = null; }
-    const pv=document.getElementById('video-preview'); if(pv) pv.srcObject=null;
+    const pv = document.getElementById('video-preview');
+    if (pv) pv.srcObject = null;
     if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
 }
 function capturarFoto() {
@@ -1162,7 +1222,7 @@ function capturarFoto() {
 function iniciarGravacaoVideo() {
     pedacosGravados = [];
     if (!window.MediaRecorder) { alert('Gravação de vídeo não é suportada neste navegador.'); return; }
-    const tipos = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+    const tipos = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
     const mime = tipos.find(t => MediaRecorder.isTypeSupported?.(t));
     try { mediaRecorder = new MediaRecorder(streamDeVideo, mime ? { mimeType: mime } : undefined); }
     catch (e) { alert('Este navegador não oferece formato de gravação compatível.'); return; }
@@ -1233,9 +1293,16 @@ function processarMidiaGaleria(event) {
     event.target.value = '';
 }
 function validarVideoGaleria(videoDataUrl) {
-    const v = document.createElement('video'); v.preload = 'metadata'; v.src = videoDataUrl;
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.src = videoDataUrl;
     v.onloadedmetadata = () => {
-        if (!Number.isFinite(v.duration) || v.duration > 5.2) { alert('O vídeo da galeria deve ter até 5 segundos.'); v.removeAttribute('src'); v.load(); return; }
+        if (Number.isFinite(v.duration) && v.duration > 6.0) {
+            alert('O vídeo da galeria deve ter até 5 segundos.');
+            v.removeAttribute('src');
+            v.load();
+            return;
+        }
         document.getElementById('video_base64').value = videoDataUrl;
         extrairFrameVideo(videoDataUrl);
     };
@@ -1245,7 +1312,13 @@ function extrairFrameVideo(videoDataUrl) {
     const video = document.createElement('video');
     video.src = videoDataUrl; video.muted = true; video.playsInline = true;
     video.onloadeddata = () => { video.currentTime = Math.min(1, Math.max(0, (video.duration || 1) / 2)); };
-    video.onerror = () => alert('Não foi possível gerar a miniatura do vídeo.');
+    video.onerror = () => {
+        let thumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+        document.getElementById('foto_base64').value = thumb;
+        document.getElementById('photo-preview').src = thumb;
+        document.getElementById('photo-preview').style.display = 'block';
+        document.getElementById('btn-remover-midia').style.display = 'flex';
+    };
     video.onseeked = () => {
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
@@ -1345,10 +1418,17 @@ async function salvarRegistro() {
 
     if (ehEdicao) {
         const anterior = registros[indiceEdicao];
-        // Editar dados da coleta não equivale a realizar uma revisão.
-        novoReg.revisor = anterior.revisor || '';
-        novoReg.revisado_em = anterior.revisado_em || '';
-        novoReg.editado = Boolean(anterior.editado || anterior.revisado_em);
+        if (revisorNome) {
+            // Se o Revisor está identificado e editou o item, atualiza/sobrescreve a data e hora da revisão
+            novoReg.revisor = revisorNome;
+            novoReg.revisado_em = obterTimestampAtual();
+            novoReg.editado = true;
+        } else {
+            // Se o campo Revisor está vazio, mantém o status anterior sem apagar eventual revisão
+            novoReg.revisor = anterior.revisor || '';
+            novoReg.revisado_em = anterior.revisado_em || '';
+            novoReg.editado = Boolean(anterior.editado || anterior.revisado_em);
+        }
         registros[indiceEdicao] = novoReg;
         cancelarEdicao();
     } else {
@@ -1433,7 +1513,7 @@ function editarRegistro(index) {
         document.getElementById('btn-remover-midia').style.display = 'none';
     }
 
-    document.getElementById('btn-salvar').innerText = "💾 SALVAR ALTERAÇÕES (ATUALIZA REVISÃO)";
+    document.getElementById('btn-salvar').innerText = "💾 SALVAR ALTERAÇÕES";
     document.getElementById('btn-cancelar-edicao').style.display = 'block';
     document.querySelector('.top-section').scrollTop = 0;
 }
@@ -1470,46 +1550,122 @@ async function limparTudo() {
 }
 
 // ==========================================
-// RENDERIZAÇÃO INDEXADA POR ÁREA
+// RENDERIZAÇÃO SEGURA E INDEXADA POR ÁREA
 // ==========================================
 function atualizarLista() {
     const lista = document.getElementById('lista-registros');
     document.getElementById('contador').innerText = registros.length;
     lista.replaceChildren();
+
     if (!registros.length) {
-        const vazio = document.createElement('p'); vazio.style.cssText = 'text-align:center;color:#888;margin-top:40px;';
-        vazio.textContent = 'Nenhum registro carregado. Adicione acima ou clique em "IMPORTAR / MESCLAR JSON".'; lista.appendChild(vazio); return;
+        const vazio = document.createElement('p');
+        vazio.style.cssText = 'text-align:center;color:#888;margin-top:40px;';
+        vazio.textContent = 'Nenhum registro carregado. Adicione acima ou clique em "IMPORTAR / MESCLAR JSON".';
+        lista.appendChild(vazio);
+        return;
     }
-    const el = (tag, cls, value) => { const n=document.createElement(tag); if(cls)n.className=cls; if(value!==undefined)n.textContent=String(value); return n; };
+
+    const el = (tag, cls, value) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (value !== undefined) n.textContent = String(value);
+        return n;
+    };
+
     let areaAtual = null;
-    registros.forEach((reg,index) => {
+    registros.forEach((reg, index) => {
         const area = reg.area || 'SEM ÁREA DEFINIDA';
-        if(area!==areaAtual){ areaAtual=area; const h=el('div','area-header'); h.append(el('span','',`📍 ÁREA: ${area}`)); h.append(el('span','',`${registros.filter(r=>(r.area||'SEM ÁREA DEFINIDA')===area).length} item(ns)`)); lista.append(h); }
-        const item=el('div','registro-item'+((reg.editado||reg.revisado_em)?' revisado':'')+(reg.isDuplicado?' duplicado':''));
-        const badges=el('div','badges-row');
-        if(reg.isDuplicado) badges.append(el('span','selo-duplicado','⚠️ POSSÍVEL DUPLICADO (MESMA ÁREA, LOCAL E TEMA)'));
-        if(reg.editado||reg.revisado_em) badges.append(el('span','selo-revisado',`✅ REVISADO POR ${(reg.revisor||'REVISOR').toUpperCase()} EM ${reg.revisado_em||''}`));
-        item.append(badges);
-        const conteudo=el('div','registro-conteudo'), texto=el('div','registro-texto');
-        const titulo=el('strong','',`#${index+1} - ${reg.local||'N/A'}`); texto.append(titulo);
-        if(reg.interruptor) texto.append(el('span','',` | CHAVE: ${reg.interruptor}`)); texto.append(document.createElement('br'));
-        const oc=el('span','',reg.ocorrencia||''); oc.style.cssText='color:var(--danger);font-weight:bold;'; texto.append(oc);
-        if(reg.descricao){texto.append(document.createElement('br')); const d=el('span','',`DETALHE: ${reg.descricao}`);d.style.cssText='color:#555;font-size:11px;';texto.append(d);}
-        texto.append(document.createElement('br')); const ac=el('span','',`AÇÃO: ${reg.acao||'NÃO INFORMADA'}`); ac.style.cssText='color:#28a745;font-size:11px;font-weight:bold;'; texto.append(ac);
-        texto.append(document.createElement('br')); const ass=el('span','',`Registrado por ${reg.auditor||'DESCONHECIDO'} em: ${reg.data||''}${reg.hora?' às '+reg.hora:''}.`);ass.style.cssText='color:#777;font-size:11px;';texto.append(ass);
-        conteudo.append(texto);
-        if(reg.video||reg.foto){
-            const thumb=reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
-            const m=el('img',reg.video?'registro-miniatura':'registro-miniatura'); m.src=thumb; m.alt=reg.video?'Miniatura do vídeo':'Foto anexada'; m.addEventListener('click',()=>abrirViewerMidia(index)); conteudo.append(m);
+        if (area !== areaAtual) {
+            areaAtual = area;
+            const h = el('div', 'area-header');
+            h.append(el('span', '', `📍 ÁREA: ${area}`));
+            h.append(el('span', '', `${registros.filter(r => (r.area || 'SEM ÁREA DEFINIDA') === area).length} item(ns)`));
+            lista.append(h);
         }
+
+        const item = el('div', 'registro-item' + ((reg.editado || reg.revisado_em) ? ' revisado' : '') + (reg.isDuplicado ? ' duplicado' : ''));
+        const badges = el('div', 'badges-row');
+        if (reg.isDuplicado) badges.append(el('span', 'selo-duplicado', '⚠️ DUPLICADO (MESMA ÁREA, LOCAL E TEMA)'));
+        if (reg.editado || reg.revisado_em) badges.append(el('span', 'selo-revisado', `✅ REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em || ''}`));
+        item.append(badges);
+
+        const conteudo = el('div', 'registro-conteudo');
+        const texto = el('div', 'registro-texto');
+        texto.append(el('strong', '', `#${index + 1} - ${reg.local || 'N/A'}`));
+
+        if (reg.interruptor) {
+            const ch = el('span', '', ` | CHAVE: ${reg.interruptor}`);
+            ch.style.cssText = 'color:#6f42c1;font-weight:bold;';
+            texto.append(ch);
+        }
+        texto.append(document.createElement('br'));
+
+        const oc = el('span', '', reg.ocorrencia || '');
+        oc.style.cssText = 'color:var(--danger);font-weight:bold;';
+        texto.append(oc);
+
+        if (reg.descricao) {
+            texto.append(document.createElement('br'));
+            const d = el('span', '', `DETALHE: ${reg.descricao}`);
+            d.style.cssText = 'color:#555;font-size:11px;';
+            texto.append(d);
+        }
+
+        texto.append(document.createElement('br'));
+        const ac = el('span', '', `AÇÃO: ${reg.acao || 'NÃO INFORMADA'}`);
+        ac.style.cssText = 'color:#28a745;font-size:11px;font-weight:bold;';
+        texto.append(ac);
+
+        texto.append(document.createElement('br'));
+        const ass = el('span', '', `Registrado por ${reg.auditor || 'DESCONHECIDO'} em: ${reg.data || ''}${reg.hora ? ' às ' + reg.hora : ''}. `);
+        ass.style.cssText = 'color:#777;font-size:11px;';
+        if (reg.revisado_em) {
+            const revStrong = el('strong', '', `REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em}`);
+            revStrong.style.color = 'var(--success)';
+            ass.append(revStrong);
+        }
+        texto.append(ass);
+        conteudo.append(texto);
+
+        const placeholderThumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+        if (reg.video) {
+            const wrap = el('div', 'video-thumbnail-container');
+            wrap.title = 'VER VÍDEO';
+            wrap.setAttribute('role', 'button');
+            wrap.setAttribute('tabindex', '0');
+            const img = el('img');
+            img.src = reg.foto || placeholderThumb;
+            const play = el('div', 'play-icon', '▶');
+            wrap.append(img, play);
+            wrap.addEventListener('click', () => abrirViewerMidia(index));
+            wrap.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); abrirViewerMidia(index); } });
+            conteudo.append(wrap);
+        } else if (reg.foto) {
+            const img = el('img', 'registro-miniatura');
+            img.src = reg.foto;
+            img.title = 'VER FOTO';
+            img.addEventListener('click', () => abrirViewerMidia(index));
+            conteudo.append(img);
+        }
+
         item.append(conteudo);
-        const acoes=el('div','acoes-item');
-        [['btn-primary','✏️ EDITAR',()=>editarRegistro(index)],['btn-success','✅ REVISADO',()=>marcarComoRevisado(index)],['btn-danger','❌ EXCLUIR',()=>excluirRegistro(index)]].forEach(([c,t,fn])=>{const b=el('button',c,t);b.type='button';b.addEventListener('click',fn);acoes.append(b);});
-        item.append(acoes); lista.append(item);
+
+        const acoes = el('div', 'acoes-item');
+        [
+            ['btn-primary', '✏️ EDITAR', () => editarRegistro(index)],
+            ['btn-success', '✅ REVISADO', () => marcarComoRevisado(index)],
+            ['btn-danger', '❌ EXCLUIR', () => excluirRegistro(index)]
+        ].forEach(([c, t, fn]) => {
+            const b = el('button', c, t);
+            b.type = 'button';
+            b.addEventListener('click', fn);
+            acoes.append(b);
+        });
+
+        item.append(acoes);
+        lista.append(item);
     });
 }
-
-
 
 // ==========================================
 // FUNÇÕES DE EXPORTAÇÃO (GERAL + INTELIGENTE POR ÁREA)
@@ -1606,11 +1762,11 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
             txtRodape += ` REVISADO POR ${nomeRev} EM ${reg.revisado_em.toUpperCase()}`;
         }
 
-        slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 11, bold: true, fit: 'shrink' });
-        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 10, bold: true, color: '0056b3', fit: 'shrink' });
-        if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 8, color: '666666', fit: 'shrink' });
+        slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 12, bold: true, fit: 'shrink' });
+        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 10.5, bold: true, color: '0056b3', fit: 'shrink' });
+        if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 9.5, color: '666666', fit: 'shrink' });
         slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 10, bold: true, color: '28a745' });
-        slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 7, italic: true, fit: 'shrink' });
+        slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 8, italic: true, fit: 'shrink' });
 
         if (reg.video) {
             let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
@@ -1629,13 +1785,14 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
 }
 
 function baixarBlob(blob, nomeArquivo) {
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    link.href = url;
     link.download = nomeArquivo;
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1500);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 async function acionarExportarGeral(formato) {
@@ -1687,6 +1844,14 @@ async function exportarAreaUnica(formato) {
     }
 }
 
+async function gerarBlobPPTXSeguro(pptx) {
+    try {
+        return await pptx.write('blob');
+    } catch (_) {
+        return await pptx.write({ outputType: 'blob' });
+    }
+}
+
 async function exportarLotePorArea(formato) {
     const areas = obterAreasUnicas();
     if (areas.length === 0) return;
@@ -1697,21 +1862,25 @@ async function exportarLotePorArea(formato) {
     const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
 
     for (const area of areas) {
-        const itensArea = limparMetadadosInternos(
-            registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === area)
-        );
-        const nomeLimpo = `KW${kw}_${limparNomeArquivo(area)}_${dataHoje}`;
+        try {
+            const itensArea = limparMetadadosInternos(
+                registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === area)
+            );
+            const nomeLimpo = `KW${kw}_${limparNomeArquivo(area)}_${dataHoje}`;
 
-        if (formato === 'JSON') {
-            zip.file(`${nomeLimpo}.json`, JSON.stringify(itensArea, null, 2));
-        } else if (formato === 'XLSX') {
-            const wb = gerarWorkbookExcel(itensArea);
-            const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            zip.file(`${nomeLimpo}.xlsx`, xlsxBuffer);
-        } else if (formato === 'PPTX') {
-            const pptx = construirObjetoPPTX(itensArea, `SETOR: ${area}`);
-            const pptxBlob = await pptx.write({ outputType: 'blob' });
-            zip.file(`${nomeLimpo}.pptx`, pptxBlob);
+            if (formato === 'JSON') {
+                zip.file(`${nomeLimpo}.json`, JSON.stringify(itensArea, null, 2));
+            } else if (formato === 'XLSX') {
+                const wb = gerarWorkbookExcel(itensArea);
+                const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                zip.file(`${nomeLimpo}.xlsx`, xlsxBuffer);
+            } else if (formato === 'PPTX') {
+                const pptx = construirObjetoPPTX(itensArea, `SETOR: ${area}`);
+                const pptxBlob = await gerarBlobPPTXSeguro(pptx);
+                zip.file(`${nomeLimpo}.pptx`, pptxBlob);
+            }
+        } catch (err) {
+            alert(`Erro ao empacotar a área ${area}: ${err.message}`);
         }
     }
 
@@ -1740,53 +1909,76 @@ function acionarImportarJSON() {
 function formatarRegistroImportado(reg) {
     if (!reg || typeof reg !== 'object' || Array.isArray(reg)) throw new Error('Registro inválido.');
     const r = normalizarRegistro(reg);
-    if (!r.area || !r.local || !r.ocorrencia) throw new Error('Registro sem área, local ou ocorrência.');
-    for (const k of ['foto','video']) if (r[k] && !/^data:(image|video)\/[a-z0-9.+-]+;base64,/i.test(r[k])) r[k]='';
+    if (!r.area && !r.local && !r.ocorrencia) throw new Error('Registro vazio.');
+    // Aceita parâmetros MIME opcionais, por exemplo video/webm;codecs=vp8;base64.
+    const dataUriMidia = /^data:(?:image|video)\/[a-z0-9.+-]+(?:;[a-z0-9._=+-]+)*;base64,/i;
+    if (r.foto && !dataUriMidia.test(r.foto)) r.foto = '';
+    if (r.video && !dataUriMidia.test(r.video)) r.video = '';
     return r;
 }
+
 function mesclarImportados(lista) {
-    const ids = new Set(registros.map(r=>String(r.id)));
-    let adicionados=0, ignorados=0;
+    const idsExistentes = new Set(registros.map(r => String(r.id)));
+    let adicionados = 0, ignorados = 0;
+
     for (const bruto of lista) {
-        try { const r=formatarRegistroImportado(bruto); if(ids.has(r.id)){ignorados++;continue;} ids.add(r.id); registros.push(r); adicionados++; }
-        catch(e){ ignorados++; }
+        try {
+            const tinhaIdOriginal = Boolean(bruto && bruto.id);
+            const r = formatarRegistroImportado(bruto);
+            if (tinhaIdOriginal && idsExistentes.has(r.id)) {
+                ignorados++;
+                continue;
+            }
+            idsExistentes.add(r.id);
+            registros.push(r);
+            adicionados++;
+        } catch (e) {
+            ignorados++;
+        }
     }
-    return {adicionados,ignorados};
+    return { adicionados, ignorados };
 }
-
-
 
 async function importarJSON(e) {
-    const files=e.target.files; if(!files?.length)return;
-    let total=0, ignorados=0;
-    for(const file of files){
+    const files = e.target.files;
+    if (!files?.length) return;
+    let total = 0, ignorados = 0;
+
+    for (const file of files) {
         try {
-            if(file.size>20*1024*1024) throw new Error('Arquivo maior que 20 MB.');
-            const dados=JSON.parse(await file.text());
-            const lista=Array.isArray(dados)?dados:(Array.isArray(dados.registros)?dados.registros:null);
-            if(!lista) throw new Error('JSON deve conter uma lista de registros.');
-            const r=mesclarImportados(lista); total+=r.adicionados; ignorados+=r.ignorados;
-        } catch(err){ alert(`Não foi possível importar ${file.name}: ${err.message}`); }
+            const dados = JSON.parse(await file.text());
+            const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.registros) ? dados.registros : null);
+            if (!lista) throw new Error('O arquivo JSON deve conter uma lista de registros.');
+            const r = mesclarImportados(lista);
+            total += r.adicionados;
+            ignorados += r.ignorados;
+        } catch (err) {
+            alert(`Não foi possível importar ${file.name}: ${err.message}`);
+        }
     }
-    await salvarMemoria(); processarEOrdenarLista();
-    alert(`Importação concluída: ${total} novo(s) registro(s), ${ignorados} ignorado(s) (duplicado por ID ou inválido).`); e.target.value='';
+
+    await salvarMemoria();
+    processarEOrdenarLista();
+    alert(`✅ Importação concluída!\n• ${total} registro(s) adicionado(s)\n• ${ignorados} ignorado(s) (ID já importado ou inválido)`);
+    e.target.value = '';
 }
-
-
 
 async function processarColarJSON() {
-    const texto=document.getElementById('texto-colar').value;
-    if(!texto.trim()){alert('COLE O TEXTO ANTES DE IMPORTAR.');return;}
+    const texto = document.getElementById('texto-colar').value;
+    if (!texto.trim()) { alert('COLE O TEXTO ANTES DE IMPORTAR.'); return; }
     try {
-        const dados=JSON.parse(texto); const lista=Array.isArray(dados)?dados:(Array.isArray(dados.registros)?dados.registros:null);
-        if(!lista) throw new Error('O JSON deve ser uma lista ou conter a propriedade "registros".');
-        const r=mesclarImportados(lista); await salvarMemoria(); processarEOrdenarLista();
-        alert(`Importação concluída: ${r.adicionados} novo(s) registro(s), ${r.ignorados} ignorado(s).`); fecharModalColar();
-    } catch(err){alert('ERRO AO IMPORTAR JSON: '+err.message);}
+        const dados = JSON.parse(texto);
+        const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.registros) ? dados.registros : null);
+        if (!lista) throw new Error('O JSON deve ser uma lista de registros.');
+        const r = mesclarImportados(lista);
+        await salvarMemoria();
+        processarEOrdenarLista();
+        alert(`✅ Importação concluída!\n• ${r.adicionados} registro(s) adicionado(s)\n• ${r.ignorados} ignorado(s)`);
+        fecharModalColar();
+    } catch (err) {
+        alert('ERRO AO IMPORTAR JSON: ' + err.message);
+    }
 }
-
-
-
 </script>
 
 </body>
