@@ -5,7 +5,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CAÇA DESPERDÍCIOS — INTEGRADO (COLETA, REVISÃO E EXPORTAÇÃO POR ÁREA)</title>
-
+                                                                                                                                    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -287,6 +287,7 @@
             flex: 1;
             font-size: 13px;
             line-height: 1.4;
+            overflow-wrap: anywhere;
         }
 
         .registro-miniatura {
@@ -321,7 +322,7 @@
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.45);
             border-radius: 5px;
             display: flex;
             align-items: center;
@@ -696,6 +697,7 @@ let qrAnimationFrame = null;
 let qrUltimoTexto = "";
 let qrUltimaLeitura = 0;
 let qrDetectorNativo = null;
+let qrDetectando = false;
 
 window.onload = async function() {
     let auditorSalvo = localStorage.getItem('auditor_nome');
@@ -708,20 +710,41 @@ window.onload = async function() {
     let dadosAntigosColeta = await localforage.getItem('registros_caca_desperdicios');
     let dadosAntigosRevisor = await localforage.getItem('registros_revisor');
 
-    if (Array.isArray(dadosUnificados) && dadosUnificados.length > 0) {
+    if (Array.isArray(dadosUnificados)) {
         registros = dadosUnificados;
     } else if (Array.isArray(dadosAntigosRevisor) && dadosAntigosRevisor.length > 0) {
         registros = dadosAntigosRevisor;
-        await salvarMemoria();
     } else if (Array.isArray(dadosAntigosColeta) && dadosAntigosColeta.length > 0) {
         registros = dadosAntigosColeta;
-        await salvarMemoria();
     }
 
+    await salvarMemoria();
     processarEOrdenarLista();
 };
 
+function gerarIdRegistro() {
+    return (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'reg-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+}
+
+function normalizarRegistro(r) {
+    const x = (r && typeof r === 'object' && !Array.isArray(r)) ? { ...r } : {};
+    x.id = String(x.id || gerarIdRegistro());
+    for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor','data','hora','revisado_em']) {
+        x[k] = x[k] == null ? '' : String(x[k]).trim();
+    }
+    for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor']) {
+        x[k] = x[k].toUpperCase();
+    }
+    x.foto = (typeof x.foto === 'string' && x.foto.startsWith('data:image/')) ? x.foto : '';
+    x.video = (typeof x.video === 'string' && x.video.startsWith('data:video/')) ? x.video : '';
+    x.editado = Boolean(x.revisado_em || x.editado);
+    return x;
+}
+
 async function salvarMemoria() {
+    registros = registros.map(normalizarRegistro);
     await localforage.setItem(STORAGE_KEY, registros);
 }
 
@@ -742,6 +765,20 @@ function obterTimestampAtual() {
     const data = agora.toLocaleDateString('pt-BR');
     const hora = agora.toLocaleTimeString('pt-BR');
     return `${data} às ${hora}`;
+}
+
+function parseDataHoraBR(str) {
+    if (!str) return 0;
+    const m = String(str).match(/(\d{2})\/(\d{2})\/(\d{4})(?:.*?(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (!m) return 0;
+    return new Date(
+        Number(m[3]),
+        Number(m[2]) - 1,
+        Number(m[1]),
+        Number(m[4] || 0),
+        Number(m[5] || 0),
+        Number(m[6] || 0)
+    ).getTime();
 }
 
 function removerAcentos(texto) {
@@ -803,57 +840,49 @@ function processarEOrdenarLista() {
 }
 
 // ==========================================
-// LIMPEZA DE DUPLICADAS (PRIORIZA REVISADOS)
+// LIMPEZA DE DUPLICADAS (PRIORIZA REVISADOS COM PARSER BR)
 // ==========================================
 async function limparDuplicadas() {
-    if (registros.length === 0) return;
-
     const grupos = new Map();
-    const semChave = [];
-    let removidos = 0;
-
-    registros.forEach(reg => {
-        const key = chaveIdentidade(reg);
-        if (!key) {
-            semChave.push(reg);
-            return;
-        }
-        if (!grupos.has(key)) {
-            grupos.set(key, [reg]);
-        } else {
-            grupos.get(key).push(reg);
-        }
+    registros.forEach(r => {
+        const k = chaveIdentidade(r);
+        if (k) grupos.set(k, [...(grupos.get(k) || []), r]);
     });
 
-    const resultado = [...semChave];
-
-    grupos.forEach(listaGrupo => {
-        if (listaGrupo.length === 1) {
-            resultado.push(listaGrupo[0]);
-            return;
-        }
-
-        const revisados = listaGrupo.filter(r => r.editado || r.revisado_em);
-        if (revisados.length > 0) {
-            // Elimina todos os que NÃO têm revisão e mantém o último revisado
-            const escolhido = revisados[revisados.length - 1];
-            resultado.push(escolhido);
-            removidos += (listaGrupo.length - 1);
-        } else {
-            // Se nenhum tiver revisão, mantém apenas 1 exemplar e elimina as cópias
-            resultado.push(listaGrupo[0]);
-            removidos += (listaGrupo.length - 1);
-        }
-    });
-
-    if (removidos > 0) {
-        registros = resultado;
-        await salvarMemoria();
-        processarEOrdenarLista();
-        alert(`✅ Limpeza concluída!\n${removidos} registro(s) duplicado(s) removido(s).\nOs registros não revisados foram eliminados em favor dos revisados!`);
-    } else {
+    const duplicados = [...grupos.values()].filter(g => g.length > 1);
+    if (!duplicados.length) {
         alert("ℹ️ Nenhum item duplicado (Mesma Área + Local + Ocorrência) foi encontrado.");
+        return;
     }
+
+    const totalRemover = duplicados.reduce((n, g) => n + g.length - 1, 0);
+    if (!confirm(`Foram encontrados ${totalRemover} registro(s) duplicado(s).\nO sistema eliminará os itens sem revisão e manterá o item revisado mais recente.\nDeseja continuar?`)) {
+        return;
+    }
+
+    const idsRemover = new Set();
+    duplicados.forEach(grupo => {
+        const ordenados = [...grupo].sort((a, b) => {
+            const revA = Boolean(a.editado || a.revisado_em) ? 1 : 0;
+            const revB = Boolean(b.editado || b.revisado_em) ? 1 : 0;
+            if (revB !== revA) return revB - revA; // Revisado sempre vence não revisado
+
+            const tempoRevA = parseDataHoraBR(a.revisado_em);
+            const tempoRevB = parseDataHoraBR(b.revisado_em);
+            if (tempoRevB !== tempoRevA) return tempoRevB - tempoRevA; // Revisão mais recente vence
+
+            const tempoColA = parseDataHoraBR(`${a.data || ''} ${a.hora || ''}`);
+            const tempoColB = parseDataHoraBR(`${b.data || ''} ${b.hora || ''}`);
+            return tempoColB - tempoColA;
+        });
+
+        ordenados.slice(1).forEach(r => idsRemover.add(r.id));
+    });
+
+    registros = registros.filter(r => !idsRemover.has(r.id));
+    await salvarMemoria();
+    processarEOrdenarLista();
+    alert(`✅ Limpeza concluída! ${idsRemover.size} duplicata(s) eliminada(s) preservando os itens revisados.`);
 }
 
 // ==========================================
@@ -867,7 +896,6 @@ async function marcarComoRevisado(index) {
         return;
     }
 
-    // Apaga a data anterior e grava a data e hora atual da última revisão
     registros[index].revisor = revisor;
     registros[index].revisado_em = obterTimestampAtual();
     registros[index].editado = true;
@@ -909,6 +937,9 @@ async function abrirLeitorQR() {
         prepararBarcodeDetector();
         iniciarLoopLeituraQR();
     } catch (erro) {
+        qrScannerAtivo = false;
+        fecharStreamQR();
+        video.srcObject = null;
         modal.style.display = 'none';
         btn.innerText = "🔳 LER QR CODE DO LOCAL";
         if (confirm("Não foi possível abrir a câmera ao vivo. Deseja ler uma foto do QR Code da galeria?")) {
@@ -927,21 +958,26 @@ function prepararBarcodeDetector() {
 function iniciarLoopLeituraQR() {
     if (!qrScannerAtivo) return;
     const video = document.getElementById('qr-camera-video');
-
-    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
-        if (qrDetectorNativo) {
-            qrDetectorNativo.detect(video).then(function(barcodes) {
-                if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                    processarQRDetectado(barcodes[0].rawValue);
-                    return;
-                }
-                tentarJSQRVideo();
-            }).catch(() => tentarJSQRVideo());
-        } else {
-            tentarJSQRVideo();
-        }
+    const proximo = () => {
+        qrDetectando = false;
+        if (qrScannerAtivo) qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR);
+    };
+    if (qrDetectando) return;
+    if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+        qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR);
+        return;
     }
-    qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR);
+    qrDetectando = true;
+    if (qrDetectorNativo) {
+        qrDetectorNativo.detect(video).then(barcodes => {
+            if (qrScannerAtivo && barcodes?.length && barcodes[0].rawValue) processarQRDetectado(barcodes[0].rawValue);
+            else if (qrScannerAtivo) tentarJSQRVideo();
+        }).catch(() => {
+            if (qrScannerAtivo) tentarJSQRVideo();
+        }).finally(proximo);
+    } else {
+        try { tentarJSQRVideo(); } finally { proximo(); }
+    }
 }
 
 function tentarJSQRVideo() {
@@ -999,6 +1035,7 @@ function processarImagemQR(event) {
     const file = event.target.files[0];
     if (!file) return;
     const img = new Image();
+    const imageUrl = URL.createObjectURL(file);
     img.onload = function() {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
@@ -1012,18 +1049,29 @@ function processarImagemQR(event) {
         } else {
             alert("❌ NENHUM QR CODE ENCONTRADO NA IMAGEM.");
         }
-        URL.revokeObjectURL(img.src);
+        URL.revokeObjectURL(imageUrl);
     };
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => { URL.revokeObjectURL(imageUrl); alert('Não foi possível abrir a imagem.'); };
+    img.src = imageUrl;
     event.target.value = '';
 }
 
 function preencherCamposViaQR(decodedText) {
     if (!decodedText) return;
-    let texto = String(decodedText).replace(/\r/g, "").replace(/\n/g, " ").trim().replace(/\s*;\s*/g, ";");
-    let partes = texto.split(";").map(item => item.trim()).filter(Boolean);
+    let partes;
+    try {
+        const obj = JSON.parse(decodedText);
+        if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+            partes = [obj.area, obj.local, obj.ocorrencia, obj.interruptor].map(v => v == null ? '' : String(v).trim());
+        }
+    } catch (_) {}
 
-    if (partes.length < 2) {
+    if (!partes) {
+        partes = String(decodedText).replace(/\r/g, '').replace(/\n/g, ' ').trim().split(';').map(item => item.trim());
+        while (partes.length > 0 && partes[partes.length - 1] === "") partes.pop();
+    }
+
+    if (partes.length < 2 || (!partes[0] && !partes[1])) {
         alert("❌ FORMATO INVÁLIDO NO QR CODE.\nEsperado: ÁREA;LOCAL;OCORRÊNCIA;INTERRUPTOR");
         return;
     }
@@ -1136,6 +1184,7 @@ async function iniciarCamera(modo) {
         streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: modo === 'video' });
         video.srcObject = streamDeVideo;
         video.muted = true;
+        await video.play();
     } catch (erro) {
         alert("ERRO AO ACESSAR CÂMERA: " + erro);
         fecharCamera();
@@ -1144,6 +1193,8 @@ async function iniciarCamera(modo) {
 function fecharCamera() {
     document.getElementById('camera-modal').style.display = 'none';
     if (streamDeVideo) { streamDeVideo.getTracks().forEach(track => track.stop()); streamDeVideo = null; }
+    const pv = document.getElementById('video-preview');
+    if (pv) pv.srcObject = null;
     if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
 }
 function capturarFoto() {
@@ -1162,11 +1213,14 @@ function capturarFoto() {
 }
 function iniciarGravacaoVideo() {
     pedacosGravados = [];
-    try { mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' }); }
-    catch (e) { mediaRecorder = new MediaRecorder(streamDeVideo); }
+    if (!window.MediaRecorder) { alert('Gravação de vídeo não é suportada neste navegador.'); return; }
+    const tipos = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
+    const mime = tipos.find(t => MediaRecorder.isTypeSupported?.(t));
+    try { mediaRecorder = new MediaRecorder(streamDeVideo, mime ? { mimeType: mime } : undefined); }
+    catch (e) { alert('Este navegador não oferece formato de gravação compatível.'); return; }
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
     mediaRecorder.onstop = () => {
-        const blob = new Blob(pedacosGravados, { type: 'video/webm' });
+        const blob = new Blob(pedacosGravados, { type: mediaRecorder.mimeType || 'video/webm' });
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = () => {
@@ -1223,17 +1277,40 @@ function processarMidiaGaleria(event) {
             };
             img.src = result;
         } else if (file.type.startsWith('video/')) {
-            document.getElementById('video_base64').value = result;
-            extrairFrameVideo(result);
+            if (file.size > 25 * 1024 * 1024) { alert('Vídeo acima de 25 MB. Selecione um arquivo menor.'); return; }
+            validarVideoGaleria(result);
         }
     };
     reader.readAsDataURL(file);
     event.target.value = '';
 }
+function validarVideoGaleria(videoDataUrl) {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.src = videoDataUrl;
+    v.onloadedmetadata = () => {
+        if (Number.isFinite(v.duration) && v.duration > 6.0) {
+            alert('O vídeo da galeria deve ter até 5 segundos.');
+            v.removeAttribute('src');
+            v.load();
+            return;
+        }
+        document.getElementById('video_base64').value = videoDataUrl;
+        extrairFrameVideo(videoDataUrl);
+    };
+    v.onerror = () => alert('Não foi possível ler esse vídeo. Tente MP4 ou WebM compatível.');
+}
 function extrairFrameVideo(videoDataUrl) {
     const video = document.createElement('video');
     video.src = videoDataUrl; video.muted = true; video.playsInline = true;
-    video.onloadeddata = () => { video.currentTime = 1; };
+    video.onloadeddata = () => { video.currentTime = Math.min(1, Math.max(0, (video.duration || 1) / 2)); };
+    video.onerror = () => {
+        let thumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+        document.getElementById('foto_base64').value = thumb;
+        document.getElementById('photo-preview').src = thumb;
+        document.getElementById('photo-preview').style.display = 'block';
+        document.getElementById('btn-remover-midia').style.display = 'flex';
+    };
     video.onseeked = () => {
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
@@ -1315,6 +1392,7 @@ async function salvarRegistro() {
     }
 
     const novoReg = {
+        id: ehEdicao ? registros[indiceEdicao].id : gerarIdRegistro(),
         data: dataRegistro,
         hora: horaRegistro,
         auditor: auditorUpper,
@@ -1331,20 +1409,21 @@ async function salvarRegistro() {
     const revisorNome = document.getElementById('nome_revisor').value.trim().toUpperCase();
 
     if (ehEdicao) {
-        // Se houver revisor preenchido (ou se já era um item revisado), atualiza/sobrescreve a data e hora da revisão
-        if (revisorNome || registros[indiceEdicao].editado) {
-            novoReg.revisor = revisorNome || registros[indiceEdicao].revisor || "REVISOR";
+        const anterior = registros[indiceEdicao];
+        if (revisorNome) {
+            // Se o Revisor está identificado e editou o item, atualiza/sobrescreve a data e hora da revisão
+            novoReg.revisor = revisorNome;
             novoReg.revisado_em = obterTimestampAtual();
             novoReg.editado = true;
+        } else {
+            // Se o campo Revisor está vazio, mantém o status anterior sem apagar eventual revisão
+            novoReg.revisor = anterior.revisor || '';
+            novoReg.revisado_em = anterior.revisado_em || '';
+            novoReg.editado = Boolean(anterior.editado || anterior.revisado_em);
         }
         registros[indiceEdicao] = novoReg;
         cancelarEdicao();
     } else {
-        if (revisorNome) {
-            novoReg.revisor = revisorNome;
-            novoReg.revisado_em = obterTimestampAtual();
-            novoReg.editado = true;
-        }
         registros.push(novoReg);
     }
 
@@ -1426,7 +1505,7 @@ function editarRegistro(index) {
         document.getElementById('btn-remover-midia').style.display = 'none';
     }
 
-    document.getElementById('btn-salvar').innerText = "💾 SALVAR ALTERAÇÕES (ATUALIZA REVISÃO)";
+    document.getElementById('btn-salvar').innerText = "💾 SALVAR ALTERAÇÕES";
     document.getElementById('btn-cancelar-edicao').style.display = 'block';
     document.querySelector('.top-section').scrollTop = 0;
 }
@@ -1463,81 +1542,117 @@ async function limparTudo() {
 }
 
 // ==========================================
-// RENDERIZAÇÃO INDEXADA POR ÁREA
+// RENDERIZAÇÃO SEGURA E INDEXADA POR ÁREA
 // ==========================================
 function atualizarLista() {
     const lista = document.getElementById('lista-registros');
     document.getElementById('contador').innerText = registros.length;
-    lista.innerHTML = '';
+    lista.replaceChildren();
 
-    if (registros.length === 0) {
-        lista.innerHTML = '<p style="text-align:center; color:#888; margin-top:40px;">Nenhum registro carregado. Adicione acima ou clique em "IMPORTAR / MESCLAR JSON".</p>';
+    if (!registros.length) {
+        const vazio = document.createElement('p');
+        vazio.style.cssText = 'text-align:center;color:#888;margin-top:40px;';
+        vazio.textContent = 'Nenhum registro carregado. Adicione acima ou clique em "IMPORTAR / MESCLAR JSON".';
+        lista.appendChild(vazio);
         return;
     }
 
-    let areaAtualContexto = null;
+    const el = (tag, cls, value) => {
+        const n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (value !== undefined) n.textContent = String(value);
+        return n;
+    };
 
+    let areaAtual = null;
     registros.forEach((reg, index) => {
-        const areaNome = reg.area || 'SEM ÁREA DEFINIDA';
-        if (areaNome !== areaAtualContexto) {
-            areaAtualContexto = areaNome;
-            const qtdArea = registros.filter(r => (r.area || 'SEM ÁREA DEFINIDA') === areaAtualContexto).length;
-            const header = document.createElement('div');
-            header.className = 'area-header';
-            header.innerHTML = `<span>📍 ÁREA: ${areaAtualContexto}</span><span>${qtdArea} item(ns)</span>`;
-            lista.appendChild(header);
+        const area = reg.area || 'SEM ÁREA DEFINIDA';
+        if (area !== areaAtual) {
+            areaAtual = area;
+            const h = el('div', 'area-header');
+            h.append(el('span', '', `📍 ÁREA: ${area}`));
+            h.append(el('span', '', `${registros.filter(r => (r.area || 'SEM ÁREA DEFINIDA') === area).length} item(ns)`));
+            lista.append(h);
         }
 
-        const item = document.createElement('div');
-        let classes = 'registro-item';
-        if (reg.editado || reg.revisado_em) classes += ' revisado';
-        if (reg.isDuplicado) classes += ' duplicado';
-        item.className = classes;
+        const item = el('div', 'registro-item' + ((reg.editado || reg.revisado_em) ? ' revisado' : '') + (reg.isDuplicado ? ' duplicado' : ''));
+        const badges = el('div', 'badges-row');
+        if (reg.isDuplicado) badges.append(el('span', 'selo-duplicado', '⚠️ DUPLICADO (MESMA ÁREA, LOCAL E TEMA)'));
+        if (reg.editado || reg.revisado_em) badges.append(el('span', 'selo-revisado', `✅ REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em || ''}`));
+        item.append(badges);
 
-        let badgesHTML = '<div class="badges-row">';
-        if (reg.isDuplicado) {
-            badgesHTML += `<span class="selo-duplicado">⚠️ DUPLICADO (MESMO LOCAL E TEMA)</span>`;
-        }
-        if (reg.editado || reg.revisado_em) {
-            let nomeRev = reg.revisor ? reg.revisor.toUpperCase() : 'REVISOR';
-            badgesHTML += `<span class="selo-revisado">✅ REVISADO POR ${nomeRev} EM ${reg.revisado_em || ''}</span>`;
-        }
-        badgesHTML += '</div>';
+        const conteudo = el('div', 'registro-conteudo');
+        const texto = el('div', 'registro-texto');
+        texto.append(el('strong', '', `#${index + 1} - ${reg.local || 'N/A'}`));
 
-        let htmlMidiaIcon = '';
-        if (reg.video) {
-            let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
-            htmlMidiaIcon = `<div class="video-thumbnail-container" onclick="abrirViewerMidia(${index})" title="VER VÍDEO"><img src="${thumb}"><div class="play-icon">▶</div></div>`;
-        } else if (reg.foto) {
-            htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="VER FOTO">`;
+        if (reg.interruptor) {
+            const ch = el('span', '', ` | CHAVE: ${reg.interruptor}`);
+            ch.style.cssText = 'color:#6f42c1;font-weight:bold;';
+            texto.append(ch);
+        }
+        texto.append(document.createElement('br'));
+
+        const oc = el('span', '', reg.ocorrencia || '');
+        oc.style.cssText = 'color:var(--danger);font-weight:bold;';
+        texto.append(oc);
+
+        if (reg.descricao) {
+            texto.append(document.createElement('br'));
+            const d = el('span', '', `DETALHE: ${reg.descricao}`);
+            d.style.cssText = 'color:#555;font-size:11px;';
+            texto.append(d);
         }
 
-        let interruptorHtml = reg.interruptor ? ` | <span style="color:#6f42c1; font-weight:bold;">CHAVE: ${reg.interruptor}</span>` : '';
-        let descHtml = reg.descricao ? `<br><span style="color:#555; font-size:11px;">DETALHE: ${reg.descricao}</span>` : '';
-        let horaDisplay = reg.hora ? ` às ${reg.hora}` : '';
-        let assinatura = `Registrado por ${reg.auditor || 'DESCONHECIDO'} em: ${reg.data || ''}${horaDisplay}.`;
+        texto.append(document.createElement('br'));
+        const ac = el('span', '', `AÇÃO: ${reg.acao || 'NÃO INFORMADA'}`);
+        ac.style.cssText = 'color:#28a745;font-size:11px;font-weight:bold;';
+        texto.append(ac);
+
+        texto.append(document.createElement('br'));
+        const ass = el('span', '', `Registrado por ${reg.auditor || 'DESCONHECIDO'} em: ${reg.data || ''}${reg.hora ? ' às ' + reg.hora : ''}. `);
+        ass.style.cssText = 'color:#777;font-size:11px;';
         if (reg.revisado_em) {
-            assinatura += ` <strong>REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em}</strong>`;
+            const revStrong = el('strong', '', `REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em}`);
+            revStrong.style.color = 'var(--success)';
+            ass.append(revStrong);
+        }
+        texto.append(ass);
+        conteudo.append(texto);
+
+        const placeholderThumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+        if (reg.video) {
+            const wrap = el('div', 'video-thumbnail-container');
+            wrap.title = 'VER VÍDEO';
+            const img = el('img');
+            img.src = reg.foto || placeholderThumb;
+            const play = el('div', 'play-icon', '▶');
+            wrap.append(img, play);
+            wrap.addEventListener('click', () => abrirViewerMidia(index));
+            conteudo.append(wrap);
+        } else if (reg.foto) {
+            const img = el('img', 'registro-miniatura');
+            img.src = reg.foto;
+            img.title = 'VER FOTO';
+            img.addEventListener('click', () => abrirViewerMidia(index));
+            conteudo.append(img);
         }
 
-        item.innerHTML = `
-            ${badgesHTML}
-            <div class="registro-conteudo">
-                <div class="registro-texto">
-                    <strong>#${index + 1} - ${reg.local || 'N/A'}</strong>${interruptorHtml}<br>
-                    <span style="color:var(--danger); font-weight:bold;">${reg.ocorrencia || ''}</span>${descHtml}<br>
-                    <span style="color:#28a745; font-size:11px; font-weight:bold;">AÇÃO: ${reg.acao || 'NÃO INFORMADA'}</span><br>
-                    <span style="color:#777; font-size:11px;">${assinatura}</span>
-                </div>
-                ${htmlMidiaIcon}
-            </div>
-            <div class="acoes-item">
-                <button class="btn-primary" onclick="editarRegistro(${index})">✏️ EDITAR</button>
-                <button class="btn-success" onclick="marcarComoRevisado(${index})">✅ REVISADO</button>
-                <button class="btn-danger" onclick="excluirRegistro(${index})">❌ EXCLUIR</button>
-            </div>
-        `;
-        lista.appendChild(item);
+        item.append(conteudo);
+
+        const acoes = el('div', 'acoes-item');
+        [
+            ['btn-primary', '✏️ EDITAR', () => editarRegistro(index)],
+            ['btn-success', '✅ REVISADO', () => marcarComoRevisado(index)],
+            ['btn-danger', '❌ EXCLUIR', () => excluirRegistro(index)]
+        ].forEach(([c, t, fn]) => {
+            const b = el('button', c, t);
+            b.type = 'button';
+            b.addEventListener('click', fn);
+            acoes.append(b);
+        });
+
+        item.append(acoes);
+        lista.append(item);
     });
 }
 
@@ -1636,11 +1751,11 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
             txtRodape += ` REVISADO POR ${nomeRev} EM ${reg.revisado_em.toUpperCase()}`;
         }
 
-        slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 13, bold: true });
-        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 11, bold: true, color: '0056b3' });
-        if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 10, color: '666666' });
+        slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 12, bold: true, fit: 'shrink' });
+        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 10.5, bold: true, color: '0056b3', fit: 'shrink' });
+        if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 9.5, color: '666666', fit: 'shrink' });
         slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 10, bold: true, color: '28a745' });
-        slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 8.5, italic: true });
+        slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 8, italic: true, fit: 'shrink' });
 
         if (reg.video) {
             let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
@@ -1659,15 +1774,17 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
 }
 
 function baixarBlob(blob, nomeArquivo) {
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    link.href = url;
     link.download = nomeArquivo;
     document.body.appendChild(link);
     link.click();
     link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-function acionarExportarGeral(formato) {
+async function acionarExportarGeral(formato) {
     let kw = getISOWeek(new Date());
     let dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
     let padrao = `GERAL_KW${kw}_${dataHoje}`;
@@ -1686,7 +1803,7 @@ function acionarExportarGeral(formato) {
         XLSX.writeFile(wb, `${nomeBase}.xlsx`);
     } else if (formato === 'PPTX') {
         const pptx = construirObjetoPPTX(limpos, "DESPERDÍCIOS UTILITIES");
-        pptx.writeFile({ fileName: `${nomeBase}.pptx` });
+        await pptx.writeFile({ fileName: `${nomeBase}.pptx` });
     }
 }
 
@@ -1716,6 +1833,14 @@ async function exportarAreaUnica(formato) {
     }
 }
 
+async function gerarBlobPPTXSeguro(pptx) {
+    try {
+        return await pptx.write('blob');
+    } catch (_) {
+        return await pptx.write({ outputType: 'blob' });
+    }
+}
+
 async function exportarLotePorArea(formato) {
     const areas = obterAreasUnicas();
     if (areas.length === 0) return;
@@ -1726,21 +1851,25 @@ async function exportarLotePorArea(formato) {
     const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
 
     for (const area of areas) {
-        const itensArea = limparMetadadosInternos(
-            registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === area)
-        );
-        const nomeLimpo = `KW${kw}_${limparNomeArquivo(area)}_${dataHoje}`;
+        try {
+            const itensArea = limparMetadadosInternos(
+                registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === area)
+            );
+            const nomeLimpo = `KW${kw}_${limparNomeArquivo(area)}_${dataHoje}`;
 
-        if (formato === 'JSON') {
-            zip.file(`${nomeLimpo}.json`, JSON.stringify(itensArea, null, 2));
-        } else if (formato === 'XLSX') {
-            const wb = gerarWorkbookExcel(itensArea);
-            const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-            zip.file(`${nomeLimpo}.xlsx`, xlsxBuffer);
-        } else if (formato === 'PPTX') {
-            const pptx = construirObjetoPPTX(itensArea, `SETOR: ${area}`);
-            const pptxBlob = await pptx.write('blob');
-            zip.file(`${nomeLimpo}.pptx`, pptxBlob);
+            if (formato === 'JSON') {
+                zip.file(`${nomeLimpo}.json`, JSON.stringify(itensArea, null, 2));
+            } else if (formato === 'XLSX') {
+                const wb = gerarWorkbookExcel(itensArea);
+                const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                zip.file(`${nomeLimpo}.xlsx`, xlsxBuffer);
+            } else if (formato === 'PPTX') {
+                const pptx = construirObjetoPPTX(itensArea, `SETOR: ${area}`);
+                const pptxBlob = await gerarBlobPPTXSeguro(pptx);
+                zip.file(`${nomeLimpo}.pptx`, pptxBlob);
+            }
+        } catch (err) {
+            alert(`Erro ao empacotar a área ${area}: ${err.message}`);
         }
     }
 
@@ -1767,65 +1896,73 @@ function acionarImportarJSON() {
 }
 
 function formatarRegistroImportado(reg) {
-    return {
-        ...reg,
-        auditor: (reg.auditor || "").toUpperCase().trim(),
-        area: (reg.area || "").toUpperCase().trim(),
-        local: (reg.local || "").toUpperCase().trim(),
-        interruptor: (reg.interruptor || "").toUpperCase().trim(),
-        ocorrencia: (reg.ocorrencia || "").toUpperCase().trim(),
-        descricao: (reg.descricao || "").toUpperCase().trim(),
-        acao: (reg.acao || "").toUpperCase().trim(),
-        revisor: reg.revisor ? String(reg.revisor).toUpperCase().trim() : undefined
-    };
+    if (!reg || typeof reg !== 'object' || Array.isArray(reg)) throw new Error('Registro inválido.');
+    const r = normalizarRegistro(reg);
+    if (!r.area && !r.local && !r.ocorrencia) throw new Error('Registro vazio.');
+    return r;
+}
+
+function mesclarImportados(lista) {
+    const idsExistentes = new Set(registros.map(r => String(r.id)));
+    let adicionados = 0, ignorados = 0;
+
+    for (const bruto of lista) {
+        try {
+            const tinhaIdOriginal = Boolean(bruto && bruto.id);
+            const r = formatarRegistroImportado(bruto);
+            if (tinhaIdOriginal && idsExistentes.has(r.id)) {
+                ignorados++;
+                continue;
+            }
+            idsExistentes.add(r.id);
+            registros.push(r);
+            adicionados++;
+        } catch (e) {
+            ignorados++;
+        }
+    }
+    return { adicionados, ignorados };
 }
 
 async function importarJSON(e) {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
-    let adicionados = 0;
+    if (!files?.length) return;
+    let total = 0, ignorados = 0;
 
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const dados = JSON.parse(event.target.result);
-                    if (Array.isArray(dados)) {
-                        const formatados = dados.map(formatarRegistroImportado);
-                        registros = registros.concat(formatados);
-                        adicionados += formatados.length;
-                    }
-                } catch (err) { alert("ERRO NO ARQUIVO: " + file.name); }
-                resolve();
-            };
-            reader.readAsText(file);
-        });
+    for (const file of files) {
+        try {
+            const dados = JSON.parse(await file.text());
+            const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.registros) ? dados.registros : null);
+            if (!lista) throw new Error('O arquivo JSON deve conter uma lista de registros.');
+            const r = mesclarImportados(lista);
+            total += r.adicionados;
+            ignorados += r.ignorados;
+        } catch (err) {
+            alert(`Não foi possível importar ${file.name}: ${err.message}`);
+        }
     }
 
     await salvarMemoria();
     processarEOrdenarLista();
-    if (adicionados > 0) {
-        alert(`✅ ${adicionados} registro(s) importado(s) e indexado(s) por área!`);
-    }
+    alert(`✅ Importação concluída!\n• ${total} registro(s) adicionado(s)\n• ${ignorados} ignorado(s) (ID já importado ou inválido)`);
     e.target.value = '';
 }
 
 async function processarColarJSON() {
     const texto = document.getElementById('texto-colar').value;
-    if (!texto || texto.trim() === '') { alert("COLE O TEXTO ANTES DE IMPORTAR."); return; }
+    if (!texto.trim()) { alert('COLE O TEXTO ANTES DE IMPORTAR.'); return; }
     try {
-        const dadosImportados = JSON.parse(texto);
-        if (Array.isArray(dadosImportados)) {
-            const formatados = dadosImportados.map(formatarRegistroImportado);
-            registros = registros.concat(formatados);
-            await salvarMemoria();
-            processarEOrdenarLista();
-            alert(`✅ SUCESSO! ${formatados.length} REGISTROS IMPORTADOS E INDEXADOS POR ÁREA.`);
-            fecharModalColar();
-        } else { alert("O TEXTO COLADO NÃO POSSUI O FORMATO DE LISTA JSON."); }
-    } catch (erro) { alert("ERRO AO LER O TEXTO JSON: " + erro); }
+        const dados = JSON.parse(texto);
+        const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.registros) ? dados.registros : null);
+        if (!lista) throw new Error('O JSON deve ser uma lista de registros.');
+        const r = mesclarImportados(lista);
+        await salvarMemoria();
+        processarEOrdenarLista();
+        alert(`✅ Importação concluída!\n• ${r.adicionados} registro(s) adicionado(s)\n• ${r.ignorados} ignorado(s)`);
+        fecharModalColar();
+    } catch (err) {
+        alert('ERRO AO IMPORTAR JSON: ' + err.message);
+    }
 }
 </script>
 
