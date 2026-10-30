@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CAÇA DESPERDÍCIOS — INTEGRADO (COLETA, REVISÃO E EXPORTAÇÃO POR ÁREA)</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #0056b3;
+            --bg: #e9ecef;
+            --card: #ffffff;
+            --text: #333333;
+            --danger: #dc3545;
+            --success: #28a745;
+            --warning: #ffc107;
+            --warning-text: #212529;
+            --info: #17a2b8;
+            --purple: #6f42c1;
+            --revisado: #e8f5e9;
+            --duplicado: #fff5f5;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        .top-section {
+            flex: none;
+            background-color: var(--card);
+            padding: 8px 12px;
+            border-bottom: 2px solid #222;
+            z-index: 10;
+            max-height: 56dvh;
+            overflow-y: auto;
+        }
+
+        .top-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .top-header-bar h2 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .btn-toggle-form {
+            width: auto;
+            height: 28px;
+            padding: 0 10px;
+            font-size: 11px;
+            background-color: #6c757d;
+        }
+
+        .center-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background-color: var(--bg);
+        }
+
+        .bottom-section {
+            flex: none;
+            background-color: var(--card);
+            padding: 8px 12px;
+            border-top: 2px solid #222;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .bottom-section button {
+            flex: 1 1 calc(50% - 8px);
+            margin: 0;
+            padding: 10px;
+            font-size: 13px;
+            height: 38px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 2px;
+            font-weight: bold;
+            font-size: 11px;
+            color: #444;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 13px;
+            background-color: white;
+            height: 34px;
+        }
+
+        .fake-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 13px;
+            background-color: #f8f9fa;
+            height: 34px;
+            cursor: pointer;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .radio-group input[type="radio"] { display: none; }
+
+        .radio-group .radio-btn {
+            flex: 1 1 calc(25% - 6px);
+            min-width: 75px;
+            padding: 6px 4px;
+            text-align: center;
+            background-color: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.1;
+            min-height: 34px;
+        }
+
+        .radio-group input[type="radio"]:checked + .radio-btn {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: 0.2s;
+        }
+
+        button:hover { opacity: 0.92; }
+
+        .btn-primary { background-color: var(--primary); }
+        .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-warning { background-color: var(--warning); color: var(--warning-text); }
+        .btn-info { background-color: var(--info); }
+        .btn-purple { background-color: var(--purple); }
+
+        .header-lista {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .header-lista h3 { margin: 0; font-size: 15px; color: #444; }
+
+        .area-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 14px 0 8px 0;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .registro-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            border-left: 5px solid #ccc;
+        }
+
+        .registro-item.revisado {
+            background: var(--revisado);
+            border-left-color: var(--success);
+        }
+
+        .registro-item.duplicado {
+            border: 2px solid var(--danger);
+            border-left: 6px solid var(--danger);
+            background: var(--duplicado);
+        }
+
+        .badges-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 3px;
+        }
+
+        .selo-revisado {
+            background-color: var(--success);
+            color: white;
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .selo-duplicado {
+            background-color: var(--danger);
+            color: white;
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .registro-conteudo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .registro-texto {
+            flex: 1;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .registro-miniatura {
+            width: 55px;
+            height: 55px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        .video-thumbnail-container {
+            position: relative;
+            width: 55px;
+            height: 55px;
+            margin-left: 10px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .video-thumbnail-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .video-thumbnail-container .play-icon {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .acoes-item {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .acoes-item button {
+            margin-top: 0;
+            padding: 5px;
+            font-size: 11px;
+            height: 30px;
+        }
+
+        /* Modais */
+        #camera-modal, #qr-camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-modal, #importar-modal, #midia-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.92);
+            z-index: 2000;
+            text-align: center;
+            padding: 15px;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        #qr-camera-modal { padding: 0; background: #000; z-index: 5000; }
+        #qr-camera-video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+
+        .qr-camera-top { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0)); }
+        .qr-camera-titulo { color: white; font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .qr-camera-status { color: white; font-size: 13px; margin-top: 6px; }
+
+        .qr-moldura {
+            position: absolute; width: 65vw; height: 65vw; max-width: 300px; max-height: 300px;
+            border: 3px solid #00ff66; border-radius: 18px; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 5; box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), 0 0 20px rgba(0,255,102,0.5);
+        }
+
+        .qr-linha-leitura { position: absolute; left: 8%; width: 84%; height: 2px; background: #00ff66; top: 50%; z-index: 6; animation: qrLinha 1.7s infinite ease-in-out; box-shadow: 0 0 8px #00ff66; }
+
+        @keyframes qrLinha { 0% { transform: translateY(-120px); opacity: 0.3; } 50% { transform: translateY(120px); opacity: 1; } 100% { transform: translateY(-120px); opacity: 0.3; } }
+
+        .qr-camera-bottom { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px 25px 15px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0)); }
+        .qr-camera-bottom button { max-width: 400px; margin: 8px auto; height: 44px; }
+
+        #qr-canvas { display: none; }
+
+        #media-viewer-modal .fechar-btn { position: absolute; top: 15px; right: 20px; font-size: 35px; color: white; cursor: pointer; z-index: 10; }
+        #viewer-img, #viewer-video { max-width: 95%; max-height: 80vh; border-radius: 8px; }
+        #video-preview { width: 100%; max-height: 60vh; background-color: black; }
+
+        .media-preview { display: none; width: auto; max-height: 55px; object-fit: contain; margin-top: 6px; border-radius: 5px; }
+
+        .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; max-width: 400px; margin: 10px auto; }
+        .modal-botoes button { width: 100%; height: 42px; }
+
+        .modal-box { background: white; width: 100%; max-width: 440px; padding: 18px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: left; max-height: 92dvh; overflow-y: auto; }
+        .modal-box textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: none; margin-top: 10px; }
+        .botoes-menu-modal { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+
+        .secao-export {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            background: #f8f9fa;
+        }
+
+        .secao-export h4 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        #container_sub_ocorrencia { background-color: #fdf5f6; padding: 8px; border: 1px dashed var(--danger); border-radius: 5px; }
+    </style>
+</head>
+
+<body>
+
+<div class="top-section">
+    <div class="top-header-bar">
+        <h2>🛠️ CAÇA DESPERDÍCIOS & REVISÃO</h2>
+        <button type="button" class="btn-toggle-form" id="btn-toggle-form" onclick="alternarFormulario()">🔼 RECOLHER FORMULÁRIO</button>
+    </div>
+
+    <div class="form-grid" style="margin-bottom: 6px;">
+        <div>
+            <label>AUDITOR (COLETA):</label>
+            <input type="text" id="auditor" placeholder="QUEM REGISTROU?" oninput="this.value = this.value.toUpperCase(); localStorage.setItem('auditor_nome', this.value);">
+        </div>
+        <div>
+            <label style="color: var(--success);">REVISOR (REVISÃO):</label>
+            <input type="text" id="nome_revisor" placeholder="QUEM REVISA? (EX: EDSON)" style="border-color: var(--success); font-weight: bold;" oninput="this.value = this.value.toUpperCase(); localStorage.setItem('revisor_nome', this.value);">
+        </div>
+    </div>
+
+    <div id="bloco-formulario">
+        <div class="form-grid">
+            <div style="grid-column: span 2;">
+                <button id="btn-qr" class="btn-purple" onclick="abrirLeitorQR()" style="height: 32px; font-size: 12px;">🔳 LER QR CODE DO LOCAL</button>
+                <input type="file" id="input-qr" accept="image/*" capture="environment" style="display:none;" onchange="processarImagemQR(event)">
+            </div>
+
+            <div>
+                <label>ÁREA / SETOR:</label>
+                <select id="area" onchange="verificarCombos()">
+                    <option value="" disabled selected>SELECIONE...</option>
+                    <option value="ARMAÇÃO">ARMAÇÃO</option>
+                    <option value="ESTAMPARIA">ESTAMPARIA</option>
+                    <option value="MONTAGEM FINAL">MONTAGEM FINAL</option>
+                    <option value="PINTURA">PINTURA</option>
+                    <option value="LOGÍSTICA">LOGÍSTICA</option>
+                    <option value="RH">RH</option>
+                    <option value="MANUTENÇÃO SITE">MANUTENÇÃO SITE</option>
+                    <option value="POWERCOAT/GESTAMP">POWERCOAT/GESTAMP</option>
+                    <option value="GESTAMP/SM">GESTAMP/SM</option>
+                    <option value="VUTEQ">VUTEQ</option>
+                    <option value="OUTROS">OUTROS</option>
+                </select>
+                <input type="text" id="area_outros" placeholder="NOME DA ÁREA..." style="display:none; margin-top:5px; border-color:var(--primary);" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div>
+                <label>LOCAL ESPECÍFICO:</label>
+                <input type="text" id="local" placeholder="EX: F40, COLUNA" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div>
+                <label>OCORRÊNCIA:</label>
+                <select id="ocorrencia" onchange="verificarCombos()">
+                    <option value="" disabled selected>SELECIONE...</option>
+                    <option value="VAZAMENTOS DE AR">VAZAMENTOS DE AR</option>
+                    <option value="VAZAMENTO DE ÁGUA">VAZAMENTO DE ÁGUA</option>
+                    <option value="LUZ ACESA">LUZ ACESA</option>
+                    <option value="VENTILADOR LIGADO">VENTILADOR LIGADO</option>
+                    <option value="TV LIGADA">TV LIGADA</option>
+                    <option value="OUTROS">OUTROS</option>
+                </select>
+                <input type="text" id="ocorrencia_outros" placeholder="ESPECIFIQUE..." style="display:none; margin-top:5px; border-color:var(--primary);" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div>
+                <label>DESCRIÇÃO (Opcional):</label>
+                <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">TOQUE PARA DIGITAR...</div>
+                <input type="hidden" id="descricao">
+            </div>
+
+            <div id="container_sub_ocorrencia" style="display: none; grid-column: span 2;">
+                <label style="color: var(--danger);">TIPO DE VAZAMENTO (ARMAÇÃO):</label>
+                <select id="sub_ocorrencia" style="border-color: var(--danger);">
+                    <option value="" disabled selected>SELECIONE O TIPO...</option>
+                    <option value="VAZAMENTO NAS HIPS, RIPS, MANIPULADORES, ETC">VAZAMENTO NAS HIPS, RIPS, MANIPULADORES, ETC</option>
+                    <option value="VAZAMENTO(S) NA(S) HIP(S)">VAZAMENTO(S) NA(S) HIP(S)</option>
+                    <option value="VAZAMENTO(S) NA(S) RIP(S)">VAZAMENTO(S) NA(S) RIP(S)</option>
+                    <option value="VAZAMENTO(S) NO(S) MANIPULADOR(ES)">VAZAMENTO(S) NO(S) MANIPULADOR(ES)</option>
+                </select>
+            </div>
+
+            <div style="grid-column: span 2;">
+                <label>AÇÃO TOMADA:</label>
+                <div class="radio-group">
+                    <input type="radio" id="acao_sem_acao" name="acao" value="SEM AÇÃO">
+                    <label for="acao_sem_acao" class="radio-btn">SEM AÇÃO</label>
+
+                    <input type="radio" id="acao_desligado" name="acao" value="DESLIGADO">
+                    <label for="acao_desligado" class="radio-btn">DESLIGADO</label>
+                    
+                    <input type="radio" id="acao_informado_area" name="acao" value="INFORMADO À ÁREA">
+                    <label for="acao_informado_area" class="radio-btn">INFORMADO À ÁREA</label>
+                    
+                    <input type="radio" id="acao_plantao_sb" name="acao" value="INFORMADO PLANTÃO SB">
+                    <label for="acao_plantao_sb" class="radio-btn">PLANTÃO SB</label>
+                </div>
+            </div>
+
+            <div style="grid-column: span 1;">
+                <label>CHAVE / INTERRUPTOR:</label>
+                <input type="text" id="interruptor" placeholder="ONDE FICA?" oninput="this.value = this.value.toUpperCase();">
+            </div>
+
+            <div style="grid-column: span 1; display: flex; align-items: flex-end; gap: 5px;">
+                <button type="button" class="btn-secondary" onclick="abrirModalMidia()" style="margin: 0; flex: 1; height: 34px;">📷 MÍDIA</button>
+                <button type="button" class="btn-danger" id="btn-remover-midia" onclick="removerMidiaFormulario()" style="margin: 0; width: 38px; height: 34px; display: none;" title="Remover Mídia">🗑</button>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:center;">
+            <img id="photo-preview" class="media-preview" src="" alt="Preview">
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin:0; width: 100%;">➕ ADICIONAR REGISTRO</button>
+        </div>
+
+        <button class="btn-secondary" id="btn-cancelar-edicao" style="display:none; margin-top:6px; width:100%;" onclick="cancelarEdicao()">❌ CANCELAR EDIÇÃO</button>
+
+        <input type="hidden" id="foto_base64">
+        <input type="hidden" id="video_base64">
+    </div>
+</div>
+
+<div class="center-section">
+    <div class="header-lista">
+        <h3>REGISTROS (<span id="contador">0</span>)</h3>
+        <div style="display: flex; gap: 6px;">
+            <button class="btn-warning" style="width:auto; height:30px; padding:0 10px; margin:0; font-size:11px;" onclick="limparDuplicadas()">🧹 LIMPAR DUPLICADAS</button>
+            <button class="btn-danger" style="width:auto; height:30px; padding:0 10px; margin:0; font-size:11px;" onclick="limparTudo()">🗑 ZERAR TUDO</button>
+        </div>
+    </div>
+    <div id="lista-registros"></div>
+</div>
+
+<div class="bottom-section">
+    <button class="btn-primary" onclick="abrirModalExportar()">📤 EXPORTAR (GERAL / POR ÁREA)</button>
+    <button class="btn-warning" style="color:var(--warning-text);" onclick="abrirModalImportar()">📂 IMPORTAR / MESCLAR JSON</button>
+    <input type="file" id="input-json" accept=".json" multiple style="display:none;" onchange="importarJSON(event)">
+</div>
+
+<!-- MODAL LEITURA QR -->
+<div id="qr-camera-modal">
+    <video id="qr-camera-video" autoplay playsinline muted></video>
+    <canvas id="qr-canvas"></canvas>
+    <div class="qr-camera-top">
+        <div class="qr-camera-titulo">🔳 LEITOR DE QR CODE</div>
+        <div id="qr-camera-status" class="qr-camera-status">Aponte a câmera para o QR Code</div>
+    </div>
+    <div class="qr-moldura"><div class="qr-linha-leitura"></div></div>
+    <div class="qr-camera-bottom">
+        <button id="btn-qr-galeria" class="btn-info" onclick="fecharLeitorQR(); document.getElementById('input-qr').click();">🖼️ LER IMAGEM DA GALERIA</button>
+        <button class="btn-danger" onclick="fecharLeitorQR()">❌ CANCELAR</button>
+    </div>
+</div>
+
+<!-- MODAL DESCRIÇÃO -->
+<div id="descricao-modal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color:var(--primary);">DESCRIÇÃO DO PROBLEMA</h3>
+        <p style="margin:0; font-size:13px; color:#666;">DIGITE OS DETALHES ADICIONAIS ABAIXO:</p>
+        <textarea id="descricao-texto" rows="5" oninput="this.value = this.value.toUpperCase();"></textarea>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-danger" style="margin:0;" onclick="fecharModalDescricao()">CANCELAR</button>
+            <button class="btn-success" style="margin:0;" onclick="salvarDescricao()">CONFIRMAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL MÍDIA -->
+<div id="midia-modal">
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-top:0; color:var(--primary);">ADICIONAR MÍDIA</h3>
+        <p style="margin:0; font-size:13px; color:#666;">ESCOLHA A ORIGEM DA FOTO OU VÍDEO:</p>
+        <div class="botoes-menu-modal">
+            <button class="btn-success" onclick="iniciarCamera('foto')">📷 TIRAR FOTO</button>
+            <button class="btn-warning" style="color:var(--warning-text);" onclick="iniciarCamera('video')">🎥 GRAVAR VÍDEO</button>
+            <button class="btn-info" onclick="acionarGaleria()">📂 CARREGAR DA GALERIA</button>
+            <button class="btn-danger" onclick="fecharModalMidia()">❌ CANCELAR</button>
+        </div>
+        <input type="file" id="input-galeria" accept="image/*,video/*" style="display:none;" onchange="processarMidiaGaleria(event)">
+    </div>
+</div>
+
+<!-- MODAL EXPORTAR INTELIGENTE -->
+<div id="exportar-modal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color:var(--primary); text-align:center;">📤 CENTRAL DE EXPORTAÇÃO</h3>
+
+        <div class="secao-export">
+            <h4>1. Relatório Unificado (Todas as Áreas)</h4>
+            <div class="botoes-menu-modal" style="margin-top: 6px;">
+                <button class="btn-primary" onclick="acionarExportarGeral('PPTX')">📺 POWERPOINT GERAL (.PPTX)</button>
+                <button class="btn-success" onclick="acionarExportarGeral('XLSX')">📊 EXCEL GERAL (.XLSX)</button>
+                <button class="btn-info" onclick="acionarExportarGeral('JSON')">💾 ARQUIVO GERAL (.JSON)</button>
+                <button class="btn-secondary" onclick="copiarJSON()">📋 COPIAR TEXTO (JSON)</button>
+            </div>
+        </div>
+
+        <div class="secao-export" style="border-color: var(--purple); background: #f6f2ff;">
+            <h4 style="color: var(--purple);">2. Exportador Inteligente (1 Arquivo p/ Cada Área)</h4>
+            <p style="margin: 0 0 8px 0; font-size: 11px; color: #555;">Separa automaticamente os registros por área para distribuir a carga de trabalho entre a equipe:</p>
+            <div class="botoes-menu-modal" style="margin-top: 6px;">
+                <button class="btn-purple" onclick="exportarLotePorArea('PPTX')">📦 PACOTE .ZIP (1 PPTX POR ÁREA)</button>
+                <button class="btn-purple" onclick="exportarLotePorArea('XLSX')">📦 PACOTE .ZIP (1 EXCEL POR ÁREA)</button>
+                <button class="btn-purple" onclick="exportarLotePorArea('JSON')">📦 PACOTE .ZIP (1 JSON POR ÁREA)</button>
+            </div>
+
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ccc;">
+                <label style="color: #333;">OU EXPORTE APENAS UMA ÁREA ESPECÍFICA:</label>
+                <select id="select-area-export" style="margin-top: 4px; margin-bottom: 8px;"></select>
+                <div style="display: flex; gap: 6px;">
+                    <button class="btn-primary" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('PPTX')">📺 PPTX</button>
+                    <button class="btn-success" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('XLSX')">📊 XLSX</button>
+                    <button class="btn-info" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('JSON')">💾 JSON</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-danger" style="margin-top: 12px;" onclick="fecharModalExportar()">❌ FECHAR</button>
+    </div>
+</div>
+
+<!-- MODAL IMPORTAR -->
+<div id="importar-modal">
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-top:0; color:#d39e00;">IMPORTAR E MESCLAR DADOS</h3>
+        <p style="margin:0; font-size:13px; color:#666;">Selecione múltiplos arquivos JSON para unir e revisar:</p>
+        <div class="botoes-menu-modal">
+            <button class="btn-warning" onclick="acionarImportarJSON()">📁 SELECIONAR ARQUIVO(S) (.JSON)</button>
+            <button class="btn-warning" onclick="abrirModalColar()">📥 COLAR TEXTO JSON</button>
+            <button class="btn-danger" onclick="fecharModalImportar()">❌ CANCELAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL COLAR JSON -->
+<div id="colar-modal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color:#d39e00;">COLAR TEXTO JSON</h3>
+        <p style="margin:0; font-size:13px; color:#666;">COLE AQUI O CÓDIGO QUE VOCÊ COPIOU DO WHATSAPP:</p>
+        <textarea id="texto-colar" rows="8"></textarea>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-danger" style="margin:0;" onclick="fecharModalColar()">CANCELAR</button>
+            <button class="btn-success" style="margin:0;" onclick="processarColarJSON()">IMPORTAR DADOS</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CÂMERA MÍDIA -->
+<div id="camera-modal">
+    <div style="width: 100%; max-width: 600px;">
+        <video id="video-preview" autoplay playsinline></video>
+        <p id="status-gravacao" style="color:red; font-weight:bold; display:none; margin:5px 0;">🔴 GRAVANDO VÍDEO (MÁX 5S)...</p>
+        <div class="modal-botoes">
+            <button id="btn-tirar-foto" class="btn-success" onclick="capturarFoto()">📷 CAPTURAR FOTO</button>
+            <button id="btn-iniciar-gravacao" class="btn-warning" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
+            <button id="btn-parar-gravacao" class="btn-danger" style="display:none;" onclick="pararGravacaoVideo()">⏹️ PARAR E SALVAR VÍDEO</button>
+            <button class="btn-danger" onclick="fecharCamera()">❌ CANCELAR</button>
+        </div>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+</div>
+
+<!-- MODAL VISUALIZADOR MÍDIA -->
+<div id="media-viewer-modal">
+    <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
+    <img id="viewer-img" style="display:none;">
+    <video id="viewer-video" controls style="display:none;"></video>
+</div>
+
+<script>
+const STORAGE_KEY = 'registros_caca_desperdicios_unificado';
+let streamDeVideo = null;
+let streamQR = null;
+let mediaRecorder = null;
+let pedacosGravados = [];
+let registros = [];
+let indiceEdicao = null;
+
+let qrScannerAtivo = false;
+let qrAnimationFrame = null;
+let qrUltimoTexto = "";
+let qrUltimaLeitura = 0;
+let qrDetectorNativo = null;
+
+window.onload = async function() {
+    let auditorSalvo = localStorage.getItem('auditor_nome');
+    if (auditorSalvo) document.getElementById('auditor').value = auditorSalvo;
+
+    let revisorSalvo = localStorage.getItem('revisor_nome');
+    if (revisorSalvo) document.getElementById('nome_revisor').value = revisorSalvo;
+
+    let dadosUnificados = await localforage.getItem(STORAGE_KEY);
+    let dadosAntigosColeta = await localforage.getItem('registros_caca_desperdicios');
+    let dadosAntigosRevisor = await localforage.getItem('registros_revisor');
+
+    if (Array.isArray(dadosUnificados) && dadosUnificados.length > 0) {
+        registros = dadosUnificados;
+    } else if (Array.isArray(dadosAntigosRevisor) && dadosAntigosRevisor.length > 0) {
+        registros = dadosAntigosRevisor;
+        await salvarMemoria();
+    } else if (Array.isArray(dadosAntigosColeta) && dadosAntigosColeta.length > 0) {
+        registros = dadosAntigosColeta;
+        await salvarMemoria();
+    }
+
+    processarEOrdenarLista();
+};
+
+async function salvarMemoria() {
+    await localforage.setItem(STORAGE_KEY, registros);
+}
+
+function alternarFormulario() {
+    const bloco = document.getElementById('bloco-formulario');
+    const btn = document.getElementById('btn-toggle-form');
+    if (bloco.style.display === 'none') {
+        bloco.style.display = 'block';
+        btn.innerText = '🔼 RECOLHER FORMULÁRIO';
+    } else {
+        bloco.style.display = 'none';
+        btn.innerText = '🔽 EXPANDIR FORMULÁRIO';
+    }
+}
+
+function obterTimestampAtual() {
+    const agora = new Date();
+    const data = agora.toLocaleDateString('pt-BR');
+    const hora = agora.toLocaleTimeString('pt-BR');
+    return `${data} às ${hora}`;
+}
+
+function removerAcentos(texto) {
+    return texto ? String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : "";
+}
+
+function limparNomeArquivo(texto) {
+    return removerAcentos(texto).replace(/[^A-Z0-9_-]/g, "_").replace(/_+/g, "_");
+}
+
+function verificarCombos() {
+    const area = document.getElementById('area').value;
+    const ocorrencia = document.getElementById('ocorrencia').value;
+    
+    document.getElementById('area_outros').style.display = area === 'OUTROS' ? 'block' : 'none';
+    document.getElementById('ocorrencia_outros').style.display = ocorrencia === 'OUTROS' ? 'block' : 'none';
+
+    const containerSub = document.getElementById('container_sub_ocorrencia');
+    if (area === 'ARMAÇÃO' && ocorrencia === 'VAZAMENTOS DE AR') {
+        containerSub.style.display = 'block';
+    } else {
+        containerSub.style.display = 'none';
+        document.getElementById('sub_ocorrencia').value = '';
+    }
+}
+
+// ==========================================
+// ORDENAÇÃO POR ÁREA + DETECÇÃO DE DUPLICATAS
+// ==========================================
+function chaveIdentidade(reg) {
+    const area = (reg.area || "").trim().toUpperCase();
+    const local = (reg.local || "").trim().toUpperCase();
+    const ocorrencia = (reg.ocorrencia || "").trim().toUpperCase();
+    if (!local) return "";
+    return `${area}|${local}|${ocorrencia}`;
+}
+
+function processarEOrdenarLista() {
+    registros.sort((a, b) => {
+        let cmpArea = (a.area || "").localeCompare(b.area || "", 'pt-BR');
+        if (cmpArea !== 0) return cmpArea;
+        let cmpLocal = (a.local || "").localeCompare(b.local || "", 'pt-BR');
+        if (cmpLocal !== 0) return cmpLocal;
+        return (a.ocorrencia || "").localeCompare(b.ocorrencia || "", 'pt-BR');
+    });
+
+    let contagem = {};
+    registros.forEach(r => {
+        let k = chaveIdentidade(r);
+        if (k) contagem[k] = (contagem[k] || 0) + 1;
+    });
+
+    registros.forEach(r => {
+        let k = chaveIdentidade(r);
+        r.isDuplicado = k ? (contagem[k] > 1) : false;
+    });
+
+    atualizarLista();
+}
+
+// ==========================================
+// LIMPEZA DE DUPLICADAS (PRIORIZA REVISADOS)
+// ==========================================
+async function limparDuplicadas() {
+    if (registros.length === 0) return;
+
+    const grupos = new Map();
+    const semChave = [];
+    let removidos = 0;
+
+    registros.forEach(reg => {
+        const key = chaveIdentidade(reg);
+        if (!key) {
+            semChave.push(reg);
+            return;
+        }
+        if (!grupos.has(key)) {
+            grupos.set(key, [reg]);
+        } else {
+            grupos.get(key).push(reg);
+        }
+    });
+
+    const resultado = [...semChave];
+
+    grupos.forEach(listaGrupo => {
+        if (listaGrupo.length === 1) {
+            resultado.push(listaGrupo[0]);
+            return;
+        }
+
+        const revisados = listaGrupo.filter(r => r.editado || r.revisado_em);
+        if (revisados.length > 0) {
+            // Elimina todos os que NÃO têm revisão e mantém o último revisado
+            const escolhido = revisados[revisados.length - 1];
+            resultado.push(escolhido);
+            removidos += (listaGrupo.length - 1);
+        } else {
+            // Se nenhum tiver revisão, mantém apenas 1 exemplar e elimina as cópias
+            resultado.push(listaGrupo[0]);
+            removidos += (listaGrupo.length - 1);
+        }
+    });
+
+    if (removidos > 0) {
+        registros = resultado;
+        await salvarMemoria();
+        processarEOrdenarLista();
+        alert(`✅ Limpeza concluída!\n${removidos} registro(s) duplicado(s) removido(s).\nOs registros não revisados foram eliminados em favor dos revisados!`);
+    } else {
+        alert("ℹ️ Nenhum item duplicado (Mesma Área + Local + Ocorrência) foi encontrado.");
+    }
+}
+
+// ==========================================
+// MARCAR COMO REVISADO (SOBRESCREVE DATA/HORA)
+// ==========================================
+async function marcarComoRevisado(index) {
+    let revisor = document.getElementById('nome_revisor').value.trim().toUpperCase();
+    if (!revisor) {
+        alert("⚠️ PREENCHA O CAMPO 'REVISOR' NO TOPO DA TELA ANTES DE REVISAR!");
+        document.getElementById('nome_revisor').focus();
+        return;
+    }
+
+    // Apaga a data anterior e grava a data e hora atual da última revisão
+    registros[index].revisor = revisor;
+    registros[index].revisado_em = obterTimestampAtual();
+    registros[index].editado = true;
+
+    await salvarMemoria();
+    processarEOrdenarLista();
+}
+
+// ==========================================
+// LEITOR DE QR CODE
+// ==========================================
+async function abrirLeitorQR() {
+    const modal = document.getElementById('qr-camera-modal');
+    const video = document.getElementById('qr-camera-video');
+    const status = document.getElementById('qr-camera-status');
+    const btn = document.getElementById('btn-qr');
+
+    qrUltimoTexto = "";
+    qrUltimaLeitura = 0;
+    status.innerText = "Iniciando câmera...";
+    modal.style.display = 'block';
+    btn.innerText = "⏳ ABRINDO LEITOR QR...";
+
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("Sem permissão");
+        streamQR = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+            audio: false
+        });
+        video.srcObject = streamQR;
+        video.setAttribute("playsinline", "true");
+        video.muted = true;
+        await video.play();
+
+        status.innerText = "APONTE PARA O QR CODE";
+        btn.innerText = "🔳 LER QR CODE DO LOCAL";
+        qrScannerAtivo = true;
+
+        prepararBarcodeDetector();
+        iniciarLoopLeituraQR();
+    } catch (erro) {
+        modal.style.display = 'none';
+        btn.innerText = "🔳 LER QR CODE DO LOCAL";
+        if (confirm("Não foi possível abrir a câmera ao vivo. Deseja ler uma foto do QR Code da galeria?")) {
+            document.getElementById('input-qr').click();
+        }
+    }
+}
+
+function prepararBarcodeDetector() {
+    qrDetectorNativo = null;
+    if ("BarcodeDetector" in window) {
+        try { qrDetectorNativo = new BarcodeDetector({ formats: ["qr_code"] }); } catch (e) {}
+    }
+}
+
+function iniciarLoopLeituraQR() {
+    if (!qrScannerAtivo) return;
+    const video = document.getElementById('qr-camera-video');
+
+    if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+        if (qrDetectorNativo) {
+            qrDetectorNativo.detect(video).then(function(barcodes) {
+                if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                    processarQRDetectado(barcodes[0].rawValue);
+                    return;
+                }
+                tentarJSQRVideo();
+            }).catch(() => tentarJSQRVideo());
+        } else {
+            tentarJSQRVideo();
+        }
+    }
+    qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR);
+}
+
+function tentarJSQRVideo() {
+    if (!qrScannerAtivo) return;
+    const video = document.getElementById('qr-camera-video');
+    const canvas = document.getElementById('qr-canvas');
+    if (video.videoWidth <= 0 || video.videoHeight <= 0) return;
+
+    let largura = video.videoWidth;
+    let altura = video.videoHeight;
+    if (largura > 1280) {
+        const escala = 1280 / largura;
+        largura = Math.round(largura * escala);
+        altura = Math.round(altura * escala);
+    }
+    canvas.width = largura;
+    canvas.height = altura;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(video, 0, 0, largura, altura);
+    const imageData = ctx.getImageData(0, 0, largura, altura);
+
+    try {
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+        if (code && code.data) processarQRDetectado(code.data);
+    } catch (erro) {}
+}
+
+function processarQRDetectado(texto) {
+    if (!texto) return;
+    const agora = Date.now();
+    if (texto === qrUltimoTexto && agora - qrUltimaLeitura < 2500) return;
+    qrUltimoTexto = texto;
+    qrUltimaLeitura = agora;
+    qrScannerAtivo = false;
+
+    if (qrAnimationFrame) { cancelAnimationFrame(qrAnimationFrame); qrAnimationFrame = null; }
+    fecharStreamQR();
+    document.getElementById('qr-camera-modal').style.display = 'none';
+    preencherCamposViaQR(texto);
+}
+
+function fecharStreamQR() {
+    if (streamQR) { streamQR.getTracks().forEach(track => track.stop()); streamQR = null; }
+}
+
+function fecharLeitorQR() {
+    qrScannerAtivo = false;
+    if (qrAnimationFrame) { cancelAnimationFrame(qrAnimationFrame); qrAnimationFrame = null; }
+    fecharStreamQR();
+    document.getElementById('qr-camera-modal').style.display = 'none';
+    document.getElementById('btn-qr').innerText = "🔳 LER QR CODE DO LOCAL";
+}
+
+function processarImagemQR(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" });
+        if (code && code.data) {
+            preencherCamposViaQR(code.data);
+        } else {
+            alert("❌ NENHUM QR CODE ENCONTRADO NA IMAGEM.");
+        }
+        URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+    event.target.value = '';
+}
+
+function preencherCamposViaQR(decodedText) {
+    if (!decodedText) return;
+    let texto = String(decodedText).replace(/\r/g, "").replace(/\n/g, " ").trim().replace(/\s*;\s*/g, ";");
+    let partes = texto.split(";").map(item => item.trim()).filter(Boolean);
+
+    if (partes.length < 2) {
+        alert("❌ FORMATO INVÁLIDO NO QR CODE.\nEsperado: ÁREA;LOCAL;OCORRÊNCIA;INTERRUPTOR");
+        return;
+    }
+
+    let areaQR = (partes[0] || "").toUpperCase();
+    let selectArea = document.getElementById('area');
+    let opcaoArea = Array.from(selectArea.options).find(o => removerAcentos(o.value) === removerAcentos(areaQR));
+    if (opcaoArea) {
+        selectArea.value = opcaoArea.value;
+    } else {
+        selectArea.value = 'OUTROS';
+        document.getElementById('area_outros').value = areaQR;
+    }
+
+    document.getElementById('local').value = (partes[1] || "").toUpperCase();
+
+    if (partes.length >= 3 && partes[2]) {
+        let ocQR = partes[2].toUpperCase();
+        let selectOc = document.getElementById('ocorrencia');
+        let opcaoOc = Array.from(selectOc.options).find(o => removerAcentos(o.value) === removerAcentos(ocQR));
+        if (opcaoOc) {
+            selectOc.value = opcaoOc.value;
+        } else {
+            selectOc.value = 'OUTROS';
+            document.getElementById('ocorrencia_outros').value = ocQR;
+        }
+    }
+
+    verificarCombos();
+
+    let msg = "✅ QR CODE LIDO COM SUCESSO!";
+    if (partes.length >= 4 && partes[3]) {
+        let infoInt = partes.slice(3).join(";").toUpperCase();
+        document.getElementById('interruptor').value = infoInt;
+        msg += "\n\n📍 INTERRUPTOR: " + infoInt;
+    }
+    alert(msg);
+}
+
+// ==========================================
+// MODAIS E CÂMERA DE MÍDIA
+// ==========================================
+function abrirModalDescricao() {
+    const modal = document.getElementById('descricao-modal');
+    const textarea = document.getElementById('descricao-texto');
+    textarea.value = document.getElementById('descricao').value;
+    modal.style.display = 'flex';
+    textarea.focus();
+}
+function fecharModalDescricao() { document.getElementById('descricao-modal').style.display = 'none'; }
+function abrirModalMidia() { document.getElementById('midia-modal').style.display = 'flex'; }
+function fecharModalMidia() { document.getElementById('midia-modal').style.display = 'none'; }
+
+function abrirModalExportar() {
+    if (registros.length === 0) {
+        alert("⚠️ NENHUM DADO NA LISTA PARA EXPORTAR.");
+        return;
+    }
+    atualizarSelectAreasExportacao();
+    document.getElementById('exportar-modal').style.display = 'flex';
+}
+function fecharModalExportar() { document.getElementById('exportar-modal').style.display = 'none'; }
+function abrirModalImportar() { document.getElementById('importar-modal').style.display = 'flex'; }
+function fecharModalImportar() { document.getElementById('importar-modal').style.display = 'none'; }
+function abrirModalColar() {
+    fecharModalImportar();
+    document.getElementById('texto-colar').value = '';
+    document.getElementById('colar-modal').style.display = 'flex';
+}
+function fecharModalColar() { document.getElementById('colar-modal').style.display = 'none'; }
+
+function salvarDescricao() {
+    const textarea = document.getElementById('descricao-texto');
+    const display = document.getElementById('descricao-display');
+    document.getElementById('descricao').value = textarea.value.toUpperCase().trim();
+    display.innerText = textarea.value.trim() !== '' ? textarea.value.toUpperCase() : 'TOQUE PARA DIGITAR...';
+    display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
+    fecharModalDescricao();
+}
+function limparCampoDescricao() {
+    document.getElementById('descricao').value = '';
+    const display = document.getElementById('descricao-display');
+    display.innerText = 'TOQUE PARA DIGITAR...';
+    display.style.color = '#6c757d';
+}
+function preencherCampoDescricao(texto) {
+    document.getElementById('descricao').value = texto || '';
+    const display = document.getElementById('descricao-display');
+    display.innerText = (texto && texto.trim() !== '') ? texto : 'TOQUE PARA DIGITAR...';
+    display.style.color = (texto && texto.trim() !== '') ? '#333' : '#6c757d';
+}
+
+function removerMidiaFormulario() {
+    document.getElementById('foto_base64').value = '';
+    document.getElementById('video_base64').value = '';
+    document.getElementById('photo-preview').style.display = 'none';
+    document.getElementById('btn-remover-midia').style.display = 'none';
+}
+
+async function iniciarCamera(modo) {
+    fecharModalMidia();
+    const modal = document.getElementById('camera-modal');
+    const video = document.getElementById('video-preview');
+    modal.style.display = 'flex';
+    document.getElementById('btn-tirar-foto').style.display = modo === 'foto' ? 'flex' : 'none';
+    document.getElementById('btn-iniciar-gravacao').style.display = modo === 'video' ? 'flex' : 'none';
+    document.getElementById('btn-parar-gravacao').style.display = 'none';
+    document.getElementById('status-gravacao').style.display = 'none';
+    try {
+        streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: modo === 'video' });
+        video.srcObject = streamDeVideo;
+        video.muted = true;
+    } catch (erro) {
+        alert("ERRO AO ACESSAR CÂMERA: " + erro);
+        fecharCamera();
+    }
+}
+function fecharCamera() {
+    document.getElementById('camera-modal').style.display = 'none';
+    if (streamDeVideo) { streamDeVideo.getTracks().forEach(track => track.stop()); streamDeVideo = null; }
+    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+}
+function capturarFoto() {
+    const video = document.getElementById('video-preview');
+    const canvas = document.getElementById('canvas');
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const fotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
+    document.getElementById('foto_base64').value = fotoBase64;
+    document.getElementById('video_base64').value = '';
+    document.getElementById('photo-preview').src = fotoBase64;
+    document.getElementById('photo-preview').style.display = 'block';
+    document.getElementById('btn-remover-midia').style.display = 'flex';
+    fecharCamera();
+}
+function iniciarGravacaoVideo() {
+    pedacosGravados = [];
+    try { mediaRecorder = new MediaRecorder(streamDeVideo, { mimeType: 'video/webm' }); }
+    catch (e) { mediaRecorder = new MediaRecorder(streamDeVideo); }
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(pedacosGravados, { type: 'video/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = () => {
+            document.getElementById('video_base64').value = reader.result;
+            document.getElementById('photo-preview').src = document.getElementById('foto_base64').value;
+            document.getElementById('photo-preview').style.display = 'block';
+            document.getElementById('btn-remover-midia').style.display = 'flex';
+        };
+    };
+    mediaRecorder.start();
+    document.getElementById('btn-iniciar-gravacao').style.display = 'none';
+    document.getElementById('btn-parar-gravacao').style.display = 'flex';
+    document.getElementById('status-gravacao').style.display = 'block';
+    setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') pararGravacaoVideo(); }, 5000);
+}
+function pararGravacaoVideo() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        try {
+            const video = document.getElementById('video-preview');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 720;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
+        } catch(e) {}
+        mediaRecorder.stop();
+    }
+    fecharCamera();
+}
+function acionarGaleria() {
+    fecharModalMidia();
+    document.getElementById('input-galeria').click();
+}
+function processarMidiaGaleria(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const result = e.target.result;
+        if (file.type.startsWith('image/')) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX_W = 1280;
+                let w = img.width, h = img.height;
+                if (w > MAX_W) { h = Math.round(h * (MAX_W / w)); w = MAX_W; }
+                canvas.width = w; canvas.height = h;
+                canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                const reduzida = canvas.toDataURL('image/jpeg', 0.65);
+                document.getElementById('foto_base64').value = reduzida;
+                document.getElementById('video_base64').value = '';
+                document.getElementById('photo-preview').src = reduzida;
+                document.getElementById('photo-preview').style.display = 'block';
+                document.getElementById('btn-remover-midia').style.display = 'flex';
+            };
+            img.src = result;
+        } else if (file.type.startsWith('video/')) {
+            document.getElementById('video_base64').value = result;
+            extrairFrameVideo(result);
+        }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+}
+function extrairFrameVideo(videoDataUrl) {
+    const video = document.createElement('video');
+    video.src = videoDataUrl; video.muted = true; video.playsInline = true;
+    video.onloadeddata = () => { video.currentTime = 1; };
+    video.onseeked = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frameBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        document.getElementById('foto_base64').value = frameBase64;
+        document.getElementById('photo-preview').src = frameBase64;
+        document.getElementById('photo-preview').style.display = 'block';
+        document.getElementById('btn-remover-midia').style.display = 'flex';
+    };
+}
+function abrirViewerMidia(index) {
+    const reg = registros[index];
+    const modal = document.getElementById('media-viewer-modal');
+    const img = document.getElementById('viewer-img');
+    const video = document.getElementById('viewer-video');
+    if (reg.video) {
+        video.src = reg.video; video.style.display = 'inline-block'; img.style.display = 'none';
+        setTimeout(() => video.play(), 200);
+    } else if (reg.foto) {
+        img.src = reg.foto; img.style.display = 'inline-block'; video.style.display = 'none';
+    }
+    modal.style.display = 'flex';
+}
+function fecharViewerMidia() {
+    document.getElementById('media-viewer-modal').style.display = 'none';
+    const v = document.getElementById('viewer-video');
+    v.pause(); v.src = '';
+}
+function resetarBotoesAcao() {
+    let radios = document.getElementsByName('acao');
+    for (let i = 0; i < radios.length; i++) radios[i].checked = false;
+}
+
+// ==========================================
+// SALVAR E EDITAR REGISTROS
+// ==========================================
+async function salvarRegistro() {
+    let auditorVal = document.getElementById('auditor').value.trim();
+    if (!auditorVal) { alert("⚠️ PREENCHA O NOME DO AUDITOR!"); return; }
+
+    let areaVal = document.getElementById('area').value;
+    if (areaVal === 'OUTROS') areaVal = document.getElementById('area_outros').value.trim();
+    let ocorrenciaVal = document.getElementById('ocorrencia').value;
+    if (ocorrenciaVal === 'OUTROS') ocorrenciaVal = document.getElementById('ocorrencia_outros').value.trim();
+    
+    if (!areaVal || !ocorrenciaVal) { alert("⚠️ SELECIONE ÁREA E OCORRÊNCIA!"); return; }
+
+    if (document.getElementById('container_sub_ocorrencia').style.display === 'block') {
+        let subOc = document.getElementById('sub_ocorrencia').value;
+        if (!subOc) {
+            alert("⚠️ SELECIONE O TIPO DE VAZAMENTO DE AR ANTES DE SALVAR!");
+            return;
+        }
+        ocorrenciaVal = ocorrenciaVal + " - " + subOc;
+    }
+
+    let localVal = document.getElementById('local').value.trim();
+    if (!localVal) { alert("⚠️ PREENCHA O LOCAL ESPECÍFICO!"); return; }
+
+    let acaoSelecionada = document.querySelector('input[name="acao"]:checked');
+    if (!acaoSelecionada) { alert("⚠️ VOCÊ PRECISA INFORMAR A AÇÃO TOMADA!"); return; }
+
+    let auditorUpper = auditorVal.toUpperCase();
+    let areaUpper = areaVal.toUpperCase();
+    let localUpper = localVal.toUpperCase();
+    let ocorrenciaUpper = ocorrenciaVal.toUpperCase();
+    let descUpper = document.getElementById('descricao').value.toUpperCase().trim();
+    let interruptorUpper = document.getElementById('interruptor').value.toUpperCase().trim();
+    let acaoUpper = acaoSelecionada.value.toUpperCase();
+
+    let dataRegistro = new Date().toLocaleDateString('pt-BR');
+    let horaRegistro = new Date().toLocaleTimeString('pt-BR');
+    let ehEdicao = (indiceEdicao !== null);
+
+    if (ehEdicao) {
+        dataRegistro = registros[indiceEdicao].data || dataRegistro;
+        horaRegistro = registros[indiceEdicao].hora || horaRegistro;
+    }
+
+    const novoReg = {
+        data: dataRegistro,
+        hora: horaRegistro,
+        auditor: auditorUpper,
+        area: areaUpper,
+        local: localUpper,
+        ocorrencia: ocorrenciaUpper,
+        interruptor: interruptorUpper,
+        descricao: descUpper,
+        acao: acaoUpper,
+        foto: document.getElementById('foto_base64').value,
+        video: document.getElementById('video_base64').value
+    };
+
+    const revisorNome = document.getElementById('nome_revisor').value.trim().toUpperCase();
+
+    if (ehEdicao) {
+        // Se houver revisor preenchido (ou se já era um item revisado), atualiza/sobrescreve a data e hora da revisão
+        if (revisorNome || registros[indiceEdicao].editado) {
+            novoReg.revisor = revisorNome || registros[indiceEdicao].revisor || "REVISOR";
+            novoReg.revisado_em = obterTimestampAtual();
+            novoReg.editado = true;
+        }
+        registros[indiceEdicao] = novoReg;
+        cancelarEdicao();
+    } else {
+        if (revisorNome) {
+            novoReg.revisor = revisorNome;
+            novoReg.revisado_em = obterTimestampAtual();
+            novoReg.editado = true;
+        }
+        registros.push(novoReg);
+    }
+
+    document.getElementById('local').value = '';
+    document.getElementById('ocorrencia').value = '';
+    document.getElementById('interruptor').value = '';
+    document.getElementById('sub_ocorrencia').value = '';
+    document.getElementById('container_sub_ocorrencia').style.display = 'none';
+
+    limparCampoDescricao();
+    resetarBotoesAcao();
+    removerMidiaFormulario();
+
+    await salvarMemoria();
+    processarEOrdenarLista();
+}
+
+function editarRegistro(index) {
+    const reg = registros[index];
+    indiceEdicao = index;
+
+    document.getElementById('bloco-formulario').style.display = 'block';
+    document.getElementById('btn-toggle-form').innerText = '🔼 RECOLHER FORMULÁRIO';
+
+    document.getElementById('auditor').value = reg.auditor || '';
+    
+    let areaSalva = (reg.area || '').toUpperCase();
+    let ocorrenciaSalva = (reg.ocorrencia || '').toUpperCase();
+    let subOcorrenciaSalva = "";
+
+    if (areaSalva === 'ARMAÇÃO' && ocorrenciaSalva.startsWith('VAZAMENTOS DE AR - ')) {
+        subOcorrenciaSalva = ocorrenciaSalva.replace('VAZAMENTOS DE AR - ', '').trim();
+        ocorrenciaSalva = 'VAZAMENTOS DE AR';
+    }
+
+    let selectArea = document.getElementById('area');
+    let opcaoArea = Array.from(selectArea.options).find(o => removerAcentos(o.value) === removerAcentos(areaSalva));
+    if (opcaoArea) {
+        selectArea.value = opcaoArea.value;
+        document.getElementById('area_outros').style.display = 'none';
+    } else {
+        selectArea.value = 'OUTROS';
+        document.getElementById('area_outros').value = areaSalva;
+        document.getElementById('area_outros').style.display = 'block';
+    }
+
+    document.getElementById('local').value = reg.local || '';
+
+    let selectOcorrencia = document.getElementById('ocorrencia');
+    let opcaoOc = Array.from(selectOcorrencia.options).find(o => removerAcentos(o.value) === removerAcentos(ocorrenciaSalva));
+    if (opcaoOc) {
+        selectOcorrencia.value = opcaoOc.value;
+        document.getElementById('ocorrencia_outros').style.display = 'none';
+    } else {
+        selectOcorrencia.value = 'OUTROS';
+        document.getElementById('ocorrencia_outros').value = ocorrenciaSalva;
+        document.getElementById('ocorrencia_outros').style.display = 'block';
+    }
+
+    verificarCombos();
+    if (subOcorrenciaSalva) document.getElementById('sub_ocorrencia').value = subOcorrenciaSalva;
+
+    document.getElementById('interruptor').value = reg.interruptor || '';
+    preencherCampoDescricao(reg.descricao);
+
+    let radios = document.getElementsByName('acao');
+    for (let r of radios) { r.checked = (r.value.toUpperCase() === (reg.acao || '').toUpperCase()); }
+
+    document.getElementById('foto_base64').value = reg.foto || '';
+    document.getElementById('video_base64').value = reg.video || '';
+
+    const previewFoto = document.getElementById('photo-preview');
+    if (reg.foto) {
+        previewFoto.src = reg.foto;
+        previewFoto.style.display = 'block';
+        document.getElementById('btn-remover-midia').style.display = 'flex';
+    } else {
+        previewFoto.style.display = 'none';
+        document.getElementById('btn-remover-midia').style.display = 'none';
+    }
+
+    document.getElementById('btn-salvar').innerText = "💾 SALVAR ALTERAÇÕES (ATUALIZA REVISÃO)";
+    document.getElementById('btn-cancelar-edicao').style.display = 'block';
+    document.querySelector('.top-section').scrollTop = 0;
+}
+
+function cancelarEdicao() {
+    indiceEdicao = null;
+    document.getElementById('local').value = '';
+    document.getElementById('ocorrencia').value = '';
+    document.getElementById('interruptor').value = '';
+    document.getElementById('sub_ocorrencia').value = '';
+    document.getElementById('container_sub_ocorrencia').style.display = 'none';
+    limparCampoDescricao();
+    resetarBotoesAcao();
+    removerMidiaFormulario();
+    document.getElementById('btn-salvar').innerText = "➕ ADICIONAR REGISTRO";
+    document.getElementById('btn-cancelar-edicao').style.display = 'none';
+}
+
+async function excluirRegistro(index) {
+    if (confirm("❌ EXCLUIR ESTE REGISTRO PERMANENTEMENTE?")) {
+        registros.splice(index, 1);
+        await salvarMemoria();
+        processarEOrdenarLista();
+    }
+}
+
+async function limparTudo() {
+    if (confirm("🗑️ APAGAR TODOS OS REGISTROS DA TELA?")) {
+        registros = [];
+        await salvarMemoria();
+        cancelarEdicao();
+        processarEOrdenarLista();
+    }
+}
+
+// ==========================================
+// RENDERIZAÇÃO INDEXADA POR ÁREA
+// ==========================================
+function atualizarLista() {
+    const lista = document.getElementById('lista-registros');
+    document.getElementById('contador').innerText = registros.length;
+    lista.innerHTML = '';
+
+    if (registros.length === 0) {
+        lista.innerHTML = '<p style="text-align:center; color:#888; margin-top:40px;">Nenhum registro carregado. Adicione acima ou clique em "IMPORTAR / MESCLAR JSON".</p>';
+        return;
+    }
+
+    let areaAtualContexto = null;
+
+    registros.forEach((reg, index) => {
+        const areaNome = reg.area || 'SEM ÁREA DEFINIDA';
+        if (areaNome !== areaAtualContexto) {
+            areaAtualContexto = areaNome;
+            const qtdArea = registros.filter(r => (r.area || 'SEM ÁREA DEFINIDA') === areaAtualContexto).length;
+            const header = document.createElement('div');
+            header.className = 'area-header';
+            header.innerHTML = `<span>📍 ÁREA: ${areaAtualContexto}</span><span>${qtdArea} item(ns)</span>`;
+            lista.appendChild(header);
+        }
+
+        const item = document.createElement('div');
+        let classes = 'registro-item';
+        if (reg.editado || reg.revisado_em) classes += ' revisado';
+        if (reg.isDuplicado) classes += ' duplicado';
+        item.className = classes;
+
+        let badgesHTML = '<div class="badges-row">';
+        if (reg.isDuplicado) {
+            badgesHTML += `<span class="selo-duplicado">⚠️ DUPLICADO (MESMO LOCAL E TEMA)</span>`;
+        }
+        if (reg.editado || reg.revisado_em) {
+            let nomeRev = reg.revisor ? reg.revisor.toUpperCase() : 'REVISOR';
+            badgesHTML += `<span class="selo-revisado">✅ REVISADO POR ${nomeRev} EM ${reg.revisado_em || ''}</span>`;
+        }
+        badgesHTML += '</div>';
+
+        let htmlMidiaIcon = '';
+        if (reg.video) {
+            let thumb = reg.foto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+            htmlMidiaIcon = `<div class="video-thumbnail-container" onclick="abrirViewerMidia(${index})" title="VER VÍDEO"><img src="${thumb}"><div class="play-icon">▶</div></div>`;
+        } else if (reg.foto) {
+            htmlMidiaIcon = `<img src="${reg.foto}" class="registro-miniatura" onclick="abrirViewerMidia(${index})" title="VER FOTO">`;
+        }
+
+        let interruptorHtml = reg.interruptor ? ` | <span style="color:#6f42c1; font-weight:bold;">CHAVE: ${reg.interruptor}</span>` : '';
+        let descHtml = reg.descricao ? `<br><span style="color:#555; font-size:11px;">DETALHE: ${reg.descricao}</span>` : '';
+        let horaDisplay = reg.hora ? ` às ${reg.hora}` : '';
+        let assinatura = `Registrado por ${reg.auditor || 'DESCONHECIDO'} em: ${reg.data || ''}${horaDisplay}.`;
+        if (reg.revisado_em) {
+            assinatura += ` <strong>REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em}</strong>`;
+        }
+
+        item.innerHTML = `
+            ${badgesHTML}
+            <div class="registro-conteudo">
+                <div class="registro-texto">
+                    <strong>#${index + 1} - ${reg.local || 'N/A'}</strong>${interruptorHtml}<br>
+                    <span style="color:var(--danger); font-weight:bold;">${reg.ocorrencia || ''}</span>${descHtml}<br>
+                    <span style="color:#28a745; font-size:11px; font-weight:bold;">AÇÃO: ${reg.acao || 'NÃO INFORMADA'}</span><br>
+                    <span style="color:#777; font-size:11px;">${assinatura}</span>
+                </div>
+                ${htmlMidiaIcon}
+            </div>
+            <div class="acoes-item">
+                <button class="btn-primary" onclick="editarRegistro(${index})">✏️ EDITAR</button>
+                <button class="btn-success" onclick="marcarComoRevisado(${index})">✅ REVISADO</button>
+                <button class="btn-danger" onclick="excluirRegistro(${index})">❌ EXCLUIR</button>
+            </div>
+        `;
+        lista.appendChild(item);
+    });
+}
+
+// ==========================================
+// FUNÇÕES DE EXPORTAÇÃO (GERAL + INTELIGENTE POR ÁREA)
+// ==========================================
+function getISOWeek(d) {
+    let t = new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()+4-(t.getDay()||7));
+    return Math.ceil((((t-new Date(t.getFullYear(),0,1))/8.64e7)+1)/7);
+}
+
+function obterAreasUnicas() {
+    const setAreas = new Set();
+    registros.forEach(r => setAreas.add((r.area || "SEM_AREA").trim().toUpperCase()));
+    return Array.from(setAreas).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+}
+
+function atualizarSelectAreasExportacao() {
+    const select = document.getElementById('select-area-export');
+    select.innerHTML = '';
+    const areas = obterAreasUnicas();
+    areas.forEach(area => {
+        const qtd = registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === area).length;
+        const opt = document.createElement('option');
+        opt.value = area;
+        opt.textContent = `${area} (${qtd} registro${qtd > 1 ? 's' : ''})`;
+        select.appendChild(opt);
+    });
+}
+
+function limparMetadadosInternos(lista) {
+    return lista.map(r => {
+        const copia = { ...r };
+        delete copia.isDuplicado;
+        return copia;
+    });
+}
+
+function gerarWorkbookExcel(listaDados) {
+    const dadosExcel = listaDados.map((r, i) => {
+        let tipoMidia = r.video ? "VÍDEO" : (r.foto ? "FOTO" : "NÃO TEM");
+        return {
+            "ITEM": i + 1,
+            "DATA (COLETA)": r.data || "",
+            "HORA (COLETA)": r.hora || "",
+            "AUDITOR": r.auditor || "",
+            "ÁREA": r.area || "",
+            "LOCAL": r.local || "",
+            "INTERRUPTOR": r.interruptor || "",
+            "OCORRÊNCIA": r.ocorrencia || "",
+            "DESCRIÇÃO": (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " "),
+            "AÇÃO TOMADA": r.acao || "",
+            "REVISOR": r.revisor || "NÃO REVISADO",
+            "ÚLTIMA REVISÃO EM": r.revisado_em || "-",
+            "MÍDIA": tipoMidia
+        };
+    });
+    const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoria");
+    return workbook;
+}
+
+function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES") {
+    let pptx = new PptxGenJS();
+    let kw = getISOWeek(new Date());
+    let slideAtual;
+
+    listaDados.forEach((reg, index) => {
+        if (index % 4 === 0) {
+            slideAtual = pptx.addSlide();
+            slideAtual.addText(`RONDA KW ${kw} - ${sufixoTitulo}`, { x: 0.3, y: 0.2, w: 9.4, h: 0.4, fontSize: 22, bold: true });
+        }
+        
+        let yBase = 1.05 + ((index % 4) * 1.12);
+        let textX = 0.3; let textW = 7.0;
+        
+        let areaUpper = reg.area || "";
+        let localUpper = reg.local || "";
+        let ocorrenciaUpper = reg.ocorrencia || "NÃO CLASSIFICADA";
+        let descUpper = reg.descricao || "";
+        if (reg.interruptor) {
+            descUpper = descUpper ? `CHAVE: ${reg.interruptor} | ${descUpper}` : `CHAVE: ${reg.interruptor}`;
+        }
+        let acaoUpper = reg.acao || "NÃO INFORMADA";
+        let auditorUpper = reg.auditor || "DESCONHECIDO";
+
+        let titulo = localUpper ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}` : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
+        
+        let displayDataHora = reg.data || '';
+        if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` ÀS ${reg.hora}`;
+        
+        let txtRodape = `REGISTRADO POR ${auditorUpper} EM: ${displayDataHora}.`;
+        if (reg.revisado_em) {
+            let nomeRev = reg.revisor ? reg.revisor.toUpperCase() : "REVISOR";
+            txtRodape += ` REVISADO POR ${nomeRev} EM ${reg.revisado_em.toUpperCase()}`;
+        }
+
+        slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 13, bold: true });
+        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 11, bold: true, color: '0056b3' });
+        if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 10, color: '666666' });
+        slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 10, bold: true, color: '28a745' });
+        slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 8.5, italic: true });
+
+        if (reg.video) {
+            let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
+            if (reg.foto) mediaOpts.cover = reg.foto;
+            try { slideAtual.addMedia(mediaOpts); }
+            catch(e) { if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain' } }); }
+            slideAtual.addText("▶ VÍDEO ANEXADO", { x: 7.5, y: yBase + 0.85, w: 1.8, h: 0.15, fontSize: 8, bold: true, color: 'dc3545', align: 'center' });
+        } else if (reg.foto) {
+            try { slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } }); } catch(e) {}
+        }
+        
+        if (index % 4 < 3) slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9, h: 0, line: { color: 'E0E0E0', width: 1 } });
+    });
+
+    return pptx;
+}
+
+function baixarBlob(blob, nomeArquivo) {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = nomeArquivo;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
+function acionarExportarGeral(formato) {
+    let kw = getISOWeek(new Date());
+    let dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+    let padrao = `GERAL_KW${kw}_${dataHoje}`;
+    let nomeBase = prompt(`CONFIRME O NOME DO ARQUIVO ${formato} GERAL:`, padrao);
+    if (!nomeBase) return;
+    nomeBase = limparNomeArquivo(nomeBase);
+    fecharModalExportar();
+
+    const limpos = limparMetadadosInternos(registros);
+
+    if (formato === 'JSON') {
+        const blob = new Blob([JSON.stringify(limpos, null, 2)], { type: "application/json" });
+        baixarBlob(blob, `${nomeBase}.json`);
+    } else if (formato === 'XLSX') {
+        const wb = gerarWorkbookExcel(limpos);
+        XLSX.writeFile(wb, `${nomeBase}.xlsx`);
+    } else if (formato === 'PPTX') {
+        const pptx = construirObjetoPPTX(limpos, "DESPERDÍCIOS UTILITIES");
+        pptx.writeFile({ fileName: `${nomeBase}.pptx` });
+    }
+}
+
+async function exportarAreaUnica(formato) {
+    const areaSelecionada = document.getElementById('select-area-export').value;
+    if (!areaSelecionada) return;
+
+    const filtrados = limparMetadadosInternos(
+        registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === areaSelecionada)
+    );
+    if (filtrados.length === 0) return;
+
+    let kw = getISOWeek(new Date());
+    let dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+    let nomeArquivoBase = `KW${kw}_${limparNomeArquivo(areaSelecionada)}_${dataHoje}`;
+    fecharModalExportar();
+
+    if (formato === 'JSON') {
+        const blob = new Blob([JSON.stringify(filtrados, null, 2)], { type: "application/json" });
+        baixarBlob(blob, `${nomeArquivoBase}.json`);
+    } else if (formato === 'XLSX') {
+        const wb = gerarWorkbookExcel(filtrados);
+        XLSX.writeFile(wb, `${nomeArquivoBase}.xlsx`);
+    } else if (formato === 'PPTX') {
+        const pptx = construirObjetoPPTX(filtrados, `SETOR: ${areaSelecionada}`);
+        await pptx.writeFile({ fileName: `${nomeArquivoBase}.pptx` });
+    }
+}
+
+async function exportarLotePorArea(formato) {
+    const areas = obterAreasUnicas();
+    if (areas.length === 0) return;
+
+    fecharModalExportar();
+    const zip = new JSZip();
+    const kw = getISOWeek(new Date());
+    const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+
+    for (const area of areas) {
+        const itensArea = limparMetadadosInternos(
+            registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === area)
+        );
+        const nomeLimpo = `KW${kw}_${limparNomeArquivo(area)}_${dataHoje}`;
+
+        if (formato === 'JSON') {
+            zip.file(`${nomeLimpo}.json`, JSON.stringify(itensArea, null, 2));
+        } else if (formato === 'XLSX') {
+            const wb = gerarWorkbookExcel(itensArea);
+            const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            zip.file(`${nomeLimpo}.xlsx`, xlsxBuffer);
+        } else if (formato === 'PPTX') {
+            const pptx = construirObjetoPPTX(itensArea, `SETOR: ${area}`);
+            const pptxBlob = await pptx.write('blob');
+            zip.file(`${nomeLimpo}.pptx`, pptxBlob);
+        }
+    }
+
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+    baixarBlob(zipBlob, `PACOTE_POR_AREA_${formato}_KW${kw}_${dataHoje}.zip`);
+}
+
+function copiarJSON() {
+    if (registros.length === 0) return;
+    const limpos = limparMetadadosInternos(registros);
+    const jsonString = JSON.stringify(limpos, null, 2);
+    navigator.clipboard.writeText(jsonString).then(() => {
+        alert("✅ DADOS COPIADOS COM SUCESSO!");
+    }).catch(err => { alert("ERRO AO COPIAR: " + err); });
+    fecharModalExportar();
+}
+
+// ==========================================
+// IMPORTAÇÃO E MESCLAGEM DE JSON
+// ==========================================
+function acionarImportarJSON() {
+    fecharModalImportar();
+    document.getElementById('input-json').click();
+}
+
+function formatarRegistroImportado(reg) {
+    return {
+        ...reg,
+        auditor: (reg.auditor || "").toUpperCase().trim(),
+        area: (reg.area || "").toUpperCase().trim(),
+        local: (reg.local || "").toUpperCase().trim(),
+        interruptor: (reg.interruptor || "").toUpperCase().trim(),
+        ocorrencia: (reg.ocorrencia || "").toUpperCase().trim(),
+        descricao: (reg.descricao || "").toUpperCase().trim(),
+        acao: (reg.acao || "").toUpperCase().trim(),
+        revisor: reg.revisor ? String(reg.revisor).toUpperCase().trim() : undefined
+    };
+}
+
+async function importarJSON(e) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    let adicionados = 0;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const dados = JSON.parse(event.target.result);
+                    if (Array.isArray(dados)) {
+                        const formatados = dados.map(formatarRegistroImportado);
+                        registros = registros.concat(formatados);
+                        adicionados += formatados.length;
+                    }
+                } catch (err) { alert("ERRO NO ARQUIVO: " + file.name); }
+                resolve();
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    await salvarMemoria();
+    processarEOrdenarLista();
+    if (adicionados > 0) {
+        alert(`✅ ${adicionados} registro(s) importado(s) e indexado(s) por área!`);
+    }
+    e.target.value = '';
+}
+
+async function processarColarJSON() {
+    const texto = document.getElementById('texto-colar').value;
+    if (!texto || texto.trim() === '') { alert("COLE O TEXTO ANTES DE IMPORTAR."); return; }
+    try {
+        const dadosImportados = JSON.parse(texto);
+        if (Array.isArray(dadosImportados)) {
+            const formatados = dadosImportados.map(formatarRegistroImportado);
+            registros = registros.concat(formatados);
+            await salvarMemoria();
+            processarEOrdenarLista();
+            alert(`✅ SUCESSO! ${formatados.length} REGISTROS IMPORTADOS E INDEXADOS POR ÁREA.`);
+            fecharModalColar();
+        } else { alert("O TEXTO COLADO NÃO POSSUI O FORMATO DE LISTA JSON."); }
+    } catch (erro) { alert("ERRO AO LER O TEXTO JSON: " + erro); }
+}
+</script>
+
+</body>
+</html>
