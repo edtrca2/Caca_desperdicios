@@ -1,15 +1,23 @@
 {
-  "name": "Caça Desperdícios & Revisão",
+  "name": "Caça Desperdícios",
   "short_name": "Caça Desperdícios",
-  "start_url": "./inspecao.html",
+  "description": "Sistema Integrado de Coleta, Revisão e Exportação por Área",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#e9ecef",
   "theme_color": "#0056b3",
   "icons": [
     {
       "src": "./icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
