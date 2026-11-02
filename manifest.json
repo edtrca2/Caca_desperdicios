@@ -1,7 +1,7 @@
 {
   "name": "Caça Desperdícios & Revisão",
   "short_name": "Caça Desperdícios",
-  "start_url": "./index.html",
+  "start_url": "./inspecao.html",
   "display": "standalone",
   "background_color": "#e9ecef",
   "theme_color": "#0056b3",
