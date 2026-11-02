@@ -1,459 +1,60 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CAÇA DESPERDÍCIOS — INTEGRADO</title>
-
-    <!-- TAGS OBRIGATÓRIAS PARA INSTALAÇÃO PWA (ANDROID E IOS) -->
-    <link rel="manifest" href="./manifest.json">
-    <link rel="apple-touch-icon" href="./icon.png">
-    <meta name="theme-color" content="#0056b3">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Caça Desperd.">
-
-    <!-- BIBLIOTECAS EXTERNAS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-
-    <style>
-        :root {
-            --primary: #0056b3;
-            --bg: #e9ecef;
-            --card: #ffffff;
-            --text: #333333;
-            --danger: #dc3545;
-            --success: #28a745;
-            --warning: #ffc107;
-            --warning-text: #212529;
-            --info: #17a2b8;
-            --purple: #6f42c1;
-            --revisado: #e8f5e9;
-            --duplicado: #fff5f5;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100dvh;
-            overflow: hidden;
-        }
-
-        .top-section {
-            flex: none;
-            background-color: var(--card);
-            padding: 8px 12px;
-            border-bottom: 2px solid #222;
-            z-index: 10;
-            max-height: 56dvh;
-            overflow-y: auto;
-        }
-
-        .top-header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .app-title-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .app-logo-img {
-            width: 34px;
-            height: 34px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-        }
-
-        .top-header-bar h2 {
-            color: var(--primary);
-            margin: 0;
-            font-size: 15px;
-        }
-
-        .btn-toggle-form {
-            width: auto;
-            height: 28px;
-            padding: 0 10px;
-            font-size: 11px;
-            background-color: #6c757d;
-        }
-
-        .center-section {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            background-color: var(--bg);
-        }
-
-        .bottom-section {
-            flex: none;
-            background-color: var(--card);
-            padding: 8px 12px;
-            border-top: 2px solid #222;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            z-index: 10;
-        }
-
-        .bottom-section button {
-            flex: 1 1 calc(50% - 8px);
-            margin: 0;
-            padding: 10px;
-            font-size: 13px;
-            height: 38px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 7px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 2px;
-            font-weight: bold;
-            font-size: 11px;
-            color: #444;
-        }
-
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 13px;
-            background-color: white;
-            height: 34px;
-        }
-
-        .fake-input {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 13px;
-            background-color: #f8f9fa;
-            height: 34px;
-            cursor: pointer;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .radio-group input[type="radio"] { display: none; }
-
-        .radio-group .radio-btn {
-            flex: 1 1 calc(25% - 6px);
-            min-width: 75px;
-            padding: 6px 4px;
-            text-align: center;
-            background-color: #f8f9fa;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: bold;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.1;
-            min-height: 34px;
-        }
-
-        .radio-group input[type="radio"]:checked + .radio-btn {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        button {
-            width: 100%;
-            padding: 8px;
-            border: none;
-            border-radius: 5px;
-            font-size: 13px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            transition: 0.2s;
-        }
-
-        button:hover { opacity: 0.92; }
-        button:disabled { opacity: 0.6; cursor: wait; }
-
-        .btn-primary { background-color: var(--primary); }
-        .btn-success { background-color: var(--success); }
-        .btn-danger { background-color: var(--danger); }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-warning { background-color: var(--warning); color: var(--warning-text); }
-        .btn-info { background-color: var(--info); }
-        .btn-purple { background-color: var(--purple); }
-        .btn-pendente { background-color: #495057; color: white; }
-
-        .header-lista {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-        }
-
-        .header-lista h3 { margin: 0; font-size: 15px; color: #444; }
-
-        .area-header {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin: 14px 0 8px 0;
-            font-size: 13px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .registro-item {
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            border-left: 5px solid #ccc;
-        }
-
-        .registro-item.revisado {
-            background: var(--revisado);
-            border-left-color: var(--success);
-        }
-
-        .registro-item.duplicado {
-            border: 2px solid var(--danger);
-            border-left: 6px solid var(--danger);
-            background: var(--duplicado);
-        }
-
-        .badges-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 3px;
-        }
-
-        .selo-revisado {
-            background-color: var(--success);
-            color: white;
-            padding: 3px 7px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .selo-duplicado {
-            background-color: var(--danger);
-            color: white;
-            padding: 3px 7px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .registro-conteudo {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .registro-texto {
-            flex: 1;
-            font-size: 13px;
-            line-height: 1.4;
-            overflow-wrap: anywhere;
-        }
-
-        .registro-miniatura {
-            width: 55px;
-            height: 55px;
-            object-fit: cover;
-            border-radius: 5px;
-            cursor: pointer;
-            border: 1px solid #ccc;
-            margin-left: 10px;
-            flex-shrink: 0;
-        }
-
-        .video-thumbnail-container {
-            position: relative;
-            width: 55px;
-            height: 55px;
-            margin-left: 10px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .video-thumbnail-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        .video-thumbnail-container .play-icon {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.45);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .acoes-item {
-            display: flex;
-            gap: 6px;
-            margin-top: 6px;
-            flex-wrap: wrap;
-        }
-
-        .acoes-item button {
-            flex: 1 1 auto;
-            margin-top: 0;
-            padding: 5px 8px;
-            font-size: 11px;
-            height: 30px;
-            width: auto;
-        }
-
-        /* Modais */
-        #camera-modal, #qr-camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-modal, #importar-modal, #midia-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.92);
-            z-index: 2000;
-            text-align: center;
-            padding: 15px;
-            align-items: center;
-            justify-content: center;
-            overflow-y: auto;
-        }
-
-        #qr-camera-modal { padding: 0; background: #000; z-index: 5000; }
-        #qr-camera-video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-
-        .qr-camera-top { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0)); }
-        .qr-camera-titulo { color: white; font-size: 18px; font-weight: bold; margin-top: 5px; }
-        .qr-camera-status { color: white; font-size: 13px; margin-top: 6px; }
-
-        .qr-moldura {
-            position: absolute; width: 65vw; height: 65vw; max-width: 300px; max-height: 300px;
-            border: 3px solid #00ff66; border-radius: 18px; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 5; box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), 0 0 20px rgba(0,255,102,0.5);
-        }
-
-        .qr-linha-leitura { position: absolute; left: 8%; width: 84%; height: 2px; background: #00ff66; top: 50%; z-index: 6; animation: qrLinha 1.7s infinite ease-in-out; box-shadow: 0 0 8px #00ff66; }
-
-        @keyframes qrLinha { 0% { transform: translateY(-120px); opacity: 0.3; } 50% { transform: translateY(120px); opacity: 1; } 100% { transform: translateY(-120px); opacity: 0.3; } }
-
-        .qr-camera-bottom { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px 25px 15px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0)); }
-        .qr-camera-bottom button { max-width: 400px; margin: 8px auto; height: 44px; }
-
-        #qr-canvas { display: none; }
-
-        #media-viewer-modal .fechar-btn { position: absolute; top: 15px; right: 20px; font-size: 35px; color: white; cursor: pointer; z-index: 10; }
-        #viewer-img, #viewer-video { max-width: 95%; max-height: 80vh; border-radius: 8px; }
-        #video-preview { width: 100%; max-height: 60vh; background-color: black; }
-
-        .media-preview { display: none; width: auto; max-height: 55px; object-fit: contain; margin-top: 6px; border-radius: 5px; }
-
-        .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; max-width: 400px; margin: 10px auto; }
-        .modal-botoes button { width: 100%; height: 42px; }
-
-        .modal-box { background: white; width: 100%; max-width: 440px; padding: 18px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: left; max-height: 92dvh; overflow-y: auto; }
-        .modal-box textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: none; margin-top: 10px; }
-        .botoes-menu-modal { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-
-        .secao-export {
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 10px;
-            margin-top: 10px;
-            background: #f8f9fa;
-        }
-
-        .secao-export h4 {
-            margin: 0 0 8px 0;
-            font-size: 12px;
-            color: var(--primary);
-            text-transform: uppercase;
-        }
-
-        #container_sub_ocorrencia { background-color: #fdf5f6; padding: 8px; border: 1px dashed var(--danger); border-radius: 5px; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>CAÇA DESPERDÍCIOS</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0056b3"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<style>
+:root{--primary:#0056b3;--bg:#e9ecef;--card:#fff;--text:#333;--danger:#dc3545;--success:#28a745;--warning:#ffc107;--warning-text:#212529;--info:#17a2b8;--purple:#6f42c1;--revisado:#e8f5e9;--duplicado:#fff5f5}
+*{box-sizing:border-box}body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0;display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+.top-section{flex:none;background:var(--card);padding:8px 12px;border-bottom:2px solid #222;z-index:10;max-height:56dvh;overflow-y:auto}
+.top-header-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.app-title-container{display:flex;align-items:center;gap:8px}.app-logo-img{width:34px;height:34px;border-radius:50%;border:2px solid var(--primary)}
+.top-header-bar h2{color:var(--primary);margin:0;font-size:15px}.btn-toggle-form{width:auto;height:28px;padding:0 10px;font-size:11px;background:#6c757d}
+.center-section{flex:1;overflow-y:auto;padding:12px;background:var(--bg)}
+.bottom-section{flex:none;background:var(--card);padding:8px 12px;border-top:2px solid #222;display:flex;flex-wrap:wrap;gap:8px;z-index:10}
+.bottom-section button{flex:1 1 calc(50% - 8px);margin:0;padding:10px;font-size:13px;height:38px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}label{display:block;margin-bottom:2px;font-weight:bold;font-size:11px;color:#444}
+input[type="text"],select{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:13px;background:#fff;height:34px}
+.fake-input{width:100%;padding:6px 8px;border:1px solid #ccc;border-radius:5px;font-size:13px;background:#f8f9fa;height:34px;cursor:pointer;color:#6c757d;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.radio-group{display:flex;gap:6px;flex-wrap:wrap}.radio-group input[type="radio"]{display:none}
+.radio-group .radio-btn{flex:1 1 calc(25% - 6px);min-width:75px;padding:6px 4px;text-align:center;background:#f8f9fa;border:2px solid #ddd;border-radius:6px;font-size:10px;font-weight:bold;color:#666;cursor:pointer;display:flex;align-items:center;justify-content:center;min-height:34px}
+.radio-group input[type="radio"]:checked+.radio-btn{background:var(--primary);color:#fff;border-color:var(--primary)}
+button{width:100%;padding:8px;border:none;border-radius:5px;font-size:13px;font-weight:bold;color:#fff;cursor:pointer;height:36px;display:flex;align-items:center;justify-content:center;gap:4px}
+button:disabled{opacity:.6;cursor:wait}.btn-primary{background:var(--primary)}.btn-success{background:var(--success)}.btn-danger{background:var(--danger)}.btn-secondary{background:#6c757d}.btn-warning{background:var(--warning);color:var(--warning-text)}.btn-info{background:var(--info)}.btn-purple{background:var(--purple)}.btn-pendente{background:#495057;color:#fff}
+.header-lista{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border-bottom:2px solid #ddd;padding-bottom:8px;margin-bottom:10px}
+.area-header{background:var(--primary);color:#fff;padding:8px 12px;border-radius:6px;margin:14px 0 8px;font-size:13px;font-weight:bold;display:flex;justify-content:space-between}
+.registro-item{background:#fff;border-radius:8px;padding:10px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;flex-direction:column;gap:5px;border-left:5px solid #ccc}
+.registro-item.revisado{background:var(--revisado);border-left-color:var(--success)}.registro-item.duplicado{border:2px solid var(--danger);border-left:6px solid var(--danger);background:var(--duplicado)}
+.badges-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:3px}.selo-revisado{background:var(--success);color:#fff;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:bold}.selo-duplicado{background:var(--danger);color:#fff;padding:3px 7px;border-radius:4px;font-size:10px;font-weight:bold}
+.registro-conteudo{display:flex;justify-content:space-between;align-items:flex-start}.registro-texto{flex:1;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.registro-miniatura,.video-thumbnail-container{width:55px;height:55px;object-fit:cover;border-radius:5px;border:1px solid #ccc;margin-left:10px;flex-shrink:0;position:relative}
+.video-thumbnail-container img{width:100%;height:100%;object-fit:cover;border-radius:5px}.video-thumbnail-container .play-icon{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+.acoes-item{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.acoes-item button{flex:1 1 auto;padding:5px 8px;font-size:11px;height:30px}
+#camera-modal,#qr-camera-modal,#media-viewer-modal,#descricao-modal,#colar-modal,#exportar-modal,#importar-modal,#midia-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.92);z-index:2000;text-align:center;padding:15px;align-items:center;justify-content:center;overflow-y:auto}
+#qr-camera-modal{padding:0;background:#000;z-index:5000}#qr-camera-video{width:100%;height:100%;object-fit:cover;background:#000}
+.qr-moldura{position:absolute;width:65vw;height:65vw;max-width:300px;max-height:300px;border:3px solid #00ff66;border-radius:18px;top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 9999px rgba(0,0,0,.25),0 0 20px rgba(0,255,102,.5)}
+.modal-box{background:#fff;width:100%;max-width:440px;padding:18px;border-radius:8px;text-align:left;max-height:92dvh;overflow-y:auto}
+.modal-box textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:5px;font-size:15px;resize:none;margin-top:10px}
+.botoes-menu-modal{display:flex;flex-direction:column;gap:8px;margin-top:12px}.secao-export{border:1px solid #dee2e6;border-radius:6px;padding:10px;margin-top:10px;background:#f8f9fa}
+#container_sub_ocorrencia{background:#fdf5f6;padding:8px;border:1px dashed var(--danger);border-radius:5px}
+</style>
 </head>
-
 <body>
-
 <div class="top-section">
     <div class="top-header-bar">
         <div class="app-title-container">
-            <!-- Usa a imagem física icon.png enviada para o repositório como logo no cabeçalho -->
             <img src="./icon.png" class="app-logo-img" alt="Logo" onerror="this.style.display='none'">
             <h2>CAÇA DESPERDÍCIOS</h2>
         </div>
-        <div id="pwa-install-container"></div>
         <button type="button" class="btn-toggle-form" id="btn-toggle-form" onclick="alternarFormulario()">🔼 RECOLHER</button>
     </div>
-
     <div class="form-grid" style="margin-bottom: 6px;">
         <div>
             <label>AUDITOR (COLETA):</label>
@@ -461,17 +62,15 @@
         </div>
         <div>
             <label style="color: var(--success);">REVISOR (REVISÃO):</label>
-            <input type="text" id="nome_revisor" placeholder="QUEM REVISA? (EX: EDSON)" style="border-color: var(--success); font-weight: bold;" oninput="this.value = this.value.toUpperCase(); localStorage.setItem('revisor_nome', this.value);">
+            <input type="text" id="nome_revisor" placeholder="QUEM REVISA?" style="border-color: var(--success); font-weight: bold;" oninput="this.value = this.value.toUpperCase(); localStorage.setItem('revisor_nome', this.value);">
         </div>
     </div>
-
     <div id="bloco-formulario">
         <div class="form-grid">
             <div style="grid-column: span 2;">
                 <button id="btn-qr" type="button" class="btn-purple" onclick="abrirLeitorQR()" style="height: 32px; font-size: 12px;">🔳 LER QR CODE DO LOCAL</button>
                 <input type="file" id="input-qr" accept="image/*" capture="environment" style="display:none;" onchange="processarImagemQR(event)">
             </div>
-
             <div>
                 <label>ÁREA / SETOR:</label>
                 <select id="area" onchange="verificarCombos()">
@@ -490,12 +89,10 @@
                 </select>
                 <input type="text" id="area_outros" placeholder="NOME DA ÁREA..." style="display:none; margin-top:5px; border-color:var(--primary);" oninput="this.value = this.value.toUpperCase();">
             </div>
-
             <div>
                 <label>LOCAL ESPECÍFICO:</label>
                 <input type="text" id="local" placeholder="EX: F40, COLUNA" oninput="this.value = this.value.toUpperCase();">
             </div>
-
             <div>
                 <label>OCORRÊNCIA:</label>
                 <select id="ocorrencia" onchange="verificarCombos()">
@@ -509,15 +106,13 @@
                 </select>
                 <input type="text" id="ocorrencia_outros" placeholder="ESPECIFIQUE..." style="display:none; margin-top:5px; border-color:var(--primary);" oninput="this.value = this.value.toUpperCase();">
             </div>
-
             <div>
                 <label>DESCRIÇÃO / DETALHE (Opcional):</label>
                 <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">TOQUE PARA DIGITAR...</div>
                 <input type="hidden" id="descricao">
             </div>
-
             <div id="container_sub_ocorrencia" style="display: none; grid-column: span 2;">
-                <label style="color: var(--danger);">TIPO DE VAZAMENTO (ARMAÇÃO):</label>
+                <label style="color: var(--danger);">TIPO VAZAMENTO (ARMAÇÃO):</label>
                 <select id="sub_ocorrencia" style="border-color: var(--danger);">
                     <option value="" disabled selected>SELECIONE O TIPO...</option>
                     <option value="VAZAMENTO NAS HIPS, RIPS, MANIPULADORES, ETC">VAZAMENTO NAS HIPS, RIPS, MANIPULADORES, ETC</option>
@@ -526,50 +121,34 @@
                     <option value="VAZAMENTO(S) NO(S) MANIPULADOR(ES)">VAZAMENTO(S) NO(S) MANIPULADOR(ES)</option>
                 </select>
             </div>
-
             <div style="grid-column: span 2;">
                 <label>AÇÃO TOMADA:</label>
                 <div class="radio-group">
-                    <input type="radio" id="acao_sem_acao" name="acao" value="SEM AÇÃO">
-                    <label for="acao_sem_acao" class="radio-btn">SEM AÇÃO</label>
-
-                    <input type="radio" id="acao_desligado" name="acao" value="DESLIGADO">
-                    <label for="acao_desligado" class="radio-btn">DESLIGADO</label>
-                    
-                    <input type="radio" id="acao_informado_area" name="acao" value="INFORMADO À ÁREA">
-                    <label for="acao_informado_area" class="radio-btn">INFORMADO À ÁREA</label>
-                    
-                    <input type="radio" id="acao_plantao_sb" name="acao" value="INFORMADO PLANTÃO SB">
-                    <label for="acao_plantao_sb" class="radio-btn">PLANTÃO SB</label>
+                    <input type="radio" id="acao_sem_acao" name="acao" value="SEM AÇÃO"><label for="acao_sem_acao" class="radio-btn">SEM AÇÃO</label>
+                    <input type="radio" id="acao_desligado" name="acao" value="DESLIGADO"><label for="acao_desligado" class="radio-btn">DESLIGADO</label>
+                    <input type="radio" id="acao_informado_area" name="acao" value="INFORMADO À ÁREA"><label for="acao_informado_area" class="radio-btn">INFORMADO À ÁREA</label>
+                    <input type="radio" id="acao_plantao_sb" name="acao" value="INFORMADO PLANTÃO SB"><label for="acao_plantao_sb" class="radio-btn">PLANTÃO SB</label>
                 </div>
             </div>
-
             <div style="grid-column: span 1;">
                 <label>CHAVE / INTERRUPTOR:</label>
                 <input type="text" id="interruptor" placeholder="ONDE FICA?" oninput="this.value = this.value.toUpperCase();">
             </div>
-
             <div style="grid-column: span 1; display: flex; align-items: flex-end; gap: 5px;">
                 <button type="button" class="btn-secondary" onclick="abrirModalMidia()" style="margin: 0; flex: 1; height: 34px;">📷 MÍDIA</button>
                 <button type="button" class="btn-danger" id="btn-remover-midia" onclick="removerMidiaFormulario()" style="margin: 0; width: 38px; height: 34px; display: none;" title="Remover Mídia">🗑</button>
             </div>
         </div>
-
         <div style="display:flex; justify-content:center;">
-            <img id="photo-preview" class="media-preview" src="" alt="Preview">
+            <img id="photo-preview" src="" alt="Preview" style="display:none; width: auto; max-height: 55px; margin-top: 6px; border-radius: 5px;">
         </div>
-
         <div style="display:flex; gap:8px; margin-top:8px;">
             <button type="button" class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin:0; width: 100%;">➕ ADICIONAR REGISTRO</button>
         </div>
-
         <button type="button" class="btn-secondary" id="btn-cancelar-edicao" style="display:none; margin-top:6px; width:100%;" onclick="cancelarEdicao()">❌ CANCELAR EDIÇÃO</button>
-
-        <input type="hidden" id="foto_base64">
-        <input type="hidden" id="video_base64">
+        <input type="hidden" id="foto_base64"><input type="hidden" id="video_base64">
     </div>
 </div>
-
 <div class="center-section">
     <div class="header-lista">
         <h3>REGISTROS (<span id="contador">0</span>)</h3>
@@ -581,33 +160,28 @@
     </div>
     <div id="lista-registros"></div>
 </div>
-
 <div class="bottom-section">
-    <button type="button" class="btn-primary" onclick="abrirModalExportar()">📤 EXPORTAR (GERAL / POR ÁREA)</button>
-    <button type="button" class="btn-warning" style="color:var(--warning-text);" onclick="abrirModalImportar()">📂 IMPORTAR / MESCLAR JSON</button>
+    <button type="button" class="btn-primary" onclick="abrirModalExportar()">📤 EXPORTAR</button>
+    <button type="button" class="btn-warning" style="color:var(--warning-text);" onclick="abrirModalImportar()">📂 IMPORTAR JSON</button>
     <input type="file" id="input-json" accept=".json" multiple style="display:none;" onchange="importarJSON(event)">
 </div>
 
-<!-- MODAL LEITURA QR -->
 <div id="qr-camera-modal">
     <video id="qr-camera-video" autoplay playsinline muted></video>
     <canvas id="qr-canvas"></canvas>
     <div class="qr-camera-top">
         <div class="qr-camera-titulo">🔳 LEITOR DE QR CODE</div>
-        <div id="qr-camera-status" class="qr-camera-status">Aponte a câmera para o QR Code</div>
+        <div id="qr-camera-status" class="qr-camera-status" style="color:white;font-size:13px;margin-top:6px;">Aponte a câmera para o QR Code</div>
     </div>
     <div class="qr-moldura"><div class="qr-linha-leitura"></div></div>
-    <div class="qr-camera-bottom">
-        <button type="button" class="btn-info" onclick="fecharLeitorQR(); document.getElementById('input-qr').click();">🖼️ LER IMAGEM DA GALERIA</button>
-        <button type="button" class="btn-danger" onclick="fecharLeitorQR()">❌ CANCELAR</button>
+    <div class="qr-camera-bottom" style="position:absolute;bottom:0;left:0;width:100%;padding:20px;background:rgba(0,0,0,0.8);">
+        <button type="button" class="btn-info" onclick="fecharLeitorQR(); document.getElementById('input-qr').click();" style="max-width:400px;margin:8px auto;height:44px;">🖼️ LER IMAGEM DA GALERIA</button>
+        <button type="button" class="btn-danger" onclick="fecharLeitorQR()" style="max-width:400px;margin:8px auto;height:44px;">❌ CANCELAR</button>
     </div>
 </div>
-
-<!-- MODAL DESCRIÇÃO -->
 <div id="descricao-modal">
     <div class="modal-box">
-        <h3 style="margin-top:0; color:var(--primary);">DESCRIÇÃO / DETALHE DO PROBLEMA</h3>
-        <p style="margin:0; font-size:13px; color:#666;">DIGITE OS DETALHES ADICIONAIS ABAIXO:</p>
+        <h3 style="margin-top:0; color:var(--primary);">DESCRIÇÃO / DETALHE</h3>
         <textarea id="descricao-texto" rows="5" oninput="this.value = this.value.toUpperCase();"></textarea>
         <div style="display:flex; gap:10px; margin-top:15px;">
             <button type="button" class="btn-danger" style="margin:0;" onclick="fecharModalDescricao()">CANCELAR</button>
@@ -615,12 +189,9 @@
         </div>
     </div>
 </div>
-
-<!-- MODAL MÍDIA -->
 <div id="midia-modal">
     <div class="modal-box" style="text-align:center;">
         <h3 style="margin-top:0; color:var(--primary);">ADICIONAR MÍDIA</h3>
-        <p style="margin:0; font-size:13px; color:#666;">ESCOLHA A ORIGEM DA FOTO OU VÍDEO:</p>
         <div class="botoes-menu-modal">
             <button type="button" class="btn-success" onclick="iniciarCamera('foto')">📷 TIRAR FOTO</button>
             <button type="button" class="btn-warning" style="color:var(--warning-text);" onclick="iniciarCamera('video')">🎥 GRAVAR VÍDEO</button>
@@ -630,15 +201,12 @@
         <input type="file" id="input-galeria" accept="image/*,video/*" style="display:none;" onchange="processarMidiaGaleria(event)">
     </div>
 </div>
-
-<!-- MODAL EXPORTAR INTELIGENTE -->
 <div id="exportar-modal">
     <div class="modal-box">
-        <h3 style="margin-top:0; color:var(--primary); text-align:center;">📤 CENTRAL DE EXPORTAÇÃO</h3>
-        <p id="status-exportacao" style="display:none; text-align:center; font-size:12px; font-weight:bold; color:var(--purple); margin: 4px 0;">⏳ Gerando arquivos, aguarde...</p>
-
+        <h3 style="margin-top:0; color:var(--primary); text-align:center;">📤 EXPORTAÇÃO</h3>
+        <p id="status-exportacao" style="display:none; text-align:center; font-size:12px; font-weight:bold; color:var(--purple); margin: 4px 0;">⏳ Aguarde...</p>
         <div class="secao-export">
-            <h4>1. Relatório Unificado (Todas as Áreas)</h4>
+            <h4>1. Geral</h4>
             <div class="botoes-menu-modal" style="margin-top: 6px;">
                 <button type="button" class="btn-primary" onclick="acionarExportarGeral('PPTX')">📺 POWERPOINT GERAL (.PPTX)</button>
                 <button type="button" class="btn-success" onclick="acionarExportarGeral('XLSX')">📊 EXCEL GERAL (.XLSX)</button>
@@ -646,10 +214,485 @@
                 <button type="button" class="btn-secondary" onclick="copiarJSON()">📋 COPIAR TEXTO (JSON)</button>
             </div>
         </div>
-
         <div class="secao-export" style="border-color: var(--purple); background: #f6f2ff;">
-            <h4 style="color: var(--purple);">2. Exportador Inteligente (1 Arquivo p/ Cada Área)</h4>
-            <p style="margin: 0 0 8px 0; font-size: 11px; color: #555;">Separa automaticamente os registros por área para distribuir a carga de trabalho entre a equipe:</p>
+            <h4 style="color: var(--purple);">2. Separado por Área</h4>
             <div class="botoes-menu-modal" style="margin-top: 6px;">
-                <button type="button" class="btn-purple" onclick="exportarLotePorArea('PPTX')">📦 PACOTE .ZIP (1 PPTX POR ÁREA)</button>
-                <button type
+                <button type="button" class="btn-purple" onclick="exportarLotePorArea('PPTX')">📦 PACOTE .ZIP (PPTX)</button>
+                <button type="button" class="btn-purple" onclick="exportarLotePorArea('XLSX')">📦 PACOTE .ZIP (EXCEL)</button>
+                <button type="button" class="btn-purple" onclick="exportarLotePorArea('JSON')">📦 PACOTE .ZIP (JSON)</button>
+            </div>
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ccc;">
+                <select id="select-area-export" style="margin-top: 4px; margin-bottom: 8px; width:100%; height:34px;"></select>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn-primary" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('PPTX')">📺 PPTX</button>
+                    <button type="button" class="btn-success" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('XLSX')">📊 XLSX</button>
+                    <button type="button" class="btn-info" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('JSON')">💾 JSON</button>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn-danger" style="margin-top: 12px;" onclick="fecharModalExportar()">❌ FECHAR</button>
+    </div>
+</div>
+<div id="importar-modal">
+    <div class="modal-box" style="text-align:center;">
+        <h3 style="margin-top:0; color:#d39e00;">IMPORTAR DADOS</h3>
+        <div class="botoes-menu-modal">
+            <button type="button" class="btn-warning" onclick="acionarImportarJSON()">📁 SELECIONAR ARQUIVO (.JSON)</button>
+            <button type="button" class="btn-warning" onclick="abrirModalColar()">📥 COLAR TEXTO JSON</button>
+            <button type="button" class="btn-danger" onclick="fecharModalImportar()">❌ CANCELAR</button>
+        </div>
+    </div>
+</div>
+<div id="colar-modal">
+    <div class="modal-box">
+        <h3 style="margin-top:0; color:#d39e00;">COLAR JSON</h3>
+        <textarea id="texto-colar" rows="8"></textarea>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button type="button" class="btn-danger" style="margin:0;" onclick="fecharModalColar()">CANCELAR</button>
+            <button type="button" class="btn-success" style="margin:0;" onclick="processarColarJSON()">IMPORTAR</button>
+        </div>
+    </div>
+</div>
+<div id="camera-modal">
+    <div style="width: 100%; max-width: 600px;">
+        <video id="video-preview" autoplay playsinline style="width:100%;max-height:60vh;background:#000;"></video>
+        <p id="status-gravacao" style="color:red; font-weight:bold; display:none; margin:5px 0;">🔴 GRAVANDO (MÁX 5S)...</p>
+        <div class="modal-botoes" style="display:flex;flex-direction:column;gap:10px;align-items:center;width:90%;max-width:400px;margin:10px auto;">
+            <button type="button" class="btn-success" id="btn-tirar-foto" onclick="capturarFoto()">📷 CAPTURAR</button>
+            <button type="button" class="btn-warning" id="btn-iniciar-gravacao" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
+            <button type="button" class="btn-danger" id="btn-parar-gravacao" style="display:none;" onclick="pararGravacaoVideo()">⏹️ PARAR E SALVAR</button>
+            <button type="button" class="btn-danger" onclick="fecharCamera()">❌ CANCELAR</button>
+        </div>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+</div>
+<div id="media-viewer-modal">
+    <span class="fechar-btn" onclick="fecharViewerMidia()" style="position:absolute;top:15px;right:20px;font-size:35px;color:#fff;cursor:pointer;z-index:10;">&times;</span>
+    <img id="viewer-img" style="display:none;max-width:95%;max-height:80vh;border-radius:8px;">
+    <video id="viewer-video" controls style="display:none;max-width:95%;max-height:80vh;border-radius:8px;"></video>
+</div>
+
+<script>
+(function() {
+    try {
+        const logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAljSURBVHja7Jv5dxT3Hcfn973dXV27K1kJLRAIIUQghAQMIdhOAAcHBwcHBwdnBykBAiEQkhKSEpISSUnJVN11/17b075v10l3e7udnt31/b0z882zO90fO/vN7u2e3d3V9Q/P6Oqa/vBf3+v0/6Ouvr+qWvrj6/q2f+p6a1+7/vS9/vN63b9fXVfV32n7f1m/r2p1V7Xuun5/VTf7z7Oua6v7/9e1df3S996u/9fWdTW6a/qJv3yvf+q+7896W1XVVTWqqjrfqapqp+rqe4v0b3V973uP/5p01U2t11XVdd29P6mqqn5l9S+6afrf9/96dV1X1X/57b+q9u+2/6o63e2u1v13/6K7un7tL7uqqr/Z9r+ufrs/v//+9w4A/78N29f2Fq0AAAAASUVORK5CYII=";
+        const manifestObj = {name:"Caça Desperdícios",short_name:"Caça",start_url:"./index.html",display:"standalone",background_color:"#e9ecef",theme_color:"#0056b3",icons:[{src:logoBase64,sizes:"512x512",type:"image/png"}]};
+        const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const link = document.createElement('link'); link.rel = 'manifest'; link.href = URL.createObjectURL(blob); document.head.appendChild(link);
+    } catch(e) {}
+})();
+const STORAGE_KEY = 'registros_caca_desperdicios_unificado';
+let streamDeVideo=null, streamQR=null, mediaRecorder=null, pedacosGravados=[], registros=[], idEdicao=null;
+let qrScannerAtivo=false, qrAnimationFrame=null, qrUltimoTexto="", qrUltimaLeitura=0, qrDetectorNativo=null, qrDetectando=false;
+
+window.onload = async function() {
+    try {
+        let aud = localStorage.getItem('auditor_nome'); if (aud) document.getElementById('auditor').value = aud;
+        let rev = localStorage.getItem('revisor_nome'); if (rev) document.getElementById('nome_revisor').value = rev;
+        let d = null;
+        if (window.localforage) try { d = await localforage.getItem(STORAGE_KEY); } catch(e){}
+        if (!Array.isArray(d)) { let loc = localStorage.getItem(STORAGE_KEY); if (loc) try { d = JSON.parse(loc); } catch(e){} }
+        registros = Array.isArray(d) ? d : []; await salvarMemoria(); processarEOrdenarLista();
+    } catch (e) { registros = []; atualizarLista(); }
+};
+
+function gerarIdRegistro() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'reg-'+Date.now()+'-'+Math.random().toString(36).slice(2); }
+function normalizarEspacos(str) { return String(str == null ? '' : str).replace(/\s+/g, ' ').trim(); }
+function normalizarRegistro(r) {
+    const x = (r && typeof r === 'object' && !Array.isArray(r)) ? { ...r } : {};
+    x.id = String(x.id || gerarIdRegistro());
+    for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor','data','hora','revisado_em']) x[k] = normalizarEspacos(x[k]);
+    for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor']) x[k] = x[k].toUpperCase();
+    const du = /^data:(?:image|video)\/[a-z0-9.+-]+(?:;[a-z0-9._=+-]+)*;base64,/i;
+    x.foto = (typeof x.foto === 'string' && du.test(x.foto)) ? x.foto : ''; x.video = (typeof x.video === 'string' && du.test(x.video)) ? x.video : '';
+    x.editado = Boolean(x.revisado_em || x.editado); delete x.isDuplicado; return x;
+}
+async function salvarMemoria() {
+    registros = registros.map(normalizarRegistro);
+    if (window.localforage) await localforage.setItem(STORAGE_KEY, registros).catch(e=>{});
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+}
+function alternarFormulario() {
+    const b = document.getElementById('bloco-formulario'), btn = document.getElementById('btn-toggle-form');
+    if (!b || !btn) return;
+    if (b.style.display === 'none') { b.style.display = 'block'; btn.innerText = '🔼 RECOLHER'; }
+    else { b.style.display = 'none'; btn.innerText = '🔽 EXPANDIR'; }
+}
+function obterTimestampAtual() { const a = new Date(); return `${a.toLocaleDateString('pt-BR')} às ${a.toLocaleTimeString('pt-BR')}`; }
+function removerAcentos(t) { return t ? String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim() : ""; }
+function limparNomeArquivo(t) { return removerAcentos(t).replace(/[^A-Z0-9_-]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "") || "ARQUIVO"; }
+function verificarCombos() {
+    const a = document.getElementById('area').value, oc = document.getElementById('ocorrencia').value;
+    document.getElementById('area_outros').style.display = a === 'OUTROS' ? 'block' : 'none';
+    document.getElementById('ocorrencia_outros').style.display = oc === 'OUTROS' ? 'block' : 'none';
+    const cs = document.getElementById('container_sub_ocorrencia');
+    if (a === 'ARMAÇÃO' && oc === 'VAZAMENTOS DE AR') cs.style.display = 'block'; else { cs.style.display = 'none'; document.getElementById('sub_ocorrencia').value = ''; }
+}
+function chaveIdentidade(r) {
+    const l = normalizarEspacos(r.local); if (!l) return "";
+    return `${normalizarEspacos(r.area)}|${l}|${normalizarEspacos(r.ocorrencia)}|${normalizarEspacos(r.descricao)}|${normalizarEspacos(r.interruptor)}`.toUpperCase();
+}
+function ordenarArrayRegistros(l) {
+    l.sort((a, b) => {
+        let c = (a.area||"").localeCompare(b.area||"", 'pt-BR'); if (c!==0) return c;
+        c = (a.local||"").localeCompare(b.local||"", 'pt-BR'); if (c!==0) return c;
+        c = (a.ocorrencia||"").localeCompare(b.ocorrencia||"", 'pt-BR'); if (c!==0) return c;
+        return (a.descricao||"").localeCompare(b.descricao||"", 'pt-BR');
+    });
+}
+function processarEOrdenarLista() {
+    ordenarArrayRegistros(registros);
+    let c = {}; registros.forEach(r => { let k = chaveIdentidade(r); if (k) c[k] = (c[k] || 0) + 1; });
+    registros.forEach(r => { let k = chaveIdentidade(r); r.isDuplicado = k ? (c[k] > 1) : false; });
+    atualizarLista();
+}
+async function limparDuplicadas() {
+    const g = new Map(); registros.forEach(r => { const k = chaveIdentidade(r); if(k) g.set(k, [...(g.get(k)||[]), r]); });
+    const d = [...g.values()].filter(x => x.length > 1);
+    if (!d.length) { alert("ℹ️ Nenhum item duplicado encontrado."); return; }
+    const tot = d.reduce((n, x) => n + x.length - 1, 0);
+    if (!confirm(`Foram encontrados ${tot} registro(s) duplicado(s).\n\nDeseja eliminar as cópias sem revisão e manter 1 exemplar revisado?`)) return;
+    const rem = new Set();
+    d.forEach(grupo => {
+        const rev = grupo.filter(r => Boolean(r.editado || r.revisado_em));
+        const esc = rev.length > 0 ? rev[0] : grupo[0];
+        grupo.forEach(r => { if (r !== esc) rem.add(r); });
+    });
+    registros = registros.filter(r => !rem.has(r)); await salvarMemoria(); processarEOrdenarLista();
+    alert(`✅ ${rem.size} duplicata(s) eliminada(s).`);
+}
+
+async function marcarComoRevisado(i) {
+    let rev = document.getElementById('nome_revisor').value.trim().toUpperCase();
+    if (!rev) { alert("⚠️ PREENCHA O REVISOR NO TOPO!"); document.getElementById('nome_revisor').focus(); return; }
+    const r = registros[i]; if (!r) return;
+    const ja = Boolean(r.editado || r.revisado_em);
+    const msg = ja ? `Já revisado por ${r.revisor||'?'}. Substituir por "${rev}"?` : `Confirmar revisão do item #${i+1} por "${rev}"?`;
+    if (!confirm(msg)) return;
+    r.revisor = rev; r.revisado_em = obterTimestampAtual(); r.editado = true;
+    await salvarMemoria(); processarEOrdenarLista();
+}
+async function limparRevisaoIndividual(i) {
+    const r = registros[i]; if (!r || (!r.editado && !r.revisado_em)) return;
+    if (!confirm(`Limpar dados de revisão do item #${i+1}?`)) return;
+    r.revisor = ''; r.revisado_em = ''; r.editado = false;
+    await salvarMemoria(); processarEOrdenarLista();
+}
+async function limparDadosRevisao() {
+    const q = registros.filter(r => Boolean(r.editado || r.revisado_em)).length;
+    if (q === 0) { alert("Nenhum revisado."); return; }
+    if (!confirm(`Limpar dados de revisão de TODOS os ${q} registro(s)?`)) return;
+    registros.forEach(r => { r.revisor = ''; r.revisado_em = ''; r.editado = false; });
+    await salvarMemoria(); processarEOrdenarLista(); alert("Feito!");
+}
+async function excluirRegistro(i) {
+    if (confirm("❌ EXCLUIR ESTE REGISTRO?")) {
+        if (registros[i] && registros[i].id === idEdicao) cancelarEdicao();
+        registros.splice(i, 1); await salvarMemoria(); processarEOrdenarLista();
+    }
+}
+async function limparTudo() {
+    if (confirm("🗑️ APAGAR TODOS OS REGISTROS DA TELA E MEMÓRIA?")) {
+        registros = [];
+        if (window.localforage) await localforage.setItem(STORAGE_KEY, []).catch(e=>{});
+        localStorage.removeItem(STORAGE_KEY); cancelarEdicao(); processarEOrdenarLista();
+    }
+}
+
+function abrirModalDescricao() {
+    const t = document.getElementById('descricao-texto'); t.value = document.getElementById('descricao').value;
+    document.getElementById('descricao-modal').style.display = 'flex'; t.focus();
+}
+function fecharModalDescricao() { document.getElementById('descricao-modal').style.display = 'none'; }
+function salvarDescricao() {
+    const v = normalizarEspacos(document.getElementById('descricao-texto').value).toUpperCase();
+    document.getElementById('descricao').value = v;
+    const d = document.getElementById('descricao-display'); d.innerText = v || 'TOQUE PARA DIGITAR...'; d.style.color = v ? '#333' : '#6c757d';
+    fecharModalDescricao();
+}
+function limparCampoDescricao() {
+    document.getElementById('descricao').value = '';
+    const d = document.getElementById('descricao-display'); d.innerText = 'TOQUE PARA DIGITAR...'; d.style.color = '#6c757d';
+}
+function abrirModalMidia() { document.getElementById('midia-modal').style.display = 'flex'; }
+function fecharModalMidia() { document.getElementById('midia-modal').style.display = 'none'; }
+function removerMidiaFormulario() {
+    document.getElementById('foto_base64').value = ''; document.getElementById('video_base64').value = '';
+    document.getElementById('photo-preview').style.display = 'none'; document.getElementById('btn-remover-midia').style.display = 'none';
+}
+function abrirModalExportar() {
+    if (registros.length === 0) { alert("⚠️ NENHUM DADO."); return; }
+    atualizarSelectAreasExportacao(); document.getElementById('exportar-modal').style.display = 'flex';
+}
+function fecharModalExportar() { document.getElementById('exportar-modal').style.display = 'none'; }
+function abrirModalImportar() { document.getElementById('importar-modal').style.display = 'flex'; }
+function fecharModalImportar() { document.getElementById('importar-modal').style.display = 'none'; }
+function abrirModalColar() { fecharModalImportar(); document.getElementById('texto-colar').value = ''; document.getElementById('colar-modal').style.display = 'flex'; }
+function fecharModalColar() { document.getElementById('colar-modal').style.display = 'none'; }
+
+async function abrirLeitorQR() {
+    qrUltimoTexto = ""; qrUltimaLeitura = 0; document.getElementById('qr-camera-status').innerText = "Iniciando câmera...";
+    document.getElementById('qr-camera-modal').style.display = 'flex'; document.getElementById('btn-qr').innerText = "⏳ ABRINDO...";
+    try {
+        streamQR = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}},audio:false});
+        const v = document.getElementById('qr-camera-video'); v.srcObject = streamQR; v.play();
+        document.getElementById('qr-camera-status').innerText = "APONTE PARA O QR"; document.getElementById('btn-qr').innerText = "🔳 LER QR";
+        qrScannerAtivo = true; qrDetectorNativo = window.BarcodeDetector ? new BarcodeDetector({formats:["qr_code"]}) : null; iniciarLoopLeituraQR();
+    } catch (e) {
+        document.getElementById('qr-camera-modal').style.display = 'none'; document.getElementById('btn-qr').innerText = "🔳 LER QR";
+        if(confirm("Câmera indisponível. Ler da galeria?")) document.getElementById('input-qr').click();
+    }
+}
+function iniciarLoopLeituraQR() {
+    if (!qrScannerAtivo) return;
+    const v = document.getElementById('qr-camera-video');
+    const p = () => { qrDetectando = false; if(qrScannerAtivo) qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR); };
+    if (qrDetectando) return;
+    if (v.readyState < 2 || !v.videoWidth) { qrAnimationFrame = requestAnimationFrame(iniciarLoopLeituraQR); return; }
+    qrDetectando = true;
+    if (qrDetectorNativo) { qrDetectorNativo.detect(v).then(b=>{ if(qrScannerAtivo&&b?.length&&b[0].rawValue)processarQRDetectado(b[0].rawValue); else if(qrScannerAtivo)tentarJSQRVideo(); }).catch(()=>tentarJSQRVideo()).finally(p); }
+    else { tentarJSQRVideo(); p(); }
+}
+function tentarJSQRVideo() {
+    if(!qrScannerAtivo)return; const v=document.getElementById('qr-camera-video'), c=document.getElementById('qr-canvas');
+    if(!v.videoWidth)return; let w=v.videoWidth, h=v.videoHeight; if(w>1280){let s=1280/w;w*=s;h*=s;}
+    c.width=w; c.height=h; const ctx=c.getContext("2d",{willReadFrequently:true}); ctx.drawImage(v,0,0,w,h);
+    try{ const code=jsQR(ctx.getImageData(0,0,w,h).data,w,h,{inversionAttempts:"attemptBoth"}); if(code&&code.data)processarQRDetectado(code.data); }catch(e){}
+}
+function processarQRDetectado(t) {
+    if(!t)return; const a=Date.now(); if(t===qrUltimoTexto&&a-qrUltimaLeitura<2500)return; qrUltimoTexto=t; qrUltimaLeitura=a; fecharLeitorQR(); preencherCamposViaQR(t);
+}
+function fecharLeitorQR() { qrScannerAtivo=false; if(qrAnimationFrame)cancelAnimationFrame(qrAnimationFrame); if(streamQR)streamQR.getTracks().forEach(t=>t.stop()); document.getElementById('qr-camera-modal').style.display='none'; document.getElementById('btn-qr').innerText="🔳 LER QR"; }
+function processarImagemQR(e) {
+    const f=e.target.files[0]; if(!f)return; const i=new Image(), u=URL.createObjectURL(f);
+    i.onload=()=>{
+        const c=document.createElement("canvas"), x=c.getContext("2d"); c.width=i.width; c.height=i.height; x.drawImage(i,0,0);
+        const cd=jsQR(x.getImageData(0,0,c.width,c.height).data, c.width, c.height, {inversionAttempts:"attemptBoth"});
+        if(cd&&cd.data) preencherCamposViaQR(cd.data); else alert("❌ QR NÃO ENCONTRADO."); URL.revokeObjectURL(u);
+    }; i.onerror=()=>URL.revokeObjectURL(u); i.src=u; e.target.value='';
+}
+function preencherCamposViaQR(t) {
+    let p; try{ const o=JSON.parse(t); if(o&&typeof o==='object'&&!Array.isArray(o)) p=[o.area,o.local,o.ocorrencia,o.interruptor].map(v=>v==null?'':String(v).trim()); }catch(e){}
+    if(!p){ p=String(t).replace(/\r/g,'').replace(/\n/g,' ').trim().split(';').map(x=>x.trim()); while(p.length&&p[p.length-1]==="")p.pop(); }
+    if(p.length<2||(!p[0]&&!p[1])){ alert("❌ FORMATO INVÁLIDO."); return; }
+    let a=(p[0]||"").toUpperCase(), sa=document.getElementById('area'), oa=Array.from(sa.options).find(o=>removerAcentos(o.value)===removerAcentos(a));
+    if(oa) sa.value=oa.value; else{ sa.value='OUTROS'; document.getElementById('area_outros').value=a; }
+    document.getElementById('local').value=(p[1]||"").toUpperCase();
+    if(p[2]){
+        let oc=p[2].toUpperCase(), soc=document.getElementById('ocorrencia'), ooc=Array.from(soc.options).find(o=>removerAcentos(o.value)===removerAcentos(oc));
+        if(ooc) soc.value=ooc.value; else{ soc.value='OUTROS'; document.getElementById('ocorrencia_outros').value=oc; }
+    }
+    verificarCombos();
+    let m="✅ LIDO!"; if(p.length>=4&&p[3]){ let i=p.slice(3).join(";").toUpperCase(); document.getElementById('interruptor').value=i; m+="\n📍 CHAVE: "+i; } alert(m);
+}
+
+async function iniciarCamera(m) {
+    fecharModalMidia(); document.getElementById('camera-modal').style.display='flex';
+    document.getElementById('btn-tirar-foto').style.display=m==='foto'?'block':'none';
+    document.getElementById('btn-iniciar-gravacao').style.display=m==='video'?'block':'none';
+    document.getElementById('btn-parar-gravacao').style.display='none'; document.getElementById('status-gravacao').style.display='none';
+    try{ streamDeVideo = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:m==='video'});
+         const v = document.getElementById('video-preview'); v.srcObject = streamDeVideo; v.muted = true; v.play();
+    }catch(e){alert("ERRO CÂMERA: "+e);fecharCamera();}
+}
+function fecharCamera() {
+    document.getElementById('camera-modal').style.display='none'; if(streamDeVideo)streamDeVideo.getTracks().forEach(t=>t.stop());
+    const v=document.getElementById('video-preview'); if(v)v.srcObject=null; if(mediaRecorder&&mediaRecorder.state==='recording')mediaRecorder.stop();
+}
+function capturarFoto() {
+    const v=document.getElementById('video-preview'), c=document.getElementById('canvas'); c.width=v.videoWidth||1280; c.height=v.videoHeight||720;
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height); const b64=c.toDataURL('image/jpeg',0.65);
+    document.getElementById('foto_base64').value=b64; document.getElementById('video_base64').value='';
+    const p=document.getElementById('photo-preview'); p.src=b64; p.style.display='block'; document.getElementById('btn-remover-midia').style.display='block'; fecharCamera();
+}
+function iniciarGravacaoVideo() {
+    pedacosGravados=[]; if(!window.MediaRecorder){alert('Não suportado.');return;}
+    const t=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'], m=t.find(x=>MediaRecorder.isTypeSupported?.(x));
+    try{ mediaRecorder=new MediaRecorder(streamDeVideo,m?{mimeType:m}:undefined); }catch(e){alert('Erro formato.');return;}
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)pedacosGravados.push(e.data);};
+    mediaRecorder.onstop=()=>{ const b=new Blob(pedacosGravados,{type:mediaRecorder.mimeType||'video/webm'}), r=new FileReader();
+        r.readAsDataURL(b); r.onloadend=()=>{ document.getElementById('video_base64').value=r.result; document.getElementById('photo-preview').src=document.getElementById('foto_base64').value; document.getElementById('photo-preview').style.display='block'; document.getElementById('btn-remover-midia').style.display='block'; };
+    }; mediaRecorder.start();
+    document.getElementById('btn-iniciar-gravacao').style.display='none'; document.getElementById('btn-parar-gravacao').style.display='block'; document.getElementById('status-gravacao').style.display='block';
+    setTimeout(()=>{if(mediaRecorder&&mediaRecorder.state==='recording')pararGravacaoVideo();},5000);
+}
+function pararGravacaoVideo() {
+    if(mediaRecorder&&mediaRecorder.state==='recording') {
+        try{ const v=document.getElementById('video-preview'), c=document.getElementById('canvas'); c.width=v.videoWidth||1280; c.height=v.videoHeight||720; c.getContext('2d').drawImage(v,0,0,c.width,c.height); document.getElementById('foto_base64').value=c.toDataURL('image/jpeg',0.5); }catch(e){} mediaRecorder.stop();
+    } fecharCamera();
+}
+function acionarGaleria() { fecharModalMidia(); document.getElementById('input-galeria').click(); }
+function processarMidiaGaleria(ev) {
+    const f=ev.target.files[0]; if(!f)return; const r=new FileReader();
+    r.onload=e=>{ const res=e.target.result;
+        if(f.type.startsWith('image/')){ const i=new Image(); i.onload=()=>{ const c=document.createElement('canvas'); let w=i.width, h=i.height; if(w>1280){h=Math.round(h*(1280/w));w=1280;} c.width=w;c.height=h; c.getContext('2d').drawImage(i,0,0,w,h); const b=c.toDataURL('image/jpeg',0.65); document.getElementById('foto_base64').value=b; document.getElementById('video_base64').value=''; const p=document.getElementById('photo-preview'); p.src=b; p.style.display='block'; document.getElementById('btn-remover-midia').style.display='block'; }; i.src=res; }
+        else if(f.type.startsWith('video/')){ if(f.size>26214400){alert('Máx 25MB.');return;}
+            const v=document.createElement('video'); v.preload='metadata'; v.src=res;
+            v.onloadedmetadata=()=>{ if(v.duration>6){alert('Máx 5 segs.');v.removeAttribute('src');return;} document.getElementById('video_base64').value=res;
+                const v2=document.createElement('video'); v2.src=res; v2.muted=true; v2.playsInline=true; v2.onloadeddata=()=>v2.currentTime=Math.min(1,v2.duration/2);
+                v2.onseeked=()=>{ const c=document.createElement('canvas'); c.width=v2.videoWidth||640; c.height=v2.videoHeight||480; c.getContext('2d').drawImage(v2,0,0,c.width,c.height); const fb=c.toDataURL('image/jpeg',0.6); document.getElementById('foto_base64').value=fb; const p=document.getElementById('photo-preview'); p.src=fb; p.style.display='block'; document.getElementById('btn-remover-midia').style.display='block'; }; v2.onerror=()=>{ document.getElementById('foto_base64').value='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+'; document.getElementById('photo-preview').src=document.getElementById('foto_base64').value; document.getElementById('photo-preview').style.display='block'; document.getElementById('btn-remover-midia').style.display='block';};
+            }; v.onerror=()=>alert('Erro vídeo.');
+        }
+    }; r.readAsDataURL(f); ev.target.value='';
+}
+function abrirViewerMidia(i) { const r=registros[i]; if(!r)return; const m=document.getElementById('media-viewer-modal'), im=document.getElementById('viewer-img'), v=document.getElementById('viewer-video'); if(r.video){v.src=r.video; v.style.display='inline-block'; im.style.display='none'; setTimeout(()=>v.play(),200);}else if(r.foto){im.src=r.foto; im.style.display='inline-block'; v.style.display='none';} m.style.display='flex'; }
+function fecharViewerMidia() { document.getElementById('media-viewer-modal').style.display='none'; const v=document.getElementById('viewer-video'); v.pause(); v.src=''; }
+
+function resetarBotoesAcao() { document.getElementsByName('acao').forEach(r=>r.checked=false); }
+async function salvarRegistro() {
+    let aud=normalizarEspacos(document.getElementById('auditor').value); if(!aud){alert("⚠️ AUDITOR!");return;}
+    let a=document.getElementById('area').value; if(a==='OUTROS')a=normalizarEspacos(document.getElementById('area_outros').value);
+    let oc=document.getElementById('ocorrencia').value; if(oc==='OUTROS')oc=normalizarEspacos(document.getElementById('ocorrencia_outros').value);
+    if(!a||!oc){alert("⚠️ ÁREA/OCORRÊNCIA!");return;}
+    if(document.getElementById('container_sub_ocorrencia').style.display==='block'){ let s=document.getElementById('sub_ocorrencia').value; if(!s){alert("⚠️ TIPO VAZAMENTO!");return;} oc+=" - "+s; }
+    let loc=normalizarEspacos(document.getElementById('local').value); if(!loc){alert("⚠️ LOCAL!");return;}
+    let act=document.querySelector('input[name="acao"]:checked'); if(!act){alert("⚠️ AÇÃO!");return;}
+    let d=normalizarEspacos(document.getElementById('descricao').value), i=normalizarEspacos(document.getElementById('interruptor').value);
+    const idx = idEdicao ? registros.findIndex(x=>x.id===idEdicao) : -1, e = idx!==-1;
+    let dt=new Date().toLocaleDateString('pt-BR'), hr=new Date().toLocaleTimeString('pt-BR'); if(e){dt=registros[idx].data||dt; hr=registros[idx].hora||hr;}
+    const nr = {id:e?registros[idx].id:gerarIdRegistro(), data:dt, hora:hr, auditor:aud.toUpperCase(), area:a.toUpperCase(), local:loc.toUpperCase(), ocorrencia:oc.toUpperCase(), interruptor:i.toUpperCase(), descricao:d.toUpperCase(), acao:act.value.toUpperCase(), foto:document.getElementById('foto_base64').value, video:document.getElementById('video_base64').value};
+    const rev=normalizarEspacos(document.getElementById('nome_revisor').value).toUpperCase();
+    if(e){ const ant=registros[idx]; if(rev&&confirm(`Revisar também como "${rev}"?`)){ nr.revisor=rev; nr.revisado_em=obterTimestampAtual(); nr.editado=true; }else{ nr.revisor=ant.revisor||''; nr.revisado_em=ant.revisado_em||''; nr.editado=Boolean(ant.editado||ant.revisado_em); } registros[idx]=nr; cancelarEdicao(); }
+    else{ if(registros.some(x=>chaveIdentidade(x)===chaveIdentidade(nr))&&!confirm("⚠️ IDÊNTICO. Adicionar?"))return; registros.push(nr); }
+    document.getElementById('local').value=''; document.getElementById('ocorrencia').value=''; document.getElementById('interruptor').value=''; document.getElementById('sub_ocorrencia').value=''; document.getElementById('container_sub_ocorrencia').style.display='none'; limparCampoDescricao(); resetarBotoesAcao(); removerMidiaFormulario(); await salvarMemoria(); processarEOrdenarLista();
+}
+function editarRegistro(i) {
+    const r=registros[i]; if(!r)return; idEdicao=r.id; document.getElementById('bloco-formulario').style.display='block'; document.getElementById('btn-toggle-form').innerText='🔼 RECOLHER';
+    document.getElementById('auditor').value=r.auditor||''; let a=(r.area||'').toUpperCase(), oc=(r.ocorrencia||'').toUpperCase(), soc="";
+    if(a==='ARMAÇÃO'&&oc.startsWith('VAZAMENTOS DE AR - ')){soc=oc.replace('VAZAMENTOS DE AR - ','').trim(); oc='VAZAMENTOS DE AR';}
+    const sa=document.getElementById('area'), oa=Array.from(sa.options).find(x=>removerAcentos(x.value)===removerAcentos(a));
+    if(oa){sa.value=oa.value; document.getElementById('area_outros').style.display='none';}else{sa.value='OUTROS'; document.getElementById('area_outros').value=a; document.getElementById('area_outros').style.display='block';}
+    document.getElementById('local').value=r.local||'';
+    const soc_el=document.getElementById('ocorrencia'), ooc=Array.from(soc_el.options).find(x=>removerAcentos(x.value)===removerAcentos(oc));
+    if(ooc){soc_el.value=ooc.value; document.getElementById('ocorrencia_outros').style.display='none';}else{soc_el.value='OUTROS'; document.getElementById('ocorrencia_outros').value=oc; document.getElementById('ocorrencia_outros').style.display='block';}
+    verificarCombos(); if(soc) document.getElementById('sub_ocorrencia').value=soc;
+    document.getElementById('interruptor').value=r.interruptor||''; const d=r.descricao||'', de=document.getElementById('descricao-display'); document.getElementById('descricao').value=d; de.innerText=d||'TOQUE PARA DIGITAR...'; de.style.color=d?'#333':'#6c757d';
+    document.getElementsByName('acao').forEach(x=>x.checked=(x.value.toUpperCase()===(r.acao||'').toUpperCase()));
+    document.getElementById('foto_base64').value=r.foto||''; document.getElementById('video_base64').value=r.video||'';
+    const pv=document.getElementById('photo-preview'); if(r.foto){pv.src=r.foto; pv.style.display='block'; document.getElementById('btn-remover-midia').style.display='block';}else{pv.style.display='none'; document.getElementById('btn-remover-midia').style.display='none';}
+    document.getElementById('btn-salvar').innerText="💾 SALVAR"; document.getElementById('btn-cancelar-edicao').style.display='block'; document.querySelector('.top-section').scrollTop=0;
+}
+function cancelarEdicao() {
+    idEdicao=null; ['local','ocorrencia','interruptor','sub_ocorrencia'].forEach(id=>document.getElementById(id).value=''); document.getElementById('container_sub_ocorrencia').style.display='none'; limparCampoDescricao(); resetarBotoesAcao(); removerMidiaFormulario(); document.getElementById('btn-salvar').innerText="➕ ADICIONAR REGISTRO"; document.getElementById('btn-cancelar-edicao').style.display='none';
+}
+
+function atualizarLista() {
+    const l = document.getElementById('lista-registros'); document.getElementById('contador').innerText = registros.length; l.replaceChildren();
+    if (!registros.length) { const v = document.createElement('p'); v.style.cssText = 'text-align:center;color:#888;margin-top:40px;'; v.textContent = 'Nenhum registro carregado.'; l.appendChild(v); return; }
+    const el = (t, c, v) => { const n = document.createElement(t); if(c) n.className = c; if(v!==undefined) n.textContent = String(v); return n; };
+    let aa = null;
+    registros.forEach((r, i) => {
+        const a = r.area || 'SEM ÁREA';
+        if (a !== aa) { aa = a; const h = el('div', 'area-header'); h.append(el('span', '', `📍 ${a}`), el('span', '', `${registros.filter(x=>(x.area||'SEM ÁREA')===a).length} item(ns)`)); l.append(h); }
+        const ir = Boolean(r.editado || r.revisado_em), it = el('div', 'registro-item' + (ir ? ' revisado' : '') + (r.isDuplicado ? ' duplicado' : ''));
+        const b = el('div', 'badges-row'); if(r.isDuplicado) b.append(el('span', 'selo-duplicado', '⚠️ DUPLICADO')); if(ir) b.append(el('span', 'selo-revisado', `✅ REV. POR ${(r.revisor||'?').toUpperCase()} EM ${r.revisado_em||''}`)); it.append(b);
+        const ct = el('div', 'registro-conteudo'), tx = el('div', 'registro-texto');
+        tx.append(el('strong', '', `#${i+1} - ${r.local||'N/A'}`)); if(r.interruptor){ const ch = el('span', '', ` | CHAVE: ${r.interruptor}`); ch.style.cssText = 'color:#6f42c1;font-weight:bold;'; tx.append(ch); }
+        tx.append(document.createElement('br')); const oc = el('span', '', r.ocorrencia||''); oc.style.cssText = 'color:var(--danger);font-weight:bold;'; tx.append(oc);
+        if(r.descricao){ tx.append(document.createElement('br')); const d = el('span', '', `DETALHE: ${r.descricao}`); d.style.cssText = 'color:#555;font-size:11px;font-weight:600;'; tx.append(d); }
+        tx.append(document.createElement('br')); const ac = el('span', '', `AÇÃO: ${r.acao||'?'}`); ac.style.cssText = 'color:#28a745;font-size:11px;font-weight:bold;'; tx.append(ac);
+        tx.append(document.createElement('br')); const ass = el('span', '', `Por ${r.auditor||'?'} em: ${r.data||''}${r.hora?' às '+r.hora:''}. `); ass.style.cssText = 'color:#777;font-size:11px;';
+        if(ir){ const rs=el('strong','',`REV. POR ${(r.revisor||'?').toUpperCase()}`); rs.style.color='var(--success)'; ass.append(rs); } tx.append(ass); ct.append(tx);
+        const pTh = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+        if(r.video){ const w=el('div','video-thumbnail-container'); w.setAttribute('role','button'); const im=el('img'); im.src=r.foto||pTh; w.append(im, el('div','play-icon','▶')); w.onclick=()=>abrirViewerMidia(i); ct.append(w); }
+        else if(r.foto){ const im=el('img','registro-miniatura'); im.src=r.foto; im.onclick=()=>abrirViewerMidia(i); ct.append(im); }
+        it.append(ct); const acI=el('div','acoes-item'), ba=[['btn-primary','✏️',()=>editarRegistro(i)],[ir?'btn-success':'btn-pendente',ir?'✅':'🔍',()=>marcarComoRevisado(i)]];
+        if(ir)ba.push(['btn-secondary','🔄',()=>limparRevisaoIndividual(i)]); ba.push(['btn-danger','❌',()=>excluirRegistro(i)]);
+        ba.forEach(([c,t,f])=>{ const b=el('button',c,t); b.onclick=f; acI.append(b); }); it.append(acI); l.append(it);
+    });
+}
+
+function getISOWeek(d) { let t = new Date(d); if (isNaN(t.getTime())) t = new Date(); t.setHours(0,0,0,0); t.setDate(t.getDate() + 4 - (t.getDay() || 7)); return Math.ceil((((t - new Date(t.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7); }
+function obterKWRelatorio(l) { if (Array.isArray(l)) { for (const r of l) { if (r && r.data) { const m = String(r.data).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) { const dt = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])); if (!isNaN(dt.getTime())) return getISOWeek(dt); } } } } return getISOWeek(new Date()); }
+function obterAreasUnicas() { const s = new Set(); registros.forEach(r => s.add((r.area || "SEM_AREA").trim().toUpperCase())); return Array.from(s).sort((a, b) => a.localeCompare(b, 'pt-BR')); }
+function atualizarSelectAreasExportacao() { const s = document.getElementById('select-area-export'); s.innerHTML = ''; obterAreasUnicas().forEach(a => { const q = registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === a).length; const o = document.createElement('option'); o.value = a; o.textContent = `${a} (${q})`; s.appendChild(o); }); }
+function traduzirTipoOcorrencia(o) { const oc = String(o || "").toUpperCase().trim(); if (oc.includes("TV LIGADA") || oc.includes("VENTILADOR LIGADO") || oc.includes("LUZ ACESA")) return "Iluminação Ligada"; if (oc.includes("VAZAMENTO DE AR")) return "Vazamento de Ar Comprimido"; if (oc.includes("VAZAMENTO DE ÁGUA")) return "Vazamento de Água"; return oc || "OUTROS"; }
+
+function gerarWorkbookExcel(l) {
+    const wb = XLSX.utils.book_new();
+    const dE = l.map((r, i) => ({ "ITEM": i + 1, "DATA": r.data||"", "HORA": r.hora||"", "AUDITOR": r.auditor||"", "ÁREA": r.area||"", "LOCAL": r.local||"", "INTERRUPTOR": r.interruptor||"", "OCORRÊNCIA": r.ocorrencia||"", "DESCRIÇÃO": (r.descricao||"").replace(/(\r\n|\n|\r)/gm, " "), "AÇÃO": r.acao||"", "REVISOR": r.revisor||"-", "REV EM": r.revisado_em||"-", "MÍDIA": r.video?"VÍDEO":(r.foto?"FOTO":"-") }));
+    const wsA = XLSX.utils.json_to_sheet(dE); wsA['!cols'] = [{wch:6},{wch:12},{wch:10},{wch:15},{wch:15},{wch:20},{wch:15},{wch:25},{wch:30},{wch:15},{wch:15},{wch:15},{wch:8}]; XLSX.utils.book_append_sheet(wb, wsA, "Auditoria");
+    const dR = l.map(r => ({ "Área": r.area||"", "Localização": r.local||"", "Tipo": traduzirTipoOcorrencia(r.ocorrencia), "KW": 1, "observações": r.descricao||"" }));
+    const wsR = XLSX.utils.json_to_sheet(dR); wsR['!cols'] = [{wch:15},{wch:20},{wch:25},{wch:5},{wch:35}]; XLSX.utils.book_append_sheet(wb, wsR, "Ronda");
+    return wb;
+}
+function normalizarDataUriMidiaPPTX(d) { if (!d || typeof d !== 'string') return ''; return d.replace(/^data:(image|video)\/([a-z0-9.+-]+)(?:;[^;]+)*;base64,/i, 'data:$1/$2;base64,'); }
+function construirObjetoPPTX(l, sTit = "DESPERDÍCIOS") {
+    let pptx = new PptxGenJS(), kw = obterKWRelatorio(l), sA;
+    l.forEach((r, i) => {
+        if (i % 4 === 0) { sA = pptx.addSlide(); sA.addText(`RONDA KW ${kw} - ${sTit}`, { x:0.3, y:0.2, w:9.4, h:0.4, fontSize:21, bold:true, fit:'shrink' }); }
+        let yB = 1.02 + ((i % 4) * 1.12), a = r.area||"", loc = r.local||"", oc = r.ocorrencia||"?", d = r.descricao||"";
+        if(r.interruptor) d = d ? `CHAVE: ${r.interruptor} | ${d}` : `CHAVE: ${r.interruptor}`;
+        let tr = `Por ${r.auditor||'?'} em ${r.data||''}`; if(r.revisado_em) tr += ` | Rev por ${r.revisor||'?'} em ${r.revisado_em}`;
+        sA.addText(loc?`#${i+1} - ${a} - ${loc}`:`#${i+1} - ${a}`, {x:0.3, y:yB, w:7.0, h:0.24, fontSize:12, bold:true, fit:'shrink'});
+        sA.addText("OC: " + oc, {x:0.3, y:yB+0.22, w:7.0, h:0.2, fontSize:10.5, bold:true, color:'0056b3', fit:'shrink'});
+        if(d) sA.addText("DET: " + d, {x:0.3, y:yB+0.41, w:7.0, h:0.19, fontSize:9.5, color:'666666', fit:'shrink'});
+        sA.addText("AÇÃO: " + (r.acao||"?"), {x:0.3, y:yB+0.59, w:7.0, h:0.19, fontSize:10, bold:true, color:'28a745', fit:'shrink'});
+        sA.addText(tr, {x:0.3, y:yB+0.77, w:7.0, h:0.18, fontSize:8, italic:true, color:'444444', fit:'shrink'});
+        const f = normalizarDataUriMidiaPPTX(r.foto), v = normalizarDataUriMidiaPPTX(r.video);
+        if(v){ try{sA.addMedia({type:'video',data:v,x:7.5,y:yB,w:1.8,h:0.85,cover:f?.startsWith('data:image/jpeg')?f:undefined});}catch(e){if(f)try{sA.addImage({data:f,x:7.5,y:yB,w:1.8,h:0.85,sizing:{type:'contain',w:1.8,h:0.85}});}catch(e){}} sA.addText("▶ VÍDEO", {x:7.5,y:yB+0.85,w:1.8,h:0.15,fontSize:8,bold:true,color:'dc3545',align:'center'}); }
+        else if(f){ try{sA.addImage({data:f,x:7.5,y:yB,w:1.8,h:0.98,sizing:{type:'contain',w:1.8,h:0.98}});}catch(e){} }
+        if(i%4<3) sA.addShape(pptx.ShapeType.line, {x:0.3, y:yB+1.05, w:9.0, h:0, line:{color:'E0E0E0',width:1}});
+    });
+    return pptx;
+}
+function baixarBlob(b, n) { const u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = n; document.body.appendChild(l); l.click(); l.remove(); setTimeout(()=>URL.revokeObjectURL(u), 4000); }
+async function gerarBlobPPTXSeguro(p) { try { return await p.write('blob'); } catch(e) { return await p.write({outputType:'blob'}); } }
+function definirStatusExportacao(a, t="⏳ Aguarde...") { const s = document.getElementById('status-exportacao'); if(s){ s.textContent = t; s.style.display = a?'block':'none'; } document.querySelectorAll('#exportar-modal button').forEach(b=>b.disabled=a); }
+function prepararListaParaExportacao(l) { const c = l.map(r=>{const x=normalizarRegistro(r); delete x.isDuplicado; return x;}); ordenarArrayRegistros(c); return c; }
+async function acionarExportarGeral(f) {
+    if(registros.length===0)return; const l = prepararListaParaExportacao(registros), kw = obterKWRelatorio(l), dh = new Date().toLocaleDateString('pt-BR').replace(/\//g,'');
+    let nb = prompt(`NOME DO ARQUIVO ${f} GERAL:`, `GERAL_KW${kw}_${dh}`); if(!nb)return; nb = limparNomeArquivo(nb);
+    try{ definirStatusExportacao(true, `Gerando ${f}...`);
+         if(f==='JSON') baixarBlob(new Blob([JSON.stringify(l,null,2)], {type:"application/json"}), `${nb}.json`);
+         else if(f==='XLSX') XLSX.writeFile(gerarWorkbookExcel(l), `${nb}.xlsx`);
+         else if(f==='PPTX') baixarBlob(await gerarBlobPPTXSeguro(construirObjetoPPTX(l, "GERAL")), `${nb}.pptx`);
+    }catch(e){alert("Erro: "+e.message);}finally{definirStatusExportacao(false); fecharModalExportar();}
+}
+async function exportarAreaUnica(f) {
+    const a = document.getElementById('select-area-export').value; if(!a)return;
+    const l = prepararListaParaExportacao(registros.filter(r=>(r.area||"SEM_AREA").trim().toUpperCase()===a)); if(l.length===0)return;
+    let kw = obterKWRelatorio(l), dh = new Date().toLocaleDateString('pt-BR').replace(/\//g,''), nb = `KW${kw}_${limparNomeArquivo(a)}_${dh}`;
+    try{ definirStatusExportacao(true, `Exportando ${a}...`);
+         if(f==='JSON') baixarBlob(new Blob([JSON.stringify(l,null,2)], {type:"application/json"}), `${nb}.json`);
+         else if(f==='XLSX') XLSX.writeFile(gerarWorkbookExcel(l), `${nb}.xlsx`);
+         else if(f==='PPTX') baixarBlob(await gerarBlobPPTXSeguro(construirObjetoPPTX(l, `SETOR: ${a}`)), `${nb}.pptx`);
+    }catch(e){alert("Erro: "+e.message);}finally{definirStatusExportacao(false); fecharModalExportar();}
+}
+async function exportarLotePorArea(f) {
+    const a = obterAreasUnicas(); if(a.length===0)return; const z = new JSZip(), kw = obterKWRelatorio(registros), dh = new Date().toLocaleDateString('pt-BR').replace(/\//g,''), nu = new Set();
+    try{ definirStatusExportacao(true, `Gerando ZIP...`);
+         for(const ax of a){ const l = prepararListaParaExportacao(registros.filter(r=>(r.area||"").trim().toUpperCase()===ax)); if(!l.length)continue;
+             let nb = `KW${kw}_${limparNomeArquivo(ax)}_${dh}`, nf=nb, s=2; while(nu.has(nf)) nf=`${nb}_${s++}`; nu.add(nf);
+             if(f==='JSON') z.file(`${nf}.json`, JSON.stringify(l,null,2));
+             else if(f==='XLSX') z.file(`${nf}.xlsx`, XLSX.write(gerarWorkbookExcel(l), {bookType:'xlsx',type:'array'}));
+             else if(f==='PPTX') z.file(`${nf}.pptx`, await gerarBlobPPTXSeguro(construirObjetoPPTX(l, `SETOR: ${ax}`)));
+         }
+         baixarBlob(await z.generateAsync({type:"blob"}), `LOTE_${f}_KW${kw}_${dh}.zip`);
+    }catch(e){alert("Erro ZIP: "+e.message);}finally{definirStatusExportacao(false); fecharModalExportar();}
+}
+function copiarJSON() { if(registros.length===0)return; navigator.clipboard.writeText(JSON.stringify(prepararListaParaExportacao(registros),null,2)).then(()=>alert("COPIADO!")).catch(e=>alert("ERRO COPIAR: "+e)); fecharModalExportar(); }
+function acionarImportarJSON() { fecharModalImportar(); document.getElementById('input-json').click(); }
+function mesclarImportados(lista, concat) {
+    const ids = new Set(registros.map(r=>String(r.id))); let ad=0, ig=0;
+    if(!concat){ registros=[]; ids.clear(); cancelarEdicao(); }
+    for(const b of lista){ try{ const r=normalizarRegistro(b); if(!r.area&&!r.local&&!r.ocorrencia)continue; if(b&&b.id&&ids.has(r.id)){ig++;continue;} ids.add(r.id); registros.push(r); ad++; }catch(e){ig++;} }
+    return {ad,ig};
+}
+async function importarJSON(e) {
+    const f=e.target.files; if(!f?.length)return;
+    let c = true; if(registros.length>0) c = confirm(`Deseja concatenar (mesclar) o novo arquivo com os ${registros.length} já na tela?\n\n• OK: Sim, juntar tudo.\n• Cancelar: Não, limpar a tela e carregar apenas o novo.`);
+    let t=0, ig=0;
+    for(const arq of f){ try{ const d=JSON.parse(await arq.text()), l=Array.isArray(d)?d:(Array.isArray(d.registros)?d.registros:null); if(!l)throw new Error('Sem lista.'); const r=mesclarImportados(l,c); t+=r.ad; ig+=r.ig; c=true; }catch(er){alert(`Erro no ${arq.name}: ${er.message}`);} }
+    await salvarMemoria(); processarEOrdenarLista(); alert(`Concluído! ${t} carregados, ${ig} ignorados. Total: ${registros.length}`); e.target.value='';
+}
+async function processarColarJSON() {
+    const tx=document.getElementById('texto-colar').value; if(!tx.trim()){alert('COLE O TEXTO.');return;}
+    try{ const d=JSON.parse(tx), l=Array.isArray(d)?d:(Array.isArray(d.registros)?d.registros:null); if(!l)throw new Error('Inválido.');
+         let c=true; if(registros.length>0) c=confirm(`Deseja concatenar (mesclar) o novo arquivo com os ${registros.length} já na tela?\n\n• OK: Sim, juntar tudo.\n• Cancelar: Não, limpar a tela e carregar apenas o novo.`);
+         const r=mesclarImportados(l,c); await salvarMemoria(); processarEOrdenarLista(); alert(`Concluído! ${r.ad} carregados, ${r.ig} ignorados. Total: ${registros.length}`); fecharModalColar();
+    }catch(e){alert('ERRO: '+e.message);}
+}
+</script>
+</body>
+</html>
