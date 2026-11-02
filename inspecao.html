@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CAÇA DESPERDÍCIOS — INTEGRADO</title>
 
+    <!-- BIBLI EXTERNAS (Com fallbacks de segurança caso esteja offline) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -1835,12 +1836,19 @@ function atualizarSelectAreasExportacao() {
     });
 }
 
-function limparMetadadosInternos(lista) {
-    return lista.map(r => {
-        const copia = { ...r };
+function prepararListaParaExportacao(lista) {
+    const copiaLista = lista.map(r => {
+        const copia = normalizarRegistro(r);
         delete copia.isDuplicado;
         return copia;
     });
+    ordenarArrayRegistros(copiaLista);
+    return copiaLista;
+}
+
+function normalizarDataUriMidiaPPTX(dataUri) {
+    if (!dataUri || typeof dataUri !== 'string') return '';
+    return dataUri.replace(/^data:(image|video)\/([a-z0-9.+-]+)(?:;[^;]+)*;base64,/i, 'data:$1/$2;base64,');
 }
 
 function gerarWorkbookExcel(listaDados) {
