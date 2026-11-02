@@ -1,35 +1,33 @@
-const CACHE_NAME = 'caca-desperdicios-v1';
-
-// Lista de arquivos e bibliotecas que precisam funcionar offline
-const urlsToCache = [
-    './', // Guarda a página inicial
-    'https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js',
-    'https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js',
-    'https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js'
+const CACHE_NAME = 'caca-desperdicios-v2';
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  'https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js',
+  'https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js',
+  'https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js',
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+  'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'
 ];
 
-// Instalação: Baixa os arquivos na primeira vez
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Cache aberto');
-                return cache.addAll(urlsToCache);
-            })
-    );
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
 });
 
-// Interceptação: Tenta carregar do cache primeiro (Offline First)
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Se achou no cache, retorna o arquivo salvo offline
-                if (response) {
-                    return response;
-                }
-                // Se não achou, tenta baixar da internet
-                return fetch(event.request);
-            })
-    );
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
+  );
 });
