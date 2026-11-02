@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CAÇA DESPERDÍCIOS — INTEGRADO (COLETA, REVISÃO E EXPORTAÇÃO POR ÁREA)</title>
-                                                                                                                                    
+    <title>CAÇA DESPERDÍCIOS — INTEGRADO</title>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -48,7 +48,7 @@
             padding: 8px 12px;
             border-bottom: 2px solid #222;
             z-index: 10;
-            max-height: 56dvh;
+            max-height: 58dvh;
             overflow-y: auto;
         }
 
@@ -194,6 +194,7 @@
         }
 
         button:hover { opacity: 0.92; }
+        button:disabled { opacity: 0.6; cursor: wait; }
 
         .btn-primary { background-color: var(--primary); }
         .btn-success { background-color: var(--success); }
@@ -202,6 +203,7 @@
         .btn-warning { background-color: var(--warning); color: var(--warning-text); }
         .btn-info { background-color: var(--info); }
         .btn-purple { background-color: var(--purple); }
+        .btn-pendente { background-color: #495057; color: white; }
 
         .header-lista {
             display: flex;
@@ -335,17 +337,20 @@
             display: flex;
             gap: 6px;
             margin-top: 6px;
+            flex-wrap: wrap;
         }
 
         .acoes-item button {
+            flex: 1 1 auto;
             margin-top: 0;
-            padding: 5px;
+            padding: 5px 8px;
             font-size: 11px;
             height: 30px;
+            width: auto;
         }
 
         /* Modais */
-        #camera-modal, #qr-camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-modal, #importar-modal, #midia-modal {
+        .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -434,7 +439,7 @@
     <div id="bloco-formulario">
         <div class="form-grid">
             <div style="grid-column: span 2;">
-                <button id="btn-qr" class="btn-purple" onclick="abrirLeitorQR()" style="height: 32px; font-size: 12px;">🔳 LER QR CODE DO LOCAL</button>
+                <button id="btn-qr" type="button" class="btn-purple" onclick="abrirLeitorQR()" style="height: 32px; font-size: 12px;">🔳 LER QR CODE DO LOCAL</button>
                 <input type="file" id="input-qr" accept="image/*" capture="environment" style="display:none;" onchange="processarImagemQR(event)">
             </div>
 
@@ -477,7 +482,7 @@
             </div>
 
             <div>
-                <label>DESCRIÇÃO (Opcional):</label>
+                <label>DESCRIÇÃO / DETALHE (Opcional):</label>
                 <div id="descricao-display" class="fake-input" onclick="abrirModalDescricao()">TOQUE PARA DIGITAR...</div>
                 <input type="hidden" id="descricao">
             </div>
@@ -526,10 +531,10 @@
         </div>
 
         <div style="display:flex; gap:8px; margin-top:8px;">
-            <button class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin:0; width: 100%;">➕ ADICIONAR REGISTRO</button>
+            <button type="button" class="btn-primary" id="btn-salvar" onclick="salvarRegistro()" style="margin:0; width: 100%;">➕ ADICIONAR REGISTRO</button>
         </div>
 
-        <button class="btn-secondary" id="btn-cancelar-edicao" style="display:none; margin-top:6px; width:100%;" onclick="cancelarEdicao()">❌ CANCELAR EDIÇÃO</button>
+        <button type="button" class="btn-secondary" id="btn-cancelar-edicao" style="display:none; margin-top:6px; width:100%;" onclick="cancelarEdicao()">❌ CANCELAR EDIÇÃO</button>
 
         <input type="hidden" id="foto_base64">
         <input type="hidden" id="video_base64">
@@ -539,22 +544,23 @@
 <div class="center-section">
     <div class="header-lista">
         <h3>REGISTROS (<span id="contador">0</span>)</h3>
-        <div style="display: flex; gap: 6px;">
-            <button class="btn-warning" style="width:auto; height:30px; padding:0 10px; margin:0; font-size:11px;" onclick="limparDuplicadas()">🧹 LIMPAR DUPLICADAS</button>
-            <button class="btn-danger" style="width:auto; height:30px; padding:0 10px; margin:0; font-size:11px;" onclick="limparTudo()">🗑 ZERAR TUDO</button>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="btn-warning" style="width:auto; height:30px; padding:0 10px; margin:0; font-size:11px;" onclick="limparDuplicadas()">🧹 LIMPAR DUPLICADAS</button>
+            <button type="button" class="btn-secondary" style="width:auto; height:30px; padding:0 10px; margin:0; font-size:11px;" onclick="limparDadosRevisao()">🔄 LIMPAR REVISÕES</button>
+            <button type="button" class="btn-danger" style="width:auto; height:30px; padding:0 10px; margin:0; font-size:11px;" onclick="limparTudo()">🗑 ZERAR TUDO</button>
         </div>
     </div>
     <div id="lista-registros"></div>
 </div>
 
 <div class="bottom-section">
-    <button class="btn-primary" onclick="abrirModalExportar()">📤 EXPORTAR (GERAL / POR ÁREA)</button>
-    <button class="btn-warning" style="color:var(--warning-text);" onclick="abrirModalImportar()">📂 IMPORTAR / MESCLAR JSON</button>
+    <button type="button" class="btn-primary" onclick="abrirModalExportar()">📤 EXPORTAR (GERAL / POR ÁREA)</button>
+    <button type="button" class="btn-warning" style="color:var(--warning-text);" onclick="abrirModalImportar()">📂 IMPORTAR / MESCLAR JSON</button>
     <input type="file" id="input-json" accept=".json" multiple style="display:none;" onchange="importarJSON(event)">
 </div>
 
 <!-- MODAL LEITURA QR -->
-<div id="qr-camera-modal">
+<div id="qr-camera-modal" class="modal-overlay">
     <video id="qr-camera-video" autoplay playsinline muted></video>
     <canvas id="qr-canvas"></canvas>
     <div class="qr-camera-top">
@@ -563,51 +569,52 @@
     </div>
     <div class="qr-moldura"><div class="qr-linha-leitura"></div></div>
     <div class="qr-camera-bottom">
-        <button id="btn-qr-galeria" class="btn-info" onclick="fecharLeitorQR(); document.getElementById('input-qr').click();">🖼️ LER IMAGEM DA GALERIA</button>
-        <button class="btn-danger" onclick="fecharLeitorQR()">❌ CANCELAR</button>
+        <button type="button" class="btn-info" onclick="fecharLeitorQR(); document.getElementById('input-qr').click();">🖼️ LER IMAGEM DA GALERIA</button>
+        <button type="button" class="btn-danger" onclick="fecharLeitorQR()">❌ CANCELAR</button>
     </div>
 </div>
 
 <!-- MODAL DESCRIÇÃO -->
-<div id="descricao-modal">
+<div id="descricao-modal" class="modal-overlay">
     <div class="modal-box">
-        <h3 style="margin-top:0; color:var(--primary);">DESCRIÇÃO DO PROBLEMA</h3>
+        <h3 style="margin-top:0; color:var(--primary);">DESCRIÇÃO / DETALHE DO PROBLEMA</h3>
         <p style="margin:0; font-size:13px; color:#666;">DIGITE OS DETALHES ADICIONAIS ABAIXO:</p>
         <textarea id="descricao-texto" rows="5" oninput="this.value = this.value.toUpperCase();"></textarea>
         <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-danger" style="margin:0;" onclick="fecharModalDescricao()">CANCELAR</button>
-            <button class="btn-success" style="margin:0;" onclick="salvarDescricao()">CONFIRMAR</button>
+            <button type="button" class="btn-danger" style="margin:0;" onclick="fecharModalDescricao()">CANCELAR</button>
+            <button type="button" class="btn-success" style="margin:0;" onclick="salvarDescricao()">CONFIRMAR</button>
         </div>
     </div>
 </div>
 
 <!-- MODAL MÍDIA -->
-<div id="midia-modal">
+<div id="midia-modal" class="modal-overlay">
     <div class="modal-box" style="text-align:center;">
         <h3 style="margin-top:0; color:var(--primary);">ADICIONAR MÍDIA</h3>
         <p style="margin:0; font-size:13px; color:#666;">ESCOLHA A ORIGEM DA FOTO OU VÍDEO:</p>
         <div class="botoes-menu-modal">
-            <button class="btn-success" onclick="iniciarCamera('foto')">📷 TIRAR FOTO</button>
-            <button class="btn-warning" style="color:var(--warning-text);" onclick="iniciarCamera('video')">🎥 GRAVAR VÍDEO</button>
-            <button class="btn-info" onclick="acionarGaleria()">📂 CARREGAR DA GALERIA</button>
-            <button class="btn-danger" onclick="fecharModalMidia()">❌ CANCELAR</button>
+            <button type="button" class="btn-success" onclick="iniciarCamera('foto')">📷 TIRAR FOTO</button>
+            <button type="button" class="btn-warning" style="color:var(--warning-text);" onclick="iniciarCamera('video')">🎥 GRAVAR VÍDEO</button>
+            <button type="button" class="btn-info" onclick="acionarGaleria()">📂 CARREGAR DA GALERIA</button>
+            <button type="button" class="btn-danger" onclick="fecharModalMidia()">❌ CANCELAR</button>
         </div>
         <input type="file" id="input-galeria" accept="image/*,video/*" style="display:none;" onchange="processarMidiaGaleria(event)">
     </div>
 </div>
 
 <!-- MODAL EXPORTAR INTELIGENTE -->
-<div id="exportar-modal">
+<div id="exportar-modal" class="modal-overlay">
     <div class="modal-box">
         <h3 style="margin-top:0; color:var(--primary); text-align:center;">📤 CENTRAL DE EXPORTAÇÃO</h3>
+        <p id="status-exportacao" style="display:none; text-align:center; font-size:12px; font-weight:bold; color:var(--purple); margin: 4px 0;">⏳ Gerando arquivos, aguarde...</p>
 
         <div class="secao-export">
             <h4>1. Relatório Unificado (Todas as Áreas)</h4>
             <div class="botoes-menu-modal" style="margin-top: 6px;">
-                <button class="btn-primary" onclick="acionarExportarGeral('PPTX')">📺 POWERPOINT GERAL (.PPTX)</button>
-                <button class="btn-success" onclick="acionarExportarGeral('XLSX')">📊 EXCEL GERAL (.XLSX)</button>
-                <button class="btn-info" onclick="acionarExportarGeral('JSON')">💾 ARQUIVO GERAL (.JSON)</button>
-                <button class="btn-secondary" onclick="copiarJSON()">📋 COPIAR TEXTO (JSON)</button>
+                <button type="button" class="btn-primary" onclick="acionarExportarGeral('PPTX')">📺 POWERPOINT GERAL (.PPTX)</button>
+                <button type="button" class="btn-success" onclick="acionarExportarGeral('XLSX')">📊 EXCEL GERAL (.XLSX)</button>
+                <button type="button" class="btn-info" onclick="acionarExportarGeral('JSON')">💾 ARQUIVO GERAL (.JSON)</button>
+                <button type="button" class="btn-secondary" onclick="copiarJSON()">📋 COPIAR TEXTO (JSON)</button>
             </div>
         </div>
 
@@ -615,82 +622,111 @@
             <h4 style="color: var(--purple);">2. Exportador Inteligente (1 Arquivo p/ Cada Área)</h4>
             <p style="margin: 0 0 8px 0; font-size: 11px; color: #555;">Separa automaticamente os registros por área para distribuir a carga de trabalho entre a equipe:</p>
             <div class="botoes-menu-modal" style="margin-top: 6px;">
-                <button class="btn-purple" onclick="exportarLotePorArea('PPTX')">📦 PACOTE .ZIP (1 PPTX POR ÁREA)</button>
-                <button class="btn-purple" onclick="exportarLotePorArea('XLSX')">📦 PACOTE .ZIP (1 EXCEL POR ÁREA)</button>
-                <button class="btn-purple" onclick="exportarLotePorArea('JSON')">📦 PACOTE .ZIP (1 JSON POR ÁREA)</button>
+                <button type="button" class="btn-purple" onclick="exportarLotePorArea('PPTX')">📦 PACOTE .ZIP (1 PPTX POR ÁREA)</button>
+                <button type="button" class="btn-purple" onclick="exportarLotePorArea('XLSX')">📦 PACOTE .ZIP (1 EXCEL POR ÁREA)</button>
+                <button type="button" class="btn-purple" onclick="exportarLotePorArea('JSON')">📦 PACOTE .ZIP (1 JSON POR ÁREA)</button>
             </div>
 
             <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ccc;">
                 <label style="color: #333;">OU EXPORTE APENAS UMA ÁREA ESPECÍFICA:</label>
                 <select id="select-area-export" style="margin-top: 4px; margin-bottom: 8px;"></select>
                 <div style="display: flex; gap: 6px;">
-                    <button class="btn-primary" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('PPTX')">📺 PPTX</button>
-                    <button class="btn-success" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('XLSX')">📊 XLSX</button>
-                    <button class="btn-info" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('JSON')">💾 JSON</button>
+                    <button type="button" class="btn-primary" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('PPTX')">📺 PPTX</button>
+                    <button type="button" class="btn-success" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('XLSX')">📊 XLSX</button>
+                    <button type="button" class="btn-info" style="height: 32px; font-size: 11px;" onclick="exportarAreaUnica('JSON')">💾 JSON</button>
                 </div>
             </div>
         </div>
 
-        <button class="btn-danger" style="margin-top: 12px;" onclick="fecharModalExportar()">❌ FECHAR</button>
+        <button type="button" class="btn-danger" style="margin-top: 12px;" onclick="fecharModalExportar()">❌ FECHAR</button>
     </div>
 </div>
 
 <!-- MODAL IMPORTAR -->
-<div id="importar-modal">
+<div id="importar-modal" class="modal-overlay">
     <div class="modal-box" style="text-align:center;">
-        <h3 style="margin-top:0; color:#d39e00;">IMPORTAR E MESCLAR DADOS</h3>
-        <p style="margin:0; font-size:13px; color:#666;">Selecione múltiplos arquivos JSON para unir e revisar:</p>
+        <h3 style="margin-top:0; color:#d39e00;">IMPORTAR DADOS JSON</h3>
+        <p style="margin:0; font-size:13px; color:#666;">Escolha como deseja carregar os arquivos JSON:</p>
         <div class="botoes-menu-modal">
-            <button class="btn-warning" onclick="acionarImportarJSON()">📁 SELECIONAR ARQUIVO(S) (.JSON)</button>
-            <button class="btn-warning" onclick="abrirModalColar()">📥 COLAR TEXTO JSON</button>
-            <button class="btn-danger" onclick="fecharModalImportar()">❌ CANCELAR</button>
+            <button type="button" class="btn-warning" onclick="acionarImportarJSON()">📁 SELECIONAR ARQUIVO(S) (.JSON)</button>
+            <button type="button" class="btn-warning" onclick="abrirModalColar()">📥 COLAR TEXTO JSON</button>
+            <button type="button" class="btn-danger" onclick="fecharModalImportar()">❌ CANCELAR</button>
         </div>
     </div>
 </div>
 
 <!-- MODAL COLAR JSON -->
-<div id="colar-modal">
+<div id="colar-modal" class="modal-overlay">
     <div class="modal-box">
         <h3 style="margin-top:0; color:#d39e00;">COLAR TEXTO JSON</h3>
         <p style="margin:0; font-size:13px; color:#666;">COLE AQUI O CÓDIGO QUE VOCÊ COPIOU DO WHATSAPP:</p>
         <textarea id="texto-colar" rows="8"></textarea>
         <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-danger" style="margin:0;" onclick="fecharModalColar()">CANCELAR</button>
-            <button class="btn-success" style="margin:0;" onclick="processarColarJSON()">IMPORTAR DADOS</button>
+            <button type="button" class="btn-danger" style="margin:0;" onclick="fecharModalColar()">CANCELAR</button>
+            <button type="button" class="btn-success" style="margin:0;" onclick="processarColarJSON()">IMPORTAR DADOS</button>
         </div>
     </div>
 </div>
 
 <!-- MODAL CÂMERA MÍDIA -->
-<div id="camera-modal">
+<div id="camera-modal" class="modal-overlay">
     <div style="width: 100%; max-width: 600px;">
         <video id="video-preview" autoplay playsinline></video>
         <p id="status-gravacao" style="color:red; font-weight:bold; display:none; margin:5px 0;">🔴 GRAVANDO VÍDEO (MÁX 5S)...</p>
         <div class="modal-botoes">
-            <button id="btn-tirar-foto" class="btn-success" onclick="capturarFoto()">📷 CAPTURAR FOTO</button>
-            <button id="btn-iniciar-gravacao" class="btn-warning" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
-            <button id="btn-parar-gravacao" class="btn-danger" style="display:none;" onclick="pararGravacaoVideo()">⏹️ PARAR E SALVAR VÍDEO</button>
-            <button class="btn-danger" onclick="fecharCamera()">❌ CANCELAR</button>
+            <button type="button" class="btn-success" onclick="capturarFoto()">📷 CAPTURAR FOTO</button>
+            <button type="button" class="btn-warning" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
+            <button type="button" class="btn-danger" id="btn-parar-gravacao" style="display:none;" onclick="pararGravacaoVideo()">⏹️ PARAR E SALVAR VÍDEO</button>
+            <button type="button" class="btn-danger" onclick="fecharCamera()">❌ CANCELAR</button>
         </div>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
 </div>
 
 <!-- MODAL VISUALIZADOR MÍDIA -->
-<div id="media-viewer-modal">
+<div id="media-viewer-modal" class="modal-overlay">
     <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
     <img id="viewer-img" style="display:none;">
     <video id="viewer-video" controls style="display:none;"></video>
 </div>
 
 <script>
+// ==========================================
+// MANIFESTO PWA EMBUTIDO DINAMICAMENTE
+// ==========================================
+(function configurarManifestoEmbutido() {
+    try {
+        const icone192 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%230056b3'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='100'%3E%F0%9F%9B%A0%EF%B8%8F%3C/text%3E%3C/svg%3E";
+        const icone512 = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230056b3'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='260'%3E%F0%9F%9B%A0%EF%B8%8F%3C/text%3E%3C/svg%3E";
+        const manifestObj = {
+            name: "Caça Desperdícios & Revisão",
+            short_name: "Caça Desperdícios",
+            description: "Sistema Integrado de Coleta, Revisão e Exportação por Área",
+            start_url: window.location.href.split('#')[0],
+            display: "standalone",
+            orientation: "portrait",
+            background_color: "#e9ecef",
+            theme_color: "#0056b3",
+            icons: [
+                { src: icone192, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+                { src: icone512, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+            ]
+        };
+        const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = URL.createObjectURL(blob);
+        document.head.appendChild(link);
+    } catch(e) {}
+})();
+
 const STORAGE_KEY = 'registros_caca_desperdicios_unificado';
 let streamDeVideo = null;
 let streamQR = null;
 let mediaRecorder = null;
 let pedacosGravados = [];
 let registros = [];
-let indiceEdicao = null;
+let idEdicao = null;
 
 let qrScannerAtivo = false;
 let qrAnimationFrame = null;
@@ -700,26 +736,37 @@ let qrDetectorNativo = null;
 let qrDetectando = false;
 
 window.onload = async function() {
-    let auditorSalvo = localStorage.getItem('auditor_nome');
-    if (auditorSalvo) document.getElementById('auditor').value = auditorSalvo;
+    try {
+        let auditorSalvo = localStorage.getItem('auditor_nome');
+        if (auditorSalvo) document.getElementById('auditor').value = auditorSalvo;
 
-    let revisorSalvo = localStorage.getItem('revisor_nome');
-    if (revisorSalvo) document.getElementById('nome_revisor').value = revisorSalvo;
+        let revisorSalvo = localStorage.getItem('revisor_nome');
+        if (revisorSalvo) document.getElementById('nome_revisor').value = revisorSalvo;
 
-    let dadosUnificados = await localforage.getItem(STORAGE_KEY);
-    let dadosAntigosColeta = await localforage.getItem('registros_caca_desperdicios');
-    let dadosAntigosRevisor = await localforage.getItem('registros_revisor');
+        let dadosUnificados = await localforage.getItem(STORAGE_KEY);
 
-    if (Array.isArray(dadosUnificados)) {
-        registros = dadosUnificados;
-    } else if (Array.isArray(dadosAntigosRevisor) && dadosAntigosRevisor.length > 0) {
-        registros = dadosAntigosRevisor;
-    } else if (Array.isArray(dadosAntigosColeta) && dadosAntigosColeta.length > 0) {
-        registros = dadosAntigosColeta;
+        if (Array.isArray(dadosUnificados)) {
+            registros = dadosUnificados;
+        } else {
+            let dadosAntigosRevisor = await localforage.getItem('registros_revisor');
+            let dadosAntigosColeta = await localforage.getItem('registros_caca_desperdicios');
+
+            if (Array.isArray(dadosAntigosRevisor) && dadosAntigosRevisor.length > 0) {
+                registros = dadosAntigosRevisor;
+            } else if (Array.isArray(dadosAntigosColeta) && dadosAntigosColeta.length > 0) {
+                registros = dadosAntigosColeta;
+            }
+            await localforage.removeItem('registros_revisor');
+            await localforage.removeItem('registros_caca_desperdicios');
+        }
+
+        await salvarMemoria();
+        processarEOrdenarLista();
+    } catch (e) {
+        console.error("Erro ao carregar memória:", e);
+        registros = [];
+        atualizarLista();
     }
-
-    await salvarMemoria();
-    processarEOrdenarLista();
 };
 
 function gerarIdRegistro() {
@@ -728,29 +775,40 @@ function gerarIdRegistro() {
         : 'reg-' + Date.now() + '-' + Math.random().toString(36).slice(2);
 }
 
+function normalizarEspacos(str) {
+    return String(str == null ? '' : str).replace(/\s+/g, ' ').trim();
+}
+
 function normalizarRegistro(r) {
     const x = (r && typeof r === 'object' && !Array.isArray(r)) ? { ...r } : {};
     x.id = String(x.id || gerarIdRegistro());
     for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor','data','hora','revisado_em']) {
-        x[k] = x[k] == null ? '' : String(x[k]).trim();
+        x[k] = normalizarEspacos(x[k]);
     }
     for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor']) {
         x[k] = x[k].toUpperCase();
     }
-    x.foto = (typeof x.foto === 'string' && x.foto.startsWith('data:image/')) ? x.foto : '';
-    x.video = (typeof x.video === 'string' && x.video.startsWith('data:video/')) ? x.video : '';
+    const dataUriMidia = /^data:(?:image|video)\/[a-z0-9.+-]+(?:;[a-z0-9._=+-]+)*;base64,/i;
+    x.foto = (typeof x.foto === 'string' && dataUriMidia.test(x.foto)) ? x.foto : '';
+    x.video = (typeof x.video === 'string' && dataUriMidia.test(x.video)) ? x.video : '';
     x.editado = Boolean(x.revisado_em || x.editado);
+    delete x.isDuplicado;
     return x;
 }
 
 async function salvarMemoria() {
-    registros = registros.map(normalizarRegistro);
-    await localforage.setItem(STORAGE_KEY, registros);
+    try {
+        registros = registros.map(normalizarRegistro);
+        await localforage.setItem(STORAGE_KEY, registros);
+    } catch (e) {
+        console.error("Erro ao salvar:", e);
+    }
 }
 
 function alternarFormulario() {
     const bloco = document.getElementById('bloco-formulario');
     const btn = document.getElementById('btn-toggle-form');
+    if (!bloco || !btn) return;
     if (bloco.style.display === 'none') {
         bloco.style.display = 'block';
         btn.innerText = '🔼 RECOLHER FORMULÁRIO';
@@ -767,18 +825,20 @@ function obterTimestampAtual() {
     return `${data} às ${hora}`;
 }
 
-function parseDataHoraBR(str) {
-    if (!str) return 0;
-    const m = String(str).match(/(\d{2})\/(\d{2})\/(\d{4})(?:.*?(\d{2}):(\d{2})(?::(\d{2}))?)?/);
-    if (!m) return 0;
-    return new Date(
-        Number(m[3]),
-        Number(m[2]) - 1,
-        Number(m[1]),
-        Number(m[4] || 0),
-        Number(m[5] || 0),
-        Number(m[6] || 0)
-    ).getTime();
+function parseDataHoraBR(valor) {
+    if (valor == null || valor === '') return 0;
+    const texto = String(valor).trim();
+    const br = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\D+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (br) {
+        const dia = Number(br[1]), mes = Number(br[2]), ano = Number(br[3]);
+        const hora = Number(br[4] || 0), minuto = Number(br[5] || 0), segundo = Number(br[6] || 0);
+        if (mes < 1 || mes > 12 || dia < 1 || hora > 23 || minuto > 59 || segundo > 59) return 0;
+        const data = new Date(ano, mes - 1, dia, hora, minuto, segundo);
+        if (data.getFullYear() !== ano || data.getMonth() !== mes - 1 || data.getDate() !== dia) return 0;
+        return data.getTime();
+    }
+    const timestamp = Date.parse(texto);
+    return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function removerAcentos(texto) {
@@ -786,7 +846,8 @@ function removerAcentos(texto) {
 }
 
 function limparNomeArquivo(texto) {
-    return removerAcentos(texto).replace(/[^A-Z0-9_-]/g, "_").replace(/_+/g, "_");
+    const limpo = removerAcentos(texto).replace(/[^A-Z0-9_-]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+    return limpo || "ARQUIVO";
 }
 
 function verificarCombos() {
@@ -809,21 +870,29 @@ function verificarCombos() {
 // ORDENAÇÃO POR ÁREA + DETECÇÃO DE DUPLICATAS
 // ==========================================
 function chaveIdentidade(reg) {
-    const area = (reg.area || "").trim().toUpperCase();
-    const local = (reg.local || "").trim().toUpperCase();
-    const ocorrencia = (reg.ocorrencia || "").trim().toUpperCase();
+    const area = normalizarEspacos(reg.area).toUpperCase();
+    const local = normalizarEspacos(reg.local).toUpperCase();
+    const ocorrencia = normalizarEspacos(reg.ocorrencia).toUpperCase();
+    const descricao = normalizarEspacos(reg.descricao).toUpperCase();
+    const interruptor = normalizarEspacos(reg.interruptor).toUpperCase();
     if (!local) return "";
-    return `${area}|${local}|${ocorrencia}`;
+    return `${area}|${local}|${ocorrencia}|${descricao}|${interruptor}`;
 }
 
-function processarEOrdenarLista() {
-    registros.sort((a, b) => {
+function ordenarArrayRegistros(lista) {
+    lista.sort((a, b) => {
         let cmpArea = (a.area || "").localeCompare(b.area || "", 'pt-BR');
         if (cmpArea !== 0) return cmpArea;
         let cmpLocal = (a.local || "").localeCompare(b.local || "", 'pt-BR');
         if (cmpLocal !== 0) return cmpLocal;
-        return (a.ocorrencia || "").localeCompare(b.ocorrencia || "", 'pt-BR');
+        let cmpOc = (a.ocorrencia || "").localeCompare(b.ocorrencia || "", 'pt-BR');
+        if (cmpOc !== 0) return cmpOc;
+        return (a.descricao || "").localeCompare(b.descricao || "", 'pt-BR');
     });
+}
+
+function processarEOrdenarLista() {
+    ordenarArrayRegistros(registros);
 
     let contagem = {};
     registros.forEach(r => {
@@ -840,7 +909,7 @@ function processarEOrdenarLista() {
 }
 
 // ==========================================
-// LIMPEZA DE DUPLICADAS (PRIORIZA REVISADOS COM PARSER BR)
+// LIMPEZA DE DUPLICADAS (IGNORA AUDITOR E REVISOR)
 // ==========================================
 async function limparDuplicadas() {
     const grupos = new Map();
@@ -851,42 +920,35 @@ async function limparDuplicadas() {
 
     const duplicados = [...grupos.values()].filter(g => g.length > 1);
     if (!duplicados.length) {
-        alert("ℹ️ Nenhum item duplicado (Mesma Área + Local + Ocorrência) foi encontrado.");
+        alert("ℹ️ Nenhum item duplicado (Mesma Área + Local + Ocorrência + Detalhe + Chave) foi encontrado.");
         return;
     }
 
     const totalRemover = duplicados.reduce((n, g) => n + g.length - 1, 0);
-    if (!confirm(`Foram encontrados ${totalRemover} registro(s) duplicado(s).\nO sistema eliminará os itens sem revisão e manterá o item revisado mais recente.\nDeseja continuar?`)) {
+    if (!confirm(`Foram encontrados ${totalRemover} registro(s) duplicado(s) (ignorando auditor e revisor).\n\nO sistema eliminará as cópias sem revisão e manterá 1 exemplar revisado.\nDeseja continuar?`)) {
         return;
     }
 
-    const idsRemover = new Set();
+    const remover = new Set();
     duplicados.forEach(grupo => {
-        const ordenados = [...grupo].sort((a, b) => {
-            const revA = Boolean(a.editado || a.revisado_em) ? 1 : 0;
-            const revB = Boolean(b.editado || b.revisado_em) ? 1 : 0;
-            if (revB !== revA) return revB - revA; // Revisado sempre vence não revisado
+        const comRevisao = grupo.filter(r => Boolean(r.editado || r.revisado_em));
+        const escolhido = comRevisao.length > 0 ? comRevisao[0] : grupo[0];
 
-            const tempoRevA = parseDataHoraBR(a.revisado_em);
-            const tempoRevB = parseDataHoraBR(b.revisado_em);
-            if (tempoRevB !== tempoRevA) return tempoRevB - tempoRevA; // Revisão mais recente vence
-
-            const tempoColA = parseDataHoraBR(`${a.data || ''} ${a.hora || ''}`);
-            const tempoColB = parseDataHoraBR(`${b.data || ''} ${b.hora || ''}`);
-            return tempoColB - tempoColA;
+        grupo.forEach(registro => {
+            if (registro !== escolhido) {
+                remover.add(registro);
+            }
         });
-
-        ordenados.slice(1).forEach(r => idsRemover.add(r.id));
     });
 
-    registros = registros.filter(r => !idsRemover.has(r.id));
+    registros = registros.filter(registro => !remover.has(registro));
     await salvarMemoria();
     processarEOrdenarLista();
-    alert(`✅ Limpeza concluída! ${idsRemover.size} duplicata(s) eliminada(s) preservando os itens revisados.`);
+    alert(`✅ Limpeza concluída! ${remover.size} duplicata(s) eliminada(s), preservando os itens revisados.`);
 }
 
 // ==========================================
-// MARCAR COMO REVISADO (SOBRESCREVE DATA/HORA)
+// MARCAR COMO REVISADO (COM CONFIRMAÇÃO)
 // ==========================================
 async function marcarComoRevisado(index) {
     let revisor = document.getElementById('nome_revisor').value.trim().toUpperCase();
@@ -896,12 +958,65 @@ async function marcarComoRevisado(index) {
         return;
     }
 
-    registros[index].revisor = revisor;
-    registros[index].revisado_em = obterTimestampAtual();
-    registros[index].editado = true;
+    const reg = registros[index];
+    if (!reg) return;
+
+    const jaRevisado = Boolean(reg.editado || reg.revisado_em);
+    const msgConfirmacao = jaRevisado
+        ? `Este item já foi revisado (${reg.revisor || 'REVISOR'} em ${reg.revisado_em || '-'}).\nDeseja confirmar uma nova revisão como "${revisor}" substituindo a data/hora anterior pela atual?`
+        : `Deseja confirmar a revisão do item #${index + 1} (${reg.area || ''} - ${reg.local || ''}) pelo revisor "${revisor}"?`;
+
+    if (!confirm(msgConfirmacao)) {
+        return;
+    }
+
+    reg.revisor = revisor;
+    reg.revisado_em = obterTimestampAtual();
+    reg.editado = true;
 
     await salvarMemoria();
     processarEOrdenarLista();
+}
+
+// ==========================================
+// LIMPAR DADOS DE REVISÃO (INDIVIDUAL E GERAL)
+// ==========================================
+async function limparRevisaoIndividual(index) {
+    const reg = registros[index];
+    if (!reg || (!reg.editado && !reg.revisado_em)) return;
+
+    if (!confirm(`Deseja limpar os dados de revisão do item #${index + 1} (${reg.local || ''})?\nO registro voltará ao status "REVISAR".`)) {
+        return;
+    }
+
+    reg.revisor = '';
+    reg.revisado_em = '';
+    reg.editado = false;
+
+    await salvarMemoria();
+    processarEOrdenarLista();
+}
+
+async function limparDadosRevisao() {
+    const qtdRevisados = registros.filter(r => Boolean(r.editado || r.revisado_em)).length;
+    if (qtdRevisados === 0) {
+        alert("ℹ️ Nenhum registro possui dados de revisão no momento.");
+        return;
+    }
+
+    if (!confirm(`🔄 Deseja limpar os dados de revisão (nome do revisor e data/hora) de TODOS os ${qtdRevisados} registro(s) revisado(s)?\n\nAs ocorrências não serão apagadas, apenas voltarão ao status "REVISAR".`)) {
+        return;
+    }
+
+    registros.forEach(r => {
+        r.revisor = '';
+        r.revisado_em = '';
+        r.editado = false;
+    });
+
+    await salvarMemoria();
+    processarEOrdenarLista();
+    alert(`✅ Dados de revisão removidos de ${qtdRevisados} registro(s)!`);
 }
 
 // ==========================================
@@ -916,7 +1031,7 @@ async function abrirLeitorQR() {
     qrUltimoTexto = "";
     qrUltimaLeitura = 0;
     status.innerText = "Iniciando câmera...";
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
     btn.innerText = "⏳ ABRINDO LEITOR QR...";
 
     try {
@@ -937,9 +1052,6 @@ async function abrirLeitorQR() {
         prepararBarcodeDetector();
         iniciarLoopLeituraQR();
     } catch (erro) {
-        qrScannerAtivo = false;
-        fecharStreamQR();
-        video.srcObject = null;
         modal.style.display = 'none';
         btn.innerText = "🔳 LER QR CODE DO LOCAL";
         if (confirm("Não foi possível abrir a câmera ao vivo. Deseja ler uma foto do QR Code da galeria?")) {
@@ -1146,9 +1258,10 @@ function fecharModalColar() { document.getElementById('colar-modal').style.displ
 function salvarDescricao() {
     const textarea = document.getElementById('descricao-texto');
     const display = document.getElementById('descricao-display');
-    document.getElementById('descricao').value = textarea.value.toUpperCase().trim();
-    display.innerText = textarea.value.trim() !== '' ? textarea.value.toUpperCase() : 'TOQUE PARA DIGITAR...';
-    display.style.color = textarea.value.trim() !== '' ? '#333' : '#6c757d';
+    const valorLimpo = normalizarEspacos(textarea.value).toUpperCase();
+    document.getElementById('descricao').value = valorLimpo;
+    display.innerText = valorLimpo !== '' ? valorLimpo : 'TOQUE PARA DIGITAR...';
+    display.style.color = valorLimpo !== '' ? '#333' : '#6c757d';
     fecharModalDescricao();
 }
 function limparCampoDescricao() {
@@ -1158,10 +1271,11 @@ function limparCampoDescricao() {
     display.style.color = '#6c757d';
 }
 function preencherCampoDescricao(texto) {
-    document.getElementById('descricao').value = texto || '';
+    const valorLimpo = normalizarEspacos(texto).toUpperCase();
+    document.getElementById('descricao').value = valorLimpo;
     const display = document.getElementById('descricao-display');
-    display.innerText = (texto && texto.trim() !== '') ? texto : 'TOQUE PARA DIGITAR...';
-    display.style.color = (texto && texto.trim() !== '') ? '#333' : '#6c757d';
+    display.innerText = valorLimpo !== '' ? valorLimpo : 'TOQUE PARA DIGITAR...';
+    display.style.color = valorLimpo !== '' ? '#333' : '#6c757d';
 }
 
 function removerMidiaFormulario() {
@@ -1324,6 +1438,7 @@ function extrairFrameVideo(videoDataUrl) {
 }
 function abrirViewerMidia(index) {
     const reg = registros[index];
+    if (!reg) return;
     const modal = document.getElementById('media-viewer-modal');
     const img = document.getElementById('viewer-img');
     const video = document.getElementById('viewer-video');
@@ -1346,16 +1461,16 @@ function resetarBotoesAcao() {
 }
 
 // ==========================================
-// SALVAR E EDITAR REGISTROS
+// SALVAR E EDITAR REGISTROS (POR ID ÚNICO)
 // ==========================================
 async function salvarRegistro() {
-    let auditorVal = document.getElementById('auditor').value.trim();
+    let auditorVal = normalizarEspacos(document.getElementById('auditor').value);
     if (!auditorVal) { alert("⚠️ PREENCHA O NOME DO AUDITOR!"); return; }
 
     let areaVal = document.getElementById('area').value;
-    if (areaVal === 'OUTROS') areaVal = document.getElementById('area_outros').value.trim();
+    if (areaVal === 'OUTROS') areaVal = normalizarEspacos(document.getElementById('area_outros').value);
     let ocorrenciaVal = document.getElementById('ocorrencia').value;
-    if (ocorrenciaVal === 'OUTROS') ocorrenciaVal = document.getElementById('ocorrencia_outros').value.trim();
+    if (ocorrenciaVal === 'OUTROS') ocorrenciaVal = normalizarEspacos(document.getElementById('ocorrencia_outros').value);
     
     if (!areaVal || !ocorrenciaVal) { alert("⚠️ SELECIONE ÁREA E OCORRÊNCIA!"); return; }
 
@@ -1368,7 +1483,7 @@ async function salvarRegistro() {
         ocorrenciaVal = ocorrenciaVal + " - " + subOc;
     }
 
-    let localVal = document.getElementById('local').value.trim();
+    let localVal = normalizarEspacos(document.getElementById('local').value);
     if (!localVal) { alert("⚠️ PREENCHA O LOCAL ESPECÍFICO!"); return; }
 
     let acaoSelecionada = document.querySelector('input[name="acao"]:checked');
@@ -1378,21 +1493,23 @@ async function salvarRegistro() {
     let areaUpper = areaVal.toUpperCase();
     let localUpper = localVal.toUpperCase();
     let ocorrenciaUpper = ocorrenciaVal.toUpperCase();
-    let descUpper = document.getElementById('descricao').value.toUpperCase().trim();
-    let interruptorUpper = document.getElementById('interruptor').value.toUpperCase().trim();
+    let descUpper = normalizarEspacos(document.getElementById('descricao').value).toUpperCase();
+    let interruptorUpper = normalizarEspacos(document.getElementById('interruptor').value).toUpperCase();
     let acaoUpper = acaoSelecionada.value.toUpperCase();
+
+    const idxExistente = idEdicao ? registros.findIndex(r => r.id === idEdicao) : -1;
+    const ehEdicao = (idxExistente !== -1);
 
     let dataRegistro = new Date().toLocaleDateString('pt-BR');
     let horaRegistro = new Date().toLocaleTimeString('pt-BR');
-    let ehEdicao = (indiceEdicao !== null);
 
     if (ehEdicao) {
-        dataRegistro = registros[indiceEdicao].data || dataRegistro;
-        horaRegistro = registros[indiceEdicao].hora || horaRegistro;
+        dataRegistro = registros[idxExistente].data || dataRegistro;
+        horaRegistro = registros[idxExistente].hora || horaRegistro;
     }
 
     const novoReg = {
-        id: ehEdicao ? registros[indiceEdicao].id : gerarIdRegistro(),
+        id: ehEdicao ? registros[idxExistente].id : gerarIdRegistro(),
         data: dataRegistro,
         hora: horaRegistro,
         auditor: auditorUpper,
@@ -1406,24 +1523,27 @@ async function salvarRegistro() {
         video: document.getElementById('video_base64').value
     };
 
-    const revisorNome = document.getElementById('nome_revisor').value.trim().toUpperCase();
+    const revisorNome = normalizarEspacos(document.getElementById('nome_revisor').value).toUpperCase();
 
     if (ehEdicao) {
-        const anterior = registros[indiceEdicao];
-        if (revisorNome) {
-            // Se o Revisor está identificado e editou o item, atualiza/sobrescreve a data e hora da revisão
+        const anterior = registros[idxExistente];
+        if (revisorNome && confirm(`Deseja também registrar/atualizar a revisão deste item editado em nome de "${revisorNome}"?`)) {
             novoReg.revisor = revisorNome;
             novoReg.revisado_em = obterTimestampAtual();
             novoReg.editado = true;
         } else {
-            // Se o campo Revisor está vazio, mantém o status anterior sem apagar eventual revisão
             novoReg.revisor = anterior.revisor || '';
             novoReg.revisado_em = anterior.revisado_em || '';
             novoReg.editado = Boolean(anterior.editado || anterior.revisado_em);
         }
-        registros[indiceEdicao] = novoReg;
+        registros[idxExistente] = novoReg;
         cancelarEdicao();
     } else {
+        const chaveNovo = chaveIdentidade(novoReg);
+        const jaExiste = registros.some(r => chaveIdentidade(r) === chaveNovo);
+        if (jaExiste && !confirm("⚠️ Já existe um registro idêntico (Mesma Área, Local, Ocorrência e Detalhe).\nDeseja adicionar mesmo assim?")) {
+            return;
+        }
         registros.push(novoReg);
     }
 
@@ -1443,7 +1563,8 @@ async function salvarRegistro() {
 
 function editarRegistro(index) {
     const reg = registros[index];
-    indiceEdicao = index;
+    if (!reg) return;
+    idEdicao = reg.id;
 
     document.getElementById('bloco-formulario').style.display = 'block';
     document.getElementById('btn-toggle-form').innerText = '🔼 RECOLHER FORMULÁRIO';
@@ -1511,7 +1632,7 @@ function editarRegistro(index) {
 }
 
 function cancelarEdicao() {
-    indiceEdicao = null;
+    idEdicao = null;
     document.getElementById('local').value = '';
     document.getElementById('ocorrencia').value = '';
     document.getElementById('interruptor').value = '';
@@ -1526,6 +1647,8 @@ function cancelarEdicao() {
 
 async function excluirRegistro(index) {
     if (confirm("❌ EXCLUIR ESTE REGISTRO PERMANENTEMENTE?")) {
+        const regRemovido = registros[index];
+        if (regRemovido && regRemovido.id === idEdicao) cancelarEdicao();
         registros.splice(index, 1);
         await salvarMemoria();
         processarEOrdenarLista();
@@ -1533,9 +1656,11 @@ async function excluirRegistro(index) {
 }
 
 async function limparTudo() {
-    if (confirm("🗑️ APAGAR TODOS OS REGISTROS DA TELA?")) {
+    if (confirm("🗑️ APAGAR TODOS OS REGISTROS DA TELA E DA MEMÓRIA DO NAVEGADOR?")) {
         registros = [];
-        await salvarMemoria();
+        await localforage.setItem(STORAGE_KEY, []);
+        await localforage.removeItem('registros_revisor');
+        await localforage.removeItem('registros_caca_desperdicios');
         cancelarEdicao();
         processarEOrdenarLista();
     }
@@ -1575,10 +1700,11 @@ function atualizarLista() {
             lista.append(h);
         }
 
-        const item = el('div', 'registro-item' + ((reg.editado || reg.revisado_em) ? ' revisado' : '') + (reg.isDuplicado ? ' duplicado' : ''));
+        const isRevisado = Boolean(reg.editado || reg.revisado_em);
+        const item = el('div', 'registro-item' + (isRevisado ? ' revisado' : '') + (reg.isDuplicado ? ' duplicado' : ''));
         const badges = el('div', 'badges-row');
-        if (reg.isDuplicado) badges.append(el('span', 'selo-duplicado', '⚠️ DUPLICADO (MESMA ÁREA, LOCAL E TEMA)'));
-        if (reg.editado || reg.revisado_em) badges.append(el('span', 'selo-revisado', `✅ REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em || ''}`));
+        if (reg.isDuplicado) badges.append(el('span', 'selo-duplicado', '⚠️ DUPLICADO (MESMO LOCAL, TEMA E DETALHE)'));
+        if (isRevisado) badges.append(el('span', 'selo-revisado', `✅ REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em || ''}`));
         item.append(badges);
 
         const conteudo = el('div', 'registro-conteudo');
@@ -1599,7 +1725,7 @@ function atualizarLista() {
         if (reg.descricao) {
             texto.append(document.createElement('br'));
             const d = el('span', '', `DETALHE: ${reg.descricao}`);
-            d.style.cssText = 'color:#555;font-size:11px;';
+            d.style.cssText = 'color:#555;font-size:11px;font-weight:600;';
             texto.append(d);
         }
 
@@ -1611,7 +1737,7 @@ function atualizarLista() {
         texto.append(document.createElement('br'));
         const ass = el('span', '', `Registrado por ${reg.auditor || 'DESCONHECIDO'} em: ${reg.data || ''}${reg.hora ? ' às ' + reg.hora : ''}. `);
         ass.style.cssText = 'color:#777;font-size:11px;';
-        if (reg.revisado_em) {
+        if (isRevisado) {
             const revStrong = el('strong', '', `REVISADO POR ${(reg.revisor || 'REVISOR').toUpperCase()} EM ${reg.revisado_em}`);
             revStrong.style.color = 'var(--success)';
             ass.append(revStrong);
@@ -1623,11 +1749,14 @@ function atualizarLista() {
         if (reg.video) {
             const wrap = el('div', 'video-thumbnail-container');
             wrap.title = 'VER VÍDEO';
+            wrap.setAttribute('role', 'button');
+            wrap.setAttribute('tabindex', '0');
             const img = el('img');
             img.src = reg.foto || placeholderThumb;
             const play = el('div', 'play-icon', '▶');
             wrap.append(img, play);
             wrap.addEventListener('click', () => abrirViewerMidia(index));
+            wrap.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); abrirViewerMidia(index); } });
             conteudo.append(wrap);
         } else if (reg.foto) {
             const img = el('img', 'registro-miniatura');
@@ -1640,11 +1769,16 @@ function atualizarLista() {
         item.append(conteudo);
 
         const acoes = el('div', 'acoes-item');
-        [
+        const botoesItem = [
             ['btn-primary', '✏️ EDITAR', () => editarRegistro(index)],
-            ['btn-success', '✅ REVISADO', () => marcarComoRevisado(index)],
-            ['btn-danger', '❌ EXCLUIR', () => excluirRegistro(index)]
-        ].forEach(([c, t, fn]) => {
+            [isRevisado ? 'btn-success' : 'btn-pendente', isRevisado ? '✅ REVISADO' : '🔍 REVISAR', () => marcarComoRevisado(index)]
+        ];
+        if (isRevisado) {
+            botoesItem.push(['btn-secondary', '🔄 LIMPAR REV.', () => limparRevisaoIndividual(index)]);
+        }
+        botoesItem.push(['btn-danger', '❌ EXCLUIR', () => excluirRegistro(index)]);
+
+        botoesItem.forEach(([c, t, fn]) => {
             const b = el('button', c, t);
             b.type = 'button';
             b.addEventListener('click', fn);
@@ -1657,11 +1791,29 @@ function atualizarLista() {
 }
 
 // ==========================================
-// FUNÇÕES DE EXPORTAÇÃO (GERAL + INTELIGENTE POR ÁREA)
+// FUNÇÕES DE EXPORTAÇÃO AUDITADAS (GERAL + INTELIGENTE POR ÁREA)
 // ==========================================
 function getISOWeek(d) {
-    let t = new Date(d); t.setHours(0,0,0,0); t.setDate(t.getDate()+4-(t.getDay()||7));
-    return Math.ceil((((t-new Date(t.getFullYear(),0,1))/8.64e7)+1)/7);
+    let t = new Date(d);
+    if (isNaN(t.getTime())) t = new Date();
+    t.setHours(0,0,0,0);
+    t.setDate(t.getDate() + 4 - (t.getDay() || 7));
+    return Math.ceil((((t - new Date(t.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);
+}
+
+function obterKWRelatorio(listaDados) {
+    if (Array.isArray(listaDados)) {
+        for (const r of listaDados) {
+            if (r && r.data) {
+                const m = String(r.data).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if (m) {
+                    const dt = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+                    if (!isNaN(dt.getTime())) return getISOWeek(dt);
+                }
+            }
+        }
+    }
+    return getISOWeek(new Date());
 }
 
 function obterAreasUnicas() {
@@ -1703,7 +1855,7 @@ function gerarWorkbookExcel(listaDados) {
             "LOCAL": r.local || "",
             "INTERRUPTOR": r.interruptor || "",
             "OCORRÊNCIA": r.ocorrencia || "",
-            "DESCRIÇÃO": (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " "),
+            "DESCRIÇÃO / DETALHE": (r.descricao || "").replace(/(\r\n|\n|\r)/gm, " "),
             "AÇÃO TOMADA": r.acao || "",
             "REVISOR": r.revisor || "NÃO REVISADO",
             "ÚLTIMA REVISÃO EM": r.revisado_em || "-",
@@ -1711,6 +1863,11 @@ function gerarWorkbookExcel(listaDados) {
         };
     });
     const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
+    worksheet['!cols'] = [
+        { wch: 6 },  { wch: 14 }, { wch: 12 }, { wch: 18 },
+        { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 38 },
+        { wch: 35 }, { wch: 20 }, { wch: 16 }, { wch: 22 }, { wch: 10 }
+    ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoria");
     return workbook;
@@ -1718,17 +1875,20 @@ function gerarWorkbookExcel(listaDados) {
 
 function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES") {
     let pptx = new PptxGenJS();
-    let kw = getISOWeek(new Date());
+    let kw = obterKWRelatorio(listaDados);
     let slideAtual;
 
     listaDados.forEach((reg, index) => {
         if (index % 4 === 0) {
             slideAtual = pptx.addSlide();
-            slideAtual.addText(`RONDA KW ${kw} - ${sufixoTitulo}`, { x: 0.3, y: 0.2, w: 9.4, h: 0.4, fontSize: 22, bold: true });
+            slideAtual.addText(`RONDA KW ${kw} - ${sufixoTitulo}`, {
+                x: 0.3, y: 0.2, w: 9.4, h: 0.4, fontSize: 21, bold: true, fit: 'shrink'
+            });
         }
         
-        let yBase = 1.05 + ((index % 4) * 1.12);
-        let textX = 0.3; let textW = 7.0;
+        let yBase = 1.02 + ((index % 4) * 1.12);
+        let textX = 0.3;
+        let textW = 7.0;
         
         let areaUpper = reg.area || "";
         let localUpper = reg.local || "";
@@ -1740,7 +1900,9 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
         let acaoUpper = reg.acao || "NÃO INFORMADA";
         let auditorUpper = reg.auditor || "DESCONHECIDO";
 
-        let titulo = localUpper ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}` : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
+        let titulo = localUpper
+            ? `OCORRÊNCIA #${index + 1} - ${areaUpper} - ${localUpper}`
+            : `OCORRÊNCIA #${index + 1} - ${areaUpper}`;
         
         let displayDataHora = reg.data || '';
         if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` ÀS ${reg.hora}`;
@@ -1751,23 +1913,46 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
             txtRodape += ` REVISADO POR ${nomeRev} EM ${reg.revisado_em.toUpperCase()}`;
         }
 
-        slideAtual.addText(titulo, { x: textX, y: yBase, w: textW, h: 0.25, fontSize: 12, bold: true, fit: 'shrink' });
-        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: yBase + 0.22, w: textW, h: 0.2, fontSize: 10.5, bold: true, color: '0056b3', fit: 'shrink' });
-        if (descUpper) slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: yBase + 0.40, w: textW, h: 0.2, fontSize: 9.5, color: '666666', fit: 'shrink' });
-        slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: yBase + 0.58, w: textW, h: 0.2, fontSize: 10, bold: true, color: '28a745' });
-        slideAtual.addText(txtRodape, { x: textX, y: yBase + 0.76, w: textW, h: 0.2, fontSize: 8, italic: true, fit: 'shrink' });
+        let cursorY = yBase;
+        slideAtual.addText(titulo, { x: textX, y: cursorY, w: textW, h: 0.24, fontSize: 12, bold: true, fit: 'shrink' });
+        cursorY += 0.22;
 
-        if (reg.video) {
-            let mediaOpts = { type: 'video', data: reg.video, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
-            if (reg.foto) mediaOpts.cover = reg.foto;
-            try { slideAtual.addMedia(mediaOpts); }
-            catch(e) { if (reg.foto) slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain' } }); }
+        slideAtual.addText("OCORRÊNCIA: " + ocorrenciaUpper, { x: textX, y: cursorY, w: textW, h: 0.20, fontSize: 10.5, bold: true, color: '0056b3', fit: 'shrink' });
+        cursorY += 0.19;
+
+        if (descUpper) {
+            slideAtual.addText("DETALHE: " + descUpper, { x: textX, y: cursorY, w: textW, h: 0.19, fontSize: 9.5, color: '666666', fit: 'shrink' });
+            cursorY += 0.18;
+        }
+
+        slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: cursorY, w: textW, h: 0.19, fontSize: 10, bold: true, color: '28a745', fit: 'shrink' });
+        cursorY += 0.18;
+
+        slideAtual.addText(txtRodape, { x: textX, y: cursorY, w: textW, h: 0.18, fontSize: 8, italic: true, color: '444444', fit: 'shrink' });
+
+        const fotoLimpa = normalizarDataUriMidiaPPTX(reg.foto);
+        const videoLimpo = normalizarDataUriMidiaPPTX(reg.video);
+
+        if (videoLimpo) {
+            let mediaOpts = { type: 'video', data: videoLimpo, x: 7.5, y: yBase, w: 1.8, h: 0.85 };
+            if (fotoLimpa && fotoLimpa.startsWith('data:image/jpeg')) mediaOpts.cover = fotoLimpa;
+            try {
+                slideAtual.addMedia(mediaOpts);
+            } catch (e) {
+                if (fotoLimpa) {
+                    try { slideAtual.addImage({ data: fotoLimpa, x: 7.5, y: yBase, w: 1.8, h: 0.85, sizing: { type: 'contain', w: 1.8, h: 0.85 } }); } catch (_) {}
+                }
+            }
             slideAtual.addText("▶ VÍDEO ANEXADO", { x: 7.5, y: yBase + 0.85, w: 1.8, h: 0.15, fontSize: 8, bold: true, color: 'dc3545', align: 'center' });
-        } else if (reg.foto) {
-            try { slideAtual.addImage({ data: reg.foto, x: 7.5, y: yBase, w: 1.8, h: 1.0, sizing: { type: 'contain' } }); } catch(e) {}
+        } else if (fotoLimpa) {
+            try {
+                slideAtual.addImage({ data: fotoLimpa, x: 7.5, y: yBase, w: 1.8, h: 0.98, sizing: { type: 'contain', w: 1.8, h: 0.98 } });
+            } catch (e) {}
         }
         
-        if (index % 4 < 3) slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9, h: 0, line: { color: 'E0E0E0', width: 1 } });
+        if (index % 4 < 3) {
+            slideAtual.addShape(pptx.ShapeType.line, { x: 0.3, y: yBase + 1.05, w: 9.0, h: 0, line: { color: 'E0E0E0', width: 1 } });
+        }
     });
 
     return pptx;
@@ -1781,56 +1966,7 @@ function baixarBlob(blob, nomeArquivo) {
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
-async function acionarExportarGeral(formato) {
-    let kw = getISOWeek(new Date());
-    let dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
-    let padrao = `GERAL_KW${kw}_${dataHoje}`;
-    let nomeBase = prompt(`CONFIRME O NOME DO ARQUIVO ${formato} GERAL:`, padrao);
-    if (!nomeBase) return;
-    nomeBase = limparNomeArquivo(nomeBase);
-    fecharModalExportar();
-
-    const limpos = limparMetadadosInternos(registros);
-
-    if (formato === 'JSON') {
-        const blob = new Blob([JSON.stringify(limpos, null, 2)], { type: "application/json" });
-        baixarBlob(blob, `${nomeBase}.json`);
-    } else if (formato === 'XLSX') {
-        const wb = gerarWorkbookExcel(limpos);
-        XLSX.writeFile(wb, `${nomeBase}.xlsx`);
-    } else if (formato === 'PPTX') {
-        const pptx = construirObjetoPPTX(limpos, "DESPERDÍCIOS UTILITIES");
-        await pptx.writeFile({ fileName: `${nomeBase}.pptx` });
-    }
-}
-
-async function exportarAreaUnica(formato) {
-    const areaSelecionada = document.getElementById('select-area-export').value;
-    if (!areaSelecionada) return;
-
-    const filtrados = limparMetadadosInternos(
-        registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === areaSelecionada)
-    );
-    if (filtrados.length === 0) return;
-
-    let kw = getISOWeek(new Date());
-    let dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
-    let nomeArquivoBase = `KW${kw}_${limparNomeArquivo(areaSelecionada)}_${dataHoje}`;
-    fecharModalExportar();
-
-    if (formato === 'JSON') {
-        const blob = new Blob([JSON.stringify(filtrados, null, 2)], { type: "application/json" });
-        baixarBlob(blob, `${nomeArquivoBase}.json`);
-    } else if (formato === 'XLSX') {
-        const wb = gerarWorkbookExcel(filtrados);
-        XLSX.writeFile(wb, `${nomeArquivoBase}.xlsx`);
-    } else if (formato === 'PPTX') {
-        const pptx = construirObjetoPPTX(filtrados, `SETOR: ${areaSelecionada}`);
-        await pptx.writeFile({ fileName: `${nomeArquivoBase}.pptx` });
-    }
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
 async function gerarBlobPPTXSeguro(pptx) {
@@ -1841,45 +1977,131 @@ async function gerarBlobPPTXSeguro(pptx) {
     }
 }
 
+function definirStatusExportacao(ativo, texto = "⏳ Gerando arquivos, aguarde...") {
+    const statusEl = document.getElementById('status-exportacao');
+    if (statusEl) {
+        statusEl.textContent = texto;
+        statusEl.style.display = ativo ? 'block' : 'none';
+    }
+    document.querySelectorAll('#exportar-modal button').forEach(b => { b.disabled = ativo; });
+}
+
+async function acionarExportarGeral(formato) {
+    if (registros.length === 0) return;
+    const limpos = prepararListaParaExportacao(registros);
+    let kw = obterKWRelatorio(limpos);
+    let dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+    let padrao = `GERAL_KW${kw}_${dataHoje}`;
+    let nomeBase = prompt(`CONFIRME O NOME DO ARQUIVO ${formato} GERAL:`, padrao);
+    if (!nomeBase) return;
+    nomeBase = limparNomeArquivo(nomeBase);
+
+    try {
+        definirStatusExportacao(true, `⏳ Gerando ${formato} geral...`);
+        if (formato === 'JSON') {
+            const blob = new Blob([JSON.stringify(limpos, null, 2)], { type: "application/json;charset=utf-8" });
+            baixarBlob(blob, `${nomeBase}.json`);
+        } else if (formato === 'XLSX') {
+            const wb = gerarWorkbookExcel(limpos);
+            XLSX.writeFile(wb, `${nomeBase}.xlsx`);
+        } else if (formato === 'PPTX') {
+            const pptx = construirObjetoPPTX(limpos, "DESPERDÍCIOS UTILITIES");
+            const pptxBlob = await gerarBlobPPTXSeguro(pptx);
+            baixarBlob(pptxBlob, `${nomeBase}.pptx`);
+        }
+    } catch (err) {
+        alert(`Erro ao exportar ${formato}: ${err.message}`);
+    } finally {
+        definirStatusExportacao(false);
+        fecharModalExportar();
+    }
+}
+
+async function exportarAreaUnica(formato) {
+    const areaSelecionada = document.getElementById('select-area-export').value;
+    if (!areaSelecionada) return;
+
+    const filtrados = prepararListaParaExportacao(
+        registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === areaSelecionada)
+    );
+    if (filtrados.length === 0) return;
+
+    let kw = obterKWRelatorio(filtrados);
+    let dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+    let nomeArquivoBase = `KW${kw}_${limparNomeArquivo(areaSelecionada)}_${dataHoje}`;
+
+    try {
+        definirStatusExportacao(true, `⏳ Exportando área ${areaSelecionada}...`);
+        if (formato === 'JSON') {
+            const blob = new Blob([JSON.stringify(filtrados, null, 2)], { type: "application/json;charset=utf-8" });
+            baixarBlob(blob, `${nomeArquivoBase}.json`);
+        } else if (formato === 'XLSX') {
+            const wb = gerarWorkbookExcel(filtrados);
+            XLSX.writeFile(wb, `${nomeArquivoBase}.xlsx`);
+        } else if (formato === 'PPTX') {
+            const pptx = construirObjetoPPTX(filtrados, `SETOR: ${areaSelecionada}`);
+            const pptxBlob = await gerarBlobPPTXSeguro(pptx);
+            baixarBlob(pptxBlob, `${nomeArquivoBase}.pptx`);
+        }
+    } catch (err) {
+        alert(`Erro ao exportar área ${areaSelecionada}: ${err.message}`);
+    } finally {
+        definirStatusExportacao(false);
+        fecharModalExportar();
+    }
+}
+
 async function exportarLotePorArea(formato) {
     const areas = obterAreasUnicas();
     if (areas.length === 0) return;
 
-    fecharModalExportar();
     const zip = new JSZip();
-    const kw = getISOWeek(new Date());
+    const kw = obterKWRelatorio(registros);
     const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '');
+    const nomesUsados = new Set();
 
-    for (const area of areas) {
-        try {
-            const itensArea = limparMetadadosInternos(
+    try {
+        definirStatusExportacao(true, `⏳ Empacotando ${areas.length} área(s) em .ZIP...`);
+        for (const area of areas) {
+            const itensArea = prepararListaParaExportacao(
                 registros.filter(r => (r.area || "SEM_AREA").trim().toUpperCase() === area)
             );
-            const nomeLimpo = `KW${kw}_${limparNomeArquivo(area)}_${dataHoje}`;
+            if (!itensArea.length) continue;
+
+            let nomeBase = `KW${kw}_${limparNomeArquivo(area)}_${dataHoje}`;
+            let nomeFinal = nomeBase;
+            let sufixo = 2;
+            while (nomesUsados.has(nomeFinal)) {
+                nomeFinal = `${nomeBase}_${sufixo++}`;
+            }
+            nomesUsados.add(nomeFinal);
 
             if (formato === 'JSON') {
-                zip.file(`${nomeLimpo}.json`, JSON.stringify(itensArea, null, 2));
+                zip.file(`${nomeFinal}.json`, JSON.stringify(itensArea, null, 2));
             } else if (formato === 'XLSX') {
                 const wb = gerarWorkbookExcel(itensArea);
                 const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                zip.file(`${nomeLimpo}.xlsx`, xlsxBuffer);
+                zip.file(`${nomeFinal}.xlsx`, xlsxBuffer);
             } else if (formato === 'PPTX') {
                 const pptx = construirObjetoPPTX(itensArea, `SETOR: ${area}`);
                 const pptxBlob = await gerarBlobPPTXSeguro(pptx);
-                zip.file(`${nomeLimpo}.pptx`, pptxBlob);
+                zip.file(`${nomeFinal}.pptx`, pptxBlob);
             }
-        } catch (err) {
-            alert(`Erro ao empacotar a área ${area}: ${err.message}`);
         }
-    }
 
-    const zipBlob = await zip.generateAsync({ type: "blob" });
-    baixarBlob(zipBlob, `PACOTE_POR_AREA_${formato}_KW${kw}_${dataHoje}.zip`);
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        baixarBlob(zipBlob, `PACOTE_POR_AREA_${formato}_KW${kw}_${dataHoje}.zip`);
+    } catch (err) {
+        alert(`Erro ao gerar pacote ZIP: ${err.message}`);
+    } finally {
+        definirStatusExportacao(false);
+        fecharModalExportar();
+    }
 }
 
 function copiarJSON() {
     if (registros.length === 0) return;
-    const limpos = limparMetadadosInternos(registros);
+    const limpos = prepararListaParaExportacao(registros);
     const jsonString = JSON.stringify(limpos, null, 2);
     navigator.clipboard.writeText(jsonString).then(() => {
         alert("✅ DADOS COPIADOS COM SUCESSO!");
@@ -1927,6 +2149,19 @@ function mesclarImportados(lista) {
 async function importarJSON(e) {
     const files = e.target.files;
     if (!files?.length) return;
+
+    if (registros.length > 0) {
+        const substituir = confirm(
+            `Já existem ${registros.length} registro(s) salvos na tela.\n\n` +
+            `• Clique em "OK" para LIMPAR A TELA e carregar APENAS o(s) arquivo(s) selecionado(s).\n` +
+            `• Clique em "Cancelar" se quiser MESCLAR (juntar) com os registros que já estão na tela.`
+        );
+        if (substituir) {
+            registros = [];
+            cancelarEdicao();
+        }
+    }
+
     let total = 0, ignorados = 0;
 
     for (const file of files) {
@@ -1944,7 +2179,7 @@ async function importarJSON(e) {
 
     await salvarMemoria();
     processarEOrdenarLista();
-    alert(`✅ Importação concluída!\n• ${total} registro(s) adicionado(s)\n• ${ignorados} ignorado(s) (ID já importado ou inválido)`);
+    alert(`✅ Importação concluída!\n• ${total} registro(s) carregado(s)\n• ${ignorados} ignorado(s)\n• Total na tela: ${registros.length}`);
     e.target.value = '';
 }
 
@@ -1955,10 +2190,23 @@ async function processarColarJSON() {
         const dados = JSON.parse(texto);
         const lista = Array.isArray(dados) ? dados : (Array.isArray(dados.registros) ? dados.registros : null);
         if (!lista) throw new Error('O JSON deve ser uma lista de registros.');
+
+        if (registros.length > 0) {
+            const substituir = confirm(
+                `Já existem ${registros.length} registro(s) salvos na tela.\n\n` +
+                `• Clique em "OK" para LIMPAR A TELA e carregar APENAS o JSON colado.\n` +
+                `• Clique em "Cancelar" para MESCLAR com os registros atuais.`
+            );
+            if (substituir) {
+                registros = [];
+                cancelarEdicao();
+            }
+        }
+
         const r = mesclarImportados(lista);
         await salvarMemoria();
         processarEOrdenarLista();
-        alert(`✅ Importação concluída!\n• ${r.adicionados} registro(s) adicionado(s)\n• ${r.ignorados} ignorado(s)`);
+        alert(`✅ Importação concluída!\n• ${r.adicionados} registro(s) carregado(s)\n• ${r.ignorados} ignorado(s)\n• Total na tela: ${registros.length}`);
         fecharModalColar();
     } catch (err) {
         alert('ERRO AO IMPORTAR JSON: ' + err.message);
