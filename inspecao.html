@@ -366,7 +366,7 @@
             padding: 5px 8px;
             font-size: 11px;
             height: 30px;
-            width: auto; /* Mantém os botões na horizontal */
+            width: auto;
         }
 
         /* Modais */
@@ -442,7 +442,6 @@
 <div class="top-section">
     <div class="top-header-bar">
         <div class="app-title-container">
-            <!-- Usa o ícone físico da pasta -->
             <img src="./icon.png" class="app-logo-img" alt="Logo" onerror="this.style.display='none'">
             <h2>CAÇA DESPERDÍCIOS</h2>
         </div>
@@ -2012,12 +2011,15 @@ function baixarBlob(blob, nomeArquivo) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+// CORREÇÃO DO CHROME AQUI: Força o tipo de ficheiro PPTX para evitar que faça o download como .ZIP
 async function gerarBlobPPTXSeguro(pptx) {
+    let b;
     try {
-        return await pptx.write('blob');
+        b = await pptx.write('blob');
     } catch (_) {
-        return await pptx.write({ outputType: 'blob' });
+        b = await pptx.write({ outputType: 'blob' });
     }
+    return new Blob([b], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
 }
 
 function definirStatusExportacao(ativo, texto = "⏳ Gerando arquivos, aguarde...") {
