@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CAÇA DESPERDÍCIOS — INTEGRADO</title>
 
-    <!-- BIBLI EXTERNAS (Com fallbacks de segurança caso esteja offline) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -744,21 +743,40 @@ window.onload = async function() {
         let revisorSalvo = localStorage.getItem('revisor_nome');
         if (revisorSalvo) document.getElementById('nome_revisor').value = revisorSalvo;
 
-        let dadosUnificados = await localforage.getItem(STORAGE_KEY);
+        let dadosUnificados = null;
+        try {
+            if (window.localforage) {
+                dadosUnificados = await localforage.getItem(STORAGE_KEY);
+            }
+        } catch (_) {}
+
+        if (!Array.isArray(dadosUnificados)) {
+            const rawLocal = localStorage.getItem(STORAGE_KEY);
+            if (rawLocal) {
+                try { dadosUnificados = JSON.parse(rawLocal); } catch (_) {}
+            }
+        }
 
         if (Array.isArray(dadosUnificados)) {
             registros = dadosUnificados;
         } else {
-            let dadosAntigosRevisor = await localforage.getItem('registros_revisor');
-            let dadosAntigosColeta = await localforage.getItem('registros_caca_desperdicios');
+            let dadosAntigosRevisor = null, dadosAntigosColeta = null;
+            try {
+                if (window.localforage) {
+                    dadosAntigosRevisor = await localforage.getItem('registros_revisor');
+                    dadosAntigosColeta = await localforage.getItem('registros_caca_desperdicios');
+                }
+            } catch (_) {}
 
             if (Array.isArray(dadosAntigosRevisor) && dadosAntigosRevisor.length > 0) {
                 registros = dadosAntigosRevisor;
             } else if (Array.isArray(dadosAntigosColeta) && dadosAntigosColeta.length > 0) {
                 registros = dadosAntigosColeta;
             }
-            await localforage.removeItem('registros_revisor');
-            await localforage.removeItem('registros_caca_desperdicios');
+            if (window.localforage) {
+                await localforage.removeItem('registros_revisor');
+                await localforage.removeItem('registros_caca_desperdicios');
+            }
         }
 
         await salvarMemoria();
@@ -800,7 +818,10 @@ function normalizarRegistro(r) {
 async function salvarMemoria() {
     try {
         registros = registros.map(normalizarRegistro);
-        await localforage.setItem(STORAGE_KEY, registros);
+        if (window.localforage) {
+            await localforage.setItem(STORAGE_KEY, registros);
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
     } catch (e) {
         console.error("Erro ao salvar:", e);
     }
@@ -824,22 +845,6 @@ function obterTimestampAtual() {
     const data = agora.toLocaleDateString('pt-BR');
     const hora = agora.toLocaleTimeString('pt-BR');
     return `${data} às ${hora}`;
-}
-
-function parseDataHoraBR(valor) {
-    if (valor == null || valor === '') return 0;
-    const texto = String(valor).trim();
-    const br = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\D+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
-    if (br) {
-        const dia = Number(br[1]), mes = Number(br[2]), ano = Number(br[3]);
-        const hora = Number(br[4] || 0), minuto = Number(br[5] || 0), segundo = Number(br[6] || 0);
-        if (mes < 1 || mes > 12 || dia < 1 || hora > 23 || minuto > 59 || segundo > 59) return 0;
-        const data = new Date(ano, mes - 1, dia, hora, minuto, segundo);
-        if (data.getFullYear() !== ano || data.getMonth() !== mes - 1 || data.getDate() !== dia) return 0;
-        return data.getTime();
-    }
-    const timestamp = Date.parse(texto);
-    return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 function removerAcentos(texto) {
@@ -1659,9 +1664,12 @@ async function excluirRegistro(index) {
 async function limparTudo() {
     if (confirm("🗑️ APAGAR TODOS OS REGISTROS DA TELA E DA MEMÓRIA DO NAVEGADOR?")) {
         registros = [];
-        await localforage.setItem(STORAGE_KEY, []);
-        await localforage.removeItem('registros_revisor');
-        await localforage.removeItem('registros_caca_desperdicios');
+        if (window.localforage) {
+            await localforage.setItem(STORAGE_KEY, []);
+            await localforage.removeItem('registros_revisor');
+            await localforage.removeItem('registros_caca_desperdicios');
+        }
+        localStorage.removeItem(STORAGE_KEY);
         cancelarEdicao();
         processarEOrdenarLista();
     }
@@ -1792,7 +1800,7 @@ function atualizarLista() {
 }
 
 // ==========================================
-// FUNÇÕES DE EXPORTAÇÃO AUDITADAS (GERAL + INTELIGENTE POR ÁREA)
+// FUNÇÕES DE EXPORTAÇÃO (COM ABA "RONDA" FORMATADA)
 // ==========================================
 function getISOWeek(d) {
     let t = new Date(d);
@@ -1836,22 +1844,33 @@ function atualizarSelectAreasExportacao() {
     });
 }
 
-function prepararListaParaExportacao(lista) {
-    const copiaLista = lista.map(r => {
-        const copia = normalizarRegistro(r);
+function limparMetadadosInternos(lista) {
+    return lista.map(r => {
+        const copia = { ...r };
         delete copia.isDuplicado;
         return copia;
     });
-    ordenarArrayRegistros(copiaLista);
-    return copiaLista;
 }
 
-function normalizarDataUriMidiaPPTX(dataUri) {
-    if (!dataUri || typeof dataUri !== 'string') return '';
-    return dataUri.replace(/^data:(image|video)\/([a-z0-9.+-]+)(?:;[^;]+)*;base64,/i, 'data:$1/$2;base64,');
+// Mapeia o tipo de ocorrência conforme as instruções solicitadas
+function traduzirTipoOcorrencia(ocorrenciaOriginal) {
+    const oc = String(ocorrenciaOriginal || "").toUpperCase().trim();
+    if (oc.includes("TV LIGADA") || oc.includes("VENTILADOR LIGADO") || oc.includes("LUZ ACESA")) {
+        return "Iluminação Ligada";
+    }
+    if (oc.includes("VAZAMENTO DE AR") || oc.includes("VAZAMENTOS DE AR")) {
+        return "Vazamento de Ar Comprimido";
+    }
+    if (oc.includes("VAZAMENTO DE ÁGUA") || oc.includes("VAZAMENTOS DE ÁGUA")) {
+        return "Vazamento de Água";
+    }
+    return oc || "OUTROS";
 }
 
 function gerarWorkbookExcel(listaDados) {
+    const workbook = XLSX.utils.book_new();
+
+    // 1. Aba Principal: "Auditoria"
     const dadosExcel = listaDados.map((r, i) => {
         let tipoMidia = r.video ? "VÍDEO" : (r.foto ? "FOTO" : "NÃO TEM");
         return {
@@ -1870,14 +1889,30 @@ function gerarWorkbookExcel(listaDados) {
             "MÍDIA": tipoMidia
         };
     });
-    const worksheet = XLSX.utils.json_to_sheet(dadosExcel);
-    worksheet['!cols'] = [
+    const wsAuditoria = XLSX.utils.json_to_sheet(dadosExcel);
+    wsAuditoria['!cols'] = [
         { wch: 6 },  { wch: 14 }, { wch: 12 }, { wch: 18 },
         { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 38 },
         { wch: 35 }, { wch: 20 }, { wch: 16 }, { wch: 22 }, { wch: 10 }
     ];
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoria");
+    XLSX.utils.book_append_sheet(workbook, wsAuditoria, "Auditoria");
+
+    // 2. Aba Adicional: "Ronda" (Área, Localização, Tipo, KW, observações)
+    const dadosRonda = listaDados.map(r => {
+        return {
+            "Área": r.area || "",
+            "Localização": r.local || "",
+            "Tipo": traduzirTipoOcorrencia(r.ocorrencia),
+            "KW": 1,
+            "observações": r.descricao || ""
+        };
+    });
+    const wsRonda = XLSX.utils.json_to_sheet(dadosRonda);
+    wsRonda['!cols'] = [
+        { wch: 20 }, { wch: 22 }, { wch: 30 }, { wch: 8 }, { wch: 45 }
+    ];
+    XLSX.utils.book_append_sheet(workbook, wsRonda, "Ronda");
+
     return workbook;
 }
 
@@ -1964,6 +1999,11 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
     });
 
     return pptx;
+}
+
+function normalizarDataUriMidiaPPTX(dataUri) {
+    if (!dataUri || typeof dataUri !== 'string') return '';
+    return dataUri.replace(/^data:(image|video)\/([a-z0-9.+-]+)(?:;[^;]+)*;base64,/i, 'data:$1/$2;base64,');
 }
 
 function baixarBlob(blob, nomeArquivo) {
@@ -2115,6 +2155,16 @@ function copiarJSON() {
         alert("✅ DADOS COPIADOS COM SUCESSO!");
     }).catch(err => { alert("ERRO AO COPIAR: " + err); });
     fecharModalExportar();
+}
+
+function prepararListaParaExportacao(lista) {
+    const copiaLista = lista.map(r => {
+        const copia = normalizarRegistro(r);
+        delete copia.isDuplicado;
+        return copia;
+    });
+    ordenarArrayRegistros(copiaLista);
+    return copiaLista;
 }
 
 // ==========================================
