@@ -6,15 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CAÇA DESPERDÍCIOS — INTEGRADO</title>
 
-    <!-- CONFIGURAÇÕES PWA (Apontando para o manifesto físico) -->
+    <!-- LIGAÇÃO PWA PADRÃO PARA O GITHUB PAGES -->
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0056b3">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Caça Desperdícios">
-    <link rel="manifest" href="./manifest.json">
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAljSURBVHja7Jv5dxT3Hcfn973dXV27K1kJLRAIIUQghAQMIdhOAAcHBwcHBwdnBykBAiEQkhKSEpISSUnJVN11/17b075v10l3e7udnt31/b0z882zO90fO/vN7u2e3d3V9Q/P6Oqa/vBf3+v0/6Ouvr+qWvrj6/q2f+p6a1+7/vS9/vN63b9fXVfV32n7f1m/r2p1V7Xuun5/VTf7z7Oua6v7/9e1df3S996u/9fWdTW6a/qJv3yvf+q+7896W1XVVTWqqjrfqapqp+rqe4v0b3V973uP/5p01U2t11XVdd29P6mqqn5l9S+6afrf9/96dV1X1X/57b+q9u+2/6o63e2u1v13/6K7un7tL7uqqr/Z9r+ufrs/v//+9w4A/78N29f2Fq0AAAAASUVORK5CYII=">
-    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAljSURBVHja7Jv5dxT3Hcfn973dXV27K1kJLRAIIUQghAQMIdhOAAcHBwcHBwdnBykBAiEQkhKSEpISSUnJVN11/17b075v10l3e7udnt31/b0z882zO90fO/vN7u2e3d3V9Q/P6Oqa/vBf3+v0/6Ouvr+qWvrj6/q2f+p6a1+7/vS9/vN63b9fXVfV32n7f1m/r2p1V7Xuun5/VTf7z7Oua6v7/9e1df3S996u/9fWdTW6a/qJv3yvf+q+7896W1XVVTWqqjrfqapqp+rqe4v0b3V973uP/5p01U2t11XVdd29P6mqqn5l9S+6afrf9/96dV1X1X/57b+q9u+2/6o63e2u1v13/6K7un7tL7uqqr/Z9r+ufrs/v//+9w4A/78N29f2Fq0AAAAASUVORK5CYII=">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
@@ -70,24 +67,10 @@
             margin-bottom: 8px;
         }
 
-        .app-title-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .app-logo-img {
-            width: 34px;
-            height: 34px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-        }
-
         .top-header-bar h2 {
             color: var(--primary);
             margin: 0;
-            font-size: 15px;
+            font-size: 16px;
         }
 
         .btn-toggle-form {
@@ -445,11 +428,8 @@
 
 <div class="top-section">
     <div class="top-header-bar">
-        <div class="app-title-container">
-            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAljSURBVHja7Jv5dxT3Hcfn973dXV27K1kJLRAIIUQghAQMIdhOAAcHBwcHBwdnBykBAiEQkhKSEpISSUnJVN11/17b075v10l3e7udnt31/b0z882zO90fO/vN7u2e3d3V9Q/P6Oqa/vBf3+v0/6Ouvr+qWvrj6/q2f+p6a1+7/vS9/vN63b9fXVfV32n7f1m/r2p1V7Xuun5/VTf7z7Oua6v7/9e1df3S996u/9fWdTW6a/qJv3yvf+q+7896W1XVVTWqqjrfqapqp+rqe4v0b3V973uP/5p01U2t11XVdd29P6mqqn5l9S+6afrf9/96dV1X1X/57b+q9u+2/6o63e2u1v13/6K7un7tL7uqqr/Z9r+ufrs/v//+9w4A/78N29f2Fq0AAAAASUVORK5CYII=" class="app-logo-img" alt="Logo">
-            <h2>CAÇA DESPERDÍCIOS</h2>
-        </div>
-        <button type="button" class="btn-toggle-form" id="btn-toggle-form" onclick="alternarFormulario()">🔼 RECOLHER</button>
+        <h2>🛠️ CAÇA DESPERDÍCIOS & REVISÃO</h2>
+        <button type="button" class="btn-toggle-form" id="btn-toggle-form" onclick="alternarFormulario()">🔼 RECOLHER FORMULÁRIO</button>
     </div>
 
     <div class="form-grid" style="margin-bottom: 6px;">
@@ -719,7 +699,7 @@
 
 <script>
 // ==========================================
-// MANIFESTO PWA EMBUTIDO COM A NOVA LOGO
+// MANIFESTO PWA COM O NOVO LOGÓTIPO
 // ==========================================
 (function configurarManifestoEmbutido() {
     try {
@@ -1877,6 +1857,7 @@ function limparMetadadosInternos(lista) {
     });
 }
 
+// Mapeia o tipo de ocorrência conforme as instruções solicitadas
 function traduzirTipoOcorrencia(ocorrenciaOriginal) {
     const oc = String(ocorrenciaOriginal || "").toUpperCase().trim();
     if (oc.includes("TV LIGADA") || oc.includes("VENTILADOR LIGADO") || oc.includes("LUZ ACESA")) {
@@ -1921,7 +1902,7 @@ function gerarWorkbookExcel(listaDados) {
     ];
     XLSX.utils.book_append_sheet(workbook, wsAuditoria, "Auditoria");
 
-    // 2. Aba Adicional: "Ronda" (Área, Localização, Tipo, KW, observações) -> observações contêm exclusivamente a Descrição
+    // 2. Aba Adicional: "Ronda" (Área, Localização, Tipo, KW, observações)
     const dadosRonda = listaDados.map(r => {
         return {
             "Área": r.area || "",
