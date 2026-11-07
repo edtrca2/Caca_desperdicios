@@ -20,419 +20,87 @@
 
     <style>
         :root {
-            --primary: #0056b3;
-            --bg: #e9ecef;
-            --card: #ffffff;
-            --text: #333333;
-            --danger: #dc3545;
-            --success: #28a745;
-            --warning: #ffc107;
-            --warning-text: #212529;
-            --info: #17a2b8;
-            --purple: #6f42c1;
-            --revisado: #e8f5e9;
-            --duplicado: #fff5f5;
+            --primary: #0056b3; --bg: #e9ecef; --card: #ffffff; --text: #333333;
+            --danger: #dc3545; --success: #28a745; --warning: #ffc107; --warning-text: #212529;
+            --info: #17a2b8; --purple: #6f42c1; --revisado: #e8f5e9; --duplicado: #fff5f5;
         }
-
         * { box-sizing: border-box; }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100dvh;
-            overflow: hidden;
+            background-color: var(--bg); color: var(--text); margin: 0; padding: 0;
+            display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
         }
-
         .top-section {
-            flex: none;
-            background-color: var(--card);
-            padding: 8px 12px;
-            border-bottom: 2px solid #222;
-            z-index: 10;
-            max-height: 56dvh;
-            overflow-y: auto;
+            flex: none; background-color: var(--card); padding: 8px 12px; border-bottom: 2px solid #222;
+            z-index: 10; max-height: 56dvh; overflow-y: auto;
         }
-
-        .top-header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .app-title-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .app-logo-img {
-            width: 34px;
-            height: 34px;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-        }
-
-        .top-header-bar h2 {
-            color: var(--primary);
-            margin: 0;
-            font-size: 15px;
-        }
-
-        .btn-toggle-form {
-            width: auto;
-            height: 28px;
-            padding: 0 10px;
-            font-size: 11px;
-            background-color: #6c757d;
-        }
-
-        .center-section {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            background-color: var(--bg);
-        }
-
+        .top-header-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .app-title-container { display: flex; align-items: center; gap: 8px; }
+        .app-logo-img { width: 34px; height: 34px; object-fit: cover; border-radius: 50%; border: 2px solid var(--primary); }
+        .top-header-bar h2 { color: var(--primary); margin: 0; font-size: 15px; }
+        .btn-toggle-form { width: auto; height: 28px; padding: 0 10px; font-size: 11px; background-color: #6c757d; }
+        .center-section { flex: 1; overflow-y: auto; padding: 12px; background-color: var(--bg); }
         .bottom-section {
-            flex: none;
-            background-color: var(--card);
-            padding: 8px 12px;
-            border-top: 2px solid #222;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            z-index: 10;
+            flex: none; background-color: var(--card); padding: 8px 12px; border-top: 2px solid #222;
+            display: flex; flex-wrap: wrap; gap: 8px; z-index: 10;
         }
-
-        .bottom-section button {
-            flex: 1 1 calc(50% - 8px);
-            margin: 0;
-            padding: 10px;
-            font-size: 13px;
-            height: 38px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 7px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 2px;
-            font-weight: bold;
-            font-size: 11px;
-            color: #444;
-        }
-
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 13px;
-            background-color: white;
-            height: 34px;
-        }
-
-        .fake-input {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 13px;
-            background-color: #f8f9fa;
-            height: 34px;
-            cursor: pointer;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
+        .bottom-section button { flex: 1 1 calc(50% - 8px); margin: 0; padding: 10px; font-size: 13px; height: 38px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+        label { display: block; margin-bottom: 2px; font-weight: bold; font-size: 11px; color: #444; }
+        input[type="text"], select { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; background-color: white; height: 34px; }
+        .fake-input { width: 100%; padding: 6px 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; background-color: #f8f9fa; height: 34px; cursor: pointer; color: #6c757d; display: flex; align-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+        .radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
         .radio-group input[type="radio"] { display: none; }
-
-        .radio-group .radio-btn {
-            flex: 1 1 calc(25% - 6px);
-            min-width: 75px;
-            padding: 6px 4px;
-            text-align: center;
-            background-color: #f8f9fa;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: bold;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.1;
-            min-height: 34px;
-        }
-
-        .radio-group input[type="radio"]:checked + .radio-btn {
-            background-color: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        button {
-            width: 100%;
-            padding: 8px;
-            border: none;
-            border-radius: 5px;
-            font-size: 13px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            transition: 0.2s;
-        }
-
-        button:hover { opacity: 0.92; }
-        button:disabled { opacity: 0.6; cursor: wait; }
-
-        .btn-primary { background-color: var(--primary); }
-        .btn-success { background-color: var(--success); }
-        .btn-danger { background-color: var(--danger); }
-        .btn-secondary { background-color: #6c757d; }
-        .btn-warning { background-color: var(--warning); color: var(--warning-text); }
-        .btn-info { background-color: var(--info); }
-        .btn-purple { background-color: var(--purple); }
-        .btn-pendente { background-color: #495057; color: white; }
-
-        .header-lista {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-        }
-
+        .radio-group .radio-btn { flex: 1 1 calc(25% - 6px); min-width: 75px; padding: 6px 4px; text-align: center; background-color: #f8f9fa; border: 2px solid #ddd; border-radius: 6px; font-size: 10px; font-weight: bold; color: #666; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1.1; min-height: 34px; }
+        .radio-group input[type="radio"]:checked + .radio-btn { background-color: var(--primary); color: white; border-color: var(--primary); }
+        button { width: 100%; padding: 8px; border: none; border-radius: 5px; font-size: 13px; font-weight: bold; color: white; cursor: pointer; height: 36px; display: flex; align-items: center; justify-content: center; gap: 4px; transition: 0.2s; }
+        button:hover { opacity: 0.92; } button:disabled { opacity: 0.6; cursor: wait; }
+        .btn-primary { background-color: var(--primary); } .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); } .btn-secondary { background-color: #6c757d; }
+        .btn-warning { background-color: var(--warning); color: var(--warning-text); } .btn-info { background-color: var(--info); }
+        .btn-purple { background-color: var(--purple); } .btn-pendente { background-color: #495057; color: white; }
+        .header-lista { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 10px; }
         .header-lista h3 { margin: 0; font-size: 15px; color: #444; }
-
-        .area-header {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin: 14px 0 8px 0;
-            font-size: 13px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .area-header { background-color: var(--primary); color: white; padding: 8px 12px; border-radius: 6px; margin: 14px 0 8px 0; font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .registro-item { background: white; border-radius: 8px; padding: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 5px; border-left: 5px solid #ccc; }
+        .registro-item.revisado { background: var(--revisado); border-left-color: var(--success); }
+        .registro-item.duplicado { border: 2px solid var(--danger); border-left: 6px solid var(--danger); background: var(--duplicado); }
+        .badges-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 3px; }
+        .selo-revisado, .selo-duplicado { padding: 3px 7px; border-radius: 4px; font-size: 10px; font-weight: bold; color: white; }
+        .selo-revisado { background-color: var(--success); } .selo-duplicado { background-color: var(--danger); }
+        .registro-conteudo { display: flex; justify-content: space-between; align-items: flex-start; }
+        .registro-texto { flex: 1; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+        .registro-miniatura, .video-thumbnail-container { width: 55px; height: 55px; object-fit: cover; border-radius: 5px; cursor: pointer; border: 1px solid #ccc; margin-left: 10px; flex-shrink: 0; position: relative; }
+        .video-thumbnail-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+        .video-thumbnail-container .play-icon { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
+        .acoes-item { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+        .acoes-item button { flex: 1 1 auto; margin-top: 0; padding: 5px 8px; font-size: 11px; height: 30px; width: auto; }
+        
+        #camera-modal, #qr-camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-modal, #importar-modal, #midia-modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.92); z-index: 2000; text-align: center; padding: 15px; align-items: center; justify-content: center; overflow-y: auto; 
         }
-
-        .registro-item {
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            margin-bottom: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            border-left: 5px solid #ccc;
-        }
-
-        .registro-item.revisado {
-            background: var(--revisado);
-            border-left-color: var(--success);
-        }
-
-        .registro-item.duplicado {
-            border: 2px solid var(--danger);
-            border-left: 6px solid var(--danger);
-            background: var(--duplicado);
-        }
-
-        .badges-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 3px;
-        }
-
-        .selo-revisado {
-            background-color: var(--success);
-            color: white;
-            padding: 3px 7px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .selo-duplicado {
-            background-color: var(--danger);
-            color: white;
-            padding: 3px 7px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-
-        .registro-conteudo {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .registro-texto {
-            flex: 1;
-            font-size: 13px;
-            line-height: 1.4;
-            overflow-wrap: anywhere;
-        }
-
-        .registro-miniatura {
-            width: 55px;
-            height: 55px;
-            object-fit: cover;
-            border-radius: 5px;
-            cursor: pointer;
-            border: 1px solid #ccc;
-            margin-left: 10px;
-            flex-shrink: 0;
-        }
-
-        .video-thumbnail-container {
-            position: relative;
-            width: 55px;
-            height: 55px;
-            margin-left: 10px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .video-thumbnail-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        .video-thumbnail-container .play-icon {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.45);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .acoes-item {
-            display: flex;
-            gap: 6px;
-            margin-top: 6px;
-            flex-wrap: wrap;
-        }
-
-        .acoes-item button {
-            flex: 1 1 auto;
-            margin-top: 0;
-            padding: 5px 8px;
-            font-size: 11px;
-            height: 30px;
-            width: auto;
-        }
-
-        /* Modais */
-        #camera-modal, #qr-camera-modal, #media-viewer-modal, #descricao-modal, #colar-modal, #exportar-modal, #importar-modal, #midia-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.92);
-            z-index: 2000;
-            text-align: center;
-            padding: 15px;
-            align-items: center;
-            justify-content: center;
-            overflow-y: auto;
-        }
-
         #qr-camera-modal { padding: 0; background: #000; z-index: 5000; }
         #qr-camera-video { width: 100%; height: 100%; object-fit: cover; background: #000; }
-
         .qr-camera-top { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0)); }
         .qr-camera-titulo { color: white; font-size: 18px; font-weight: bold; margin-top: 5px; }
         .qr-camera-status { color: white; font-size: 13px; margin-top: 6px; }
-
-        .qr-moldura {
-            position: absolute; width: 65vw; height: 65vw; max-width: 300px; max-height: 300px;
-            border: 3px solid #00ff66; border-radius: 18px; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 5; box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), 0 0 20px rgba(0,255,102,0.5);
-        }
-
+        .qr-moldura { position: absolute; width: 65vw; height: 65vw; max-width: 300px; max-height: 300px; border: 3px solid #00ff66; border-radius: 18px; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; box-shadow: 0 0 0 9999px rgba(0,0,0,0.25), 0 0 20px rgba(0,255,102,0.5); }
         .qr-linha-leitura { position: absolute; left: 8%; width: 84%; height: 2px; background: #00ff66; top: 50%; z-index: 6; animation: qrLinha 1.7s infinite ease-in-out; box-shadow: 0 0 8px #00ff66; }
-
         @keyframes qrLinha { 0% { transform: translateY(-120px); opacity: 0.3; } 50% { transform: translateY(120px); opacity: 1; } 100% { transform: translateY(-120px); opacity: 0.3; } }
-
         .qr-camera-bottom { position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px 25px 15px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0)); }
         .qr-camera-bottom button { max-width: 400px; margin: 8px auto; height: 44px; }
-
         #qr-canvas { display: none; }
-
         #media-viewer-modal .fechar-btn { position: absolute; top: 15px; right: 20px; font-size: 35px; color: white; cursor: pointer; z-index: 10; }
         #viewer-img, #viewer-video { max-width: 95%; max-height: 80vh; border-radius: 8px; }
         #video-preview { width: 100%; max-height: 60vh; background-color: black; }
-
         .media-preview { display: none; width: auto; max-height: 55px; object-fit: contain; margin-top: 6px; border-radius: 5px; }
-
         .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; max-width: 400px; margin: 10px auto; }
         .modal-botoes button { width: 100%; height: 42px; }
-
         .modal-box { background: white; width: 100%; max-width: 440px; padding: 18px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: left; max-height: 92dvh; overflow-y: auto; }
         .modal-box textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; resize: none; margin-top: 10px; }
         .botoes-menu-modal { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-
-        .secao-export {
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 10px;
-            margin-top: 10px;
-            background: #f8f9fa;
-        }
-
-        .secao-export h4 {
-            margin: 0 0 8px 0;
-            font-size: 12px;
-            color: var(--primary);
-            text-transform: uppercase;
-        }
-
+        .secao-export { border: 1px solid #dee2e6; border-radius: 6px; padding: 10px; margin-top: 10px; background: #f8f9fa; }
+        .secao-export h4 { margin: 0 0 8px 0; font-size: 12px; color: var(--primary); text-transform: uppercase; }
         #container_sub_ocorrencia { background-color: #fdf5f6; padding: 8px; border: 1px dashed var(--danger); border-radius: 5px; }
     </style>
 </head>
@@ -524,17 +192,10 @@
             <div style="grid-column: span 2;">
                 <label>AÇÃO TOMADA:</label>
                 <div class="radio-group">
-                    <input type="radio" id="acao_sem_acao" name="acao" value="SEM AÇÃO">
-                    <label for="acao_sem_acao" class="radio-btn">SEM AÇÃO</label>
-
-                    <input type="radio" id="acao_desligado" name="acao" value="DESLIGADO">
-                    <label for="acao_desligado" class="radio-btn">DESLIGADO</label>
-                    
-                    <input type="radio" id="acao_informado_area" name="acao" value="INFORMADO À ÁREA">
-                    <label for="acao_informado_area" class="radio-btn">INFORMADO À ÁREA</label>
-                    
-                    <input type="radio" id="acao_plantao_sb" name="acao" value="INFORMADO PLANTÃO SB">
-                    <label for="acao_plantao_sb" class="radio-btn">PLANTÃO SB</label>
+                    <input type="radio" id="acao_sem_acao" name="acao" value="SEM AÇÃO"><label for="acao_sem_acao" class="radio-btn">SEM AÇÃO</label>
+                    <input type="radio" id="acao_desligado" name="acao" value="DESLIGADO"><label for="acao_desligado" class="radio-btn">DESLIGADO</label>
+                    <input type="radio" id="acao_informado_area" name="acao" value="INFORMADO À ÁREA"><label for="acao_informado_area" class="radio-btn">INFORMADO À ÁREA</label>
+                    <input type="radio" id="acao_plantao_sb" name="acao" value="INFORMADO PLANTÃO SB"><label for="acao_plantao_sb" class="radio-btn">PLANTÃO SB</label>
                 </div>
             </div>
 
@@ -691,14 +352,14 @@
     </div>
 </div>
 
-<!-- MODAL CÂMERA MÍDIA -->
+<!-- MODAL CÂMERA MÍDIA - COM OS IDs CORRIGIDOS AQUI -->
 <div id="camera-modal">
     <div style="width: 100%; max-width: 600px;">
         <video id="video-preview" autoplay playsinline></video>
         <p id="status-gravacao" style="color:red; font-weight:bold; display:none; margin:5px 0;">🔴 GRAVANDO VÍDEO (MÁX 5S)...</p>
         <div class="modal-botoes">
-            <button type="button" class="btn-success" onclick="capturarFoto()">📷 CAPTURAR FOTO</button>
-            <button type="button" class="btn-warning" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
+            <button type="button" class="btn-success" id="btn-tirar-foto" onclick="capturarFoto()">📷 CAPTURAR FOTO</button>
+            <button type="button" class="btn-warning" id="btn-iniciar-gravacao" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
             <button type="button" class="btn-danger" id="btn-parar-gravacao" style="display:none;" onclick="pararGravacaoVideo()">⏹️ PARAR E SALVAR VÍDEO</button>
             <button type="button" class="btn-danger" onclick="fecharCamera()">❌ CANCELAR</button>
         </div>
@@ -866,9 +527,6 @@ function verificarCombos() {
     }
 }
 
-// ==========================================
-// ORDENAÇÃO POR ÁREA + DETECÇÃO DE DUPLICATAS
-// ==========================================
 function chaveIdentidade(reg) {
     const area = normalizarEspacos(reg.area).toUpperCase();
     const local = normalizarEspacos(reg.local).toUpperCase();
@@ -908,9 +566,6 @@ function processarEOrdenarLista() {
     atualizarLista();
 }
 
-// ==========================================
-// LIMPEZA DE DUPLICADAS (IGNORA AUDITOR E REVISOR)
-// ==========================================
 async function limparDuplicadas() {
     const grupos = new Map();
     registros.forEach(r => {
@@ -947,9 +602,6 @@ async function limparDuplicadas() {
     alert(`✅ Limpeza concluída! ${remover.size} duplicata(s) eliminada(s), preservando os itens revisados.`);
 }
 
-// ==========================================
-// MARCAR COMO REVISADO (COM CONFIRMAÇÃO)
-// ==========================================
 async function marcarComoRevisado(index) {
     let revisor = document.getElementById('nome_revisor').value.trim().toUpperCase();
     if (!revisor) {
@@ -978,9 +630,6 @@ async function marcarComoRevisado(index) {
     processarEOrdenarLista();
 }
 
-// ==========================================
-// LIMPAR DADOS DE REVISÃO (INDIVIDUAL E GERAL)
-// ==========================================
 async function limparRevisaoIndividual(index) {
     const reg = registros[index];
     if (!reg || (!reg.editado && !reg.revisado_em)) return;
@@ -1019,9 +668,6 @@ async function limparDadosRevisao() {
     alert(`✅ Dados de revisão removidos de ${qtdRevisados} registro(s)!`);
 }
 
-// ==========================================
-// LEITOR DE QR CODE
-// ==========================================
 async function abrirLeitorQR() {
     const modal = document.getElementById('qr-camera-modal');
     const video = document.getElementById('qr-camera-video');
@@ -1223,9 +869,6 @@ function preencherCamposViaQR(decodedText) {
     alert(msg);
 }
 
-// ==========================================
-// MODAIS E CÂMERA DE MÍDIA
-// ==========================================
 function abrirModalDescricao() {
     const modal = document.getElementById('descricao-modal');
     const textarea = document.getElementById('descricao-texto');
@@ -1325,16 +968,17 @@ function capturarFoto() {
     document.getElementById('btn-remover-midia').style.display = 'flex';
     fecharCamera();
 }
+// CORREÇÃO: Utiliza o formato automático de vídeo (MediaRecorder(streamDeVideo)) para evitar erro de compatibilidade
 function iniciarGravacaoVideo() {
     pedacosGravados = [];
     if (!window.MediaRecorder) { alert('Gravação de vídeo não é suportada neste navegador.'); return; }
-    const tipos = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
-    const mime = tipos.find(t => MediaRecorder.isTypeSupported?.(t));
-    try { mediaRecorder = new MediaRecorder(streamDeVideo, mime ? { mimeType: mime } : undefined); }
-    catch (e) { alert('Este navegador não oferece formato de gravação compatível.'); return; }
+    try { 
+        mediaRecorder = new MediaRecorder(streamDeVideo); 
+    } catch (e) { alert('Erro ao iniciar a gravação de vídeo.'); return; }
+    
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
     mediaRecorder.onstop = () => {
-        const blob = new Blob(pedacosGravados, { type: mediaRecorder.mimeType || 'video/webm' });
+        const blob = new Blob(pedacosGravados, { type: mediaRecorder.mimeType || 'video/mp4' });
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = () => {
@@ -1460,9 +1104,6 @@ function resetarBotoesAcao() {
     for (let i = 0; i < radios.length; i++) radios[i].checked = false;
 }
 
-// ==========================================
-// SALVAR E EDITAR REGISTROS (POR ID ÚNICO)
-// ==========================================
 async function salvarRegistro() {
     let auditorVal = normalizarEspacos(document.getElementById('auditor').value);
     if (!auditorVal) { alert("⚠️ PREENCHA O NOME DO AUDITOR!"); return; }
@@ -1645,33 +1286,6 @@ function cancelarEdicao() {
     document.getElementById('btn-cancelar-edicao').style.display = 'none';
 }
 
-async function excluirRegistro(index) {
-    if (confirm("❌ EXCLUIR ESTE REGISTRO PERMANENTEMENTE?")) {
-        const regRemovido = registros[index];
-        if (regRemovido && regRemovido.id === idEdicao) cancelarEdicao();
-        registros.splice(index, 1);
-        await salvarMemoria();
-        processarEOrdenarLista();
-    }
-}
-
-async function limparTudo() {
-    if (confirm("🗑️ APAGAR TODOS OS REGISTROS DA TELA E DA MEMÓRIA DO NAVEGADOR?")) {
-        registros = [];
-        if (window.localforage) {
-            await localforage.setItem(STORAGE_KEY, []);
-            await localforage.removeItem('registros_revisor');
-            await localforage.removeItem('registros_caca_desperdicios');
-        }
-        localStorage.removeItem(STORAGE_KEY);
-        cancelarEdicao();
-        processarEOrdenarLista();
-    }
-}
-
-// ==========================================
-// RENDERIZAÇÃO SEGURA E INDEXADA POR ÁREA
-// ==========================================
 function atualizarLista() {
     const lista = document.getElementById('lista-registros');
     document.getElementById('contador').innerText = registros.length;
@@ -1793,9 +1407,6 @@ function atualizarLista() {
     });
 }
 
-// ==========================================
-// FUNÇÕES DE EXPORTAÇÃO (COM ABA "RONDA" FORMATADA)
-// ==========================================
 function getISOWeek(d) {
     let t = new Date(d);
     if (isNaN(t.getTime())) t = new Date();
@@ -1838,15 +1449,6 @@ function atualizarSelectAreasExportacao() {
     });
 }
 
-function limparMetadadosInternos(lista) {
-    return lista.map(r => {
-        const copia = { ...r };
-        delete copia.isDuplicado;
-        return copia;
-    });
-}
-
-// Mapeia o tipo de ocorrência conforme as instruções solicitadas
 function traduzirTipoOcorrencia(ocorrenciaOriginal) {
     const oc = String(ocorrenciaOriginal || "").toUpperCase().trim();
     if (oc.includes("TV LIGADA") || oc.includes("VENTILADOR LIGADO") || oc.includes("LUZ ACESA")) {
@@ -1864,7 +1466,6 @@ function traduzirTipoOcorrencia(ocorrenciaOriginal) {
 function gerarWorkbookExcel(listaDados) {
     const workbook = XLSX.utils.book_new();
 
-    // 1. Aba Principal: "Auditoria"
     const dadosExcel = listaDados.map((r, i) => {
         let tipoMidia = r.video ? "VÍDEO" : (r.foto ? "FOTO" : "NÃO TEM");
         return {
@@ -1891,7 +1492,6 @@ function gerarWorkbookExcel(listaDados) {
     ];
     XLSX.utils.book_append_sheet(workbook, wsAuditoria, "Auditoria");
 
-    // 2. Aba Adicional: "Ronda" (Área, Localização, Tipo, KW, observações)
     const dadosRonda = listaDados.map(r => {
         return {
             "Área": r.area || "",
@@ -1910,6 +1510,7 @@ function gerarWorkbookExcel(listaDados) {
     return workbook;
 }
 
+// CORREÇÃO: PPTX REVISADO A VERDE APLICADA
 function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES") {
     let pptx = new PptxGenJS();
     let kw = obterKWRelatorio(listaDados);
@@ -1944,10 +1545,16 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
         let displayDataHora = reg.data || '';
         if (reg.hora && !displayDataHora.includes(reg.hora)) displayDataHora += ` ÀS ${reg.hora}`;
         
-        let txtRodape = `REGISTRADO POR ${auditorUpper} EM: ${displayDataHora}.`;
+        let arrayRodape = [
+            { text: `REGISTRADO POR ${auditorUpper} EM: ${displayDataHora}. `, options: { color: '444444' } }
+        ];
+
         if (reg.revisado_em) {
             let nomeRev = reg.revisor ? reg.revisor.toUpperCase() : "REVISOR";
-            txtRodape += ` REVISADO POR ${nomeRev} EM ${reg.revisado_em.toUpperCase()}`;
+            arrayRodape.push({ 
+                text: `REVISADO POR ${nomeRev} EM ${reg.revisado_em.toUpperCase()}`, 
+                options: { color: '28a745', bold: true } 
+            });
         }
 
         let cursorY = yBase;
@@ -1965,7 +1572,7 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
         slideAtual.addText("AÇÃO: " + acaoUpper, { x: textX, y: cursorY, w: textW, h: 0.19, fontSize: 10, bold: true, color: '28a745', fit: 'shrink' });
         cursorY += 0.18;
 
-        slideAtual.addText(txtRodape, { x: textX, y: cursorY, w: textW, h: 0.18, fontSize: 8, italic: true, color: '444444', fit: 'shrink' });
+        slideAtual.addText(arrayRodape, { x: textX, y: cursorY, w: textW, h: 0.18, fontSize: 8, italic: true, fit: 'shrink' });
 
         const fotoLimpa = normalizarDataUriMidiaPPTX(reg.foto);
         const videoLimpo = normalizarDataUriMidiaPPTX(reg.video);
@@ -2011,7 +1618,7 @@ function baixarBlob(blob, nomeArquivo) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
-// CORREÇÃO DO CHROME AQUI: Força o tipo de ficheiro PPTX para evitar que faça o download como .ZIP
+// CORREÇÃO: Força o tipo PPTX no Chrome/Android
 async function gerarBlobPPTXSeguro(pptx) {
     let b;
     try {
@@ -2164,9 +1771,6 @@ function prepararListaParaExportacao(lista) {
     return copiaLista;
 }
 
-// ==========================================
-// IMPORTAÇÃO E MESCLAGEM DE JSON
-// ==========================================
 function acionarImportarJSON() {
     fecharModalImportar();
     document.getElementById('input-json').click();
@@ -2207,6 +1811,7 @@ function mesclarImportados(lista, concatenar) {
     return { adicionados, ignorados };
 }
 
+// CORREÇÃO: Importação e pergunto do mesclar JSON APLICADAS
 async function importarJSON(e) {
     const files = e.target.files;
     if (!files?.length) return;
@@ -2232,7 +1837,6 @@ async function importarJSON(e) {
             total += r.adicionados;
             ignorados += r.ignorados;
             
-            // Força a concatenação nos ficheiros seguintes do mesmo upload
             concatenar = true;
         } catch (err) {
             alert(`Não foi possível importar ${file.name}: ${err.message}`);
@@ -2272,6 +1876,5 @@ async function processarColarJSON() {
     }
 }
 </script>
-
 </body>
 </html>
