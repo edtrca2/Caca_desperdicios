@@ -93,7 +93,8 @@
         #media-viewer-modal .fechar-btn { position: absolute; top: 15px; right: 20px; font-size: 35px; color: white; cursor: pointer; z-index: 10; }
         #viewer-img, #viewer-video { max-width: 95%; max-height: 80vh; border-radius: 8px; }
         #video-preview { width: 100%; max-height: 60vh; background-color: black; }
-        .media-preview { display: none; width: auto; max-height: 55px; object-fit: contain; margin-top: 6px; border-radius: 5px; }
+        .media-preview { display: none; width: auto; max-height: 55px; object-fit: contain; margin-top: 6px; border-radius: 5px; cursor: pointer; border: 1px solid #ccc; }
+        .badge-midia-form { display: none; font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; margin-top: 6px; cursor: pointer; }
         .modal-botoes { display: flex; flex-direction: column; gap: 10px; align-items: center; width: 90%; max-width: 400px; margin: 10px auto; }
         .modal-botoes button { width: 100%; height: 42px; }
         .modal-box { background: white; width: 100%; max-width: 440px; padding: 18px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); text-align: left; max-height: 92dvh; overflow-y: auto; }
@@ -210,8 +211,9 @@
             </div>
         </div>
 
-        <div style="display:flex; justify-content:center;">
-            <img id="photo-preview" class="media-preview" src="" alt="Preview">
+        <div style="display:flex; justify-content:center; align-items:center; gap: 8px;">
+            <img id="photo-preview" class="media-preview" src="" alt="Preview" onclick="visualizarMidiaFormulario()" title="Toque para testar a mídia">
+            <span id="badge-midia-form" class="badge-midia-form" onclick="visualizarMidiaFormulario()"></span>
         </div>
 
         <div style="display:flex; gap:8px; margin-top:8px;">
@@ -274,7 +276,7 @@
 <!-- MODAL MÍDIA -->
 <div id="midia-modal">
     <div class="modal-box" style="text-align:center;">
-        <h3 style="margin-top:0; color:var(--primary);">ADICIONAR MÍDIA</h3>
+        <h3 style="margin-top:0; color:var(--primary);">ADICIONAR / SUBSTITUIR MÍDIA</h3>
         <p style="margin:0; font-size:13px; color:#666;">ESCOLHA A ORIGEM DA FOTO OU VÍDEO:</p>
         <div class="botoes-menu-modal">
             <button type="button" class="btn-success" onclick="iniciarCamera('foto')">📷 TIRAR FOTO</button>
@@ -352,16 +354,16 @@
     </div>
 </div>
 
-<!-- MODAL CÂMERA MÍDIA - COM OS IDs CORRIGIDOS E LÓGICA REFORÇADA -->
+<!-- MODAL CÂMERA MÍDIA -->
 <div id="camera-modal">
     <div style="width: 100%; max-width: 600px;">
         <video id="video-preview" autoplay playsinline></video>
-        <p id="status-gravacao" style="color:red; font-weight:bold; display:none; margin:5px 0;">🔴 GRAVANDO VÍDEO (MÁX 5S)...</p>
+        <p id="status-gravacao" style="color:#ff4d4d; font-weight:bold; display:none; margin:8px 0; font-size:14px;">🔴 GRAVANDO VÍDEO (MÁX 5S)...</p>
         <div class="modal-botoes">
             <button type="button" class="btn-success" id="btn-tirar-foto" onclick="capturarFoto()">📷 CAPTURAR FOTO</button>
-            <button type="button" class="btn-warning" id="btn-iniciar-gravacao" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 GRAVAR VÍDEO</button>
+            <button type="button" class="btn-warning" id="btn-iniciar-gravacao" style="color:var(--warning-text);" onclick="iniciarGravacaoVideo()">🎥 INICIAR GRAVAÇÃO</button>
             <button type="button" class="btn-danger" id="btn-parar-gravacao" style="display:none;" onclick="pararGravacaoVideo()">⏹️ PARAR E SALVAR VÍDEO</button>
-            <button type="button" class="btn-danger" onclick="fecharCamera()">❌ CANCELAR</button>
+            <button type="button" class="btn-secondary" onclick="fecharCamera()">❌ CANCELAR</button>
         </div>
         <canvas id="canvas" style="display:none;"></canvas>
     </div>
@@ -371,7 +373,7 @@
 <div id="media-viewer-modal">
     <span class="fechar-btn" onclick="fecharViewerMidia()">&times;</span>
     <img id="viewer-img" style="display:none;">
-    <video id="viewer-video" controls style="display:none;"></video>
+    <video id="viewer-video" controls playsinline style="display:none;"></video>
 </div>
 
 <script>
@@ -379,6 +381,7 @@ const STORAGE_KEY = 'registros_caca_desperdicios_unificado';
 let streamDeVideo = null;
 let streamQR = null;
 let mediaRecorder = null;
+let timerGravacao = null;
 let pedacosGravados = [];
 let registros = [];
 let idEdicao = null;
@@ -453,6 +456,7 @@ function normalizarEspacos(str) {
     return String(str == null ? '' : str).replace(/\s+/g, ' ').trim();
 }
 
+// CORREÇÃO CRÍTICA: Aceita cabeçalhos de vídeo com múltiplos parâmetros (ex: data:video/webm;codecs=vp8;base64,)
 function normalizarRegistro(r) {
     const x = (r && typeof r === 'object' && !Array.isArray(r)) ? { ...r } : {};
     x.id = String(x.id || gerarIdRegistro());
@@ -462,9 +466,8 @@ function normalizarRegistro(r) {
     for (const k of ['auditor','area','local','ocorrencia','interruptor','descricao','acao','revisor']) {
         x[k] = x[k].toUpperCase();
     }
-    const dataUriMidia = /^data:(?:image|video)\/[a-z0-9.+-]+(?:;[a-z0-9._=+-]+)*;base64,/i;
-    x.foto = (typeof x.foto === 'string' && dataUriMidia.test(x.foto)) ? x.foto : '';
-    x.video = (typeof x.video === 'string' && dataUriMidia.test(x.video)) ? x.video : '';
+    x.foto = (typeof x.foto === 'string' && x.foto.startsWith('data:image/')) ? x.foto : '';
+    x.video = (typeof x.video === 'string' && x.video.startsWith('data:video/')) ? x.video : '';
     x.editado = Boolean(x.revisado_em || x.editado);
     delete x.isDuplicado;
     return x;
@@ -476,7 +479,9 @@ async function salvarMemoria() {
         if (window.localforage) {
             await localforage.setItem(STORAGE_KEY, registros);
         }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
+        } catch (_) {}
     } catch (e) {
         console.error("Erro ao salvar:", e);
     }
@@ -666,6 +671,31 @@ async function limparDadosRevisao() {
     await salvarMemoria();
     processarEOrdenarLista();
     alert(`✅ Dados de revisão removidos de ${qtdRevisados} registro(s)!`);
+}
+
+async function excluirRegistro(index) {
+    const reg = registros[index];
+    if (!reg) return;
+    if (confirm(`❌ EXCLUIR O REGISTRO #${index + 1} (${reg.local || ''}) PERMANENTEMENTE?`)) {
+        if (reg.id === idEdicao) cancelarEdicao();
+        registros.splice(index, 1);
+        await salvarMemoria();
+        processarEOrdenarLista();
+    }
+}
+
+async function limparTudo() {
+    if (confirm("🗑️ APAGAR TODOS OS REGISTROS DA TELA E DA MEMÓRIA DO NAVEGADOR?")) {
+        registros = [];
+        if (window.localforage) {
+            await localforage.setItem(STORAGE_KEY, []);
+            await localforage.removeItem('registros_revisor');
+            await localforage.removeItem('registros_caca_desperdicios');
+        }
+        localStorage.removeItem(STORAGE_KEY);
+        cancelarEdicao();
+        processarEOrdenarLista();
+    }
 }
 
 async function abrirLeitorQR() {
@@ -921,14 +951,66 @@ function preencherCampoDescricao(texto) {
     display.style.color = valorLimpo !== '' ? '#333' : '#6c757d';
 }
 
-// CORREÇÃO: Limpa e oculta visualmente a imagem imediatamente ao clicar na lixeira
+// Atualiza o preview no formulário indicando claramente se é FOTO ou VÍDEO
+function atualizarPreviewFormulario() {
+    const foto = document.getElementById('foto_base64').value;
+    const video = document.getElementById('video_base64').value;
+    const preview = document.getElementById('photo-preview');
+    const badge = document.getElementById('badge-midia-form');
+    const btnRemover = document.getElementById('btn-remover-midia');
+    const placeholderThumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
+
+    if (video) {
+        preview.src = foto || placeholderThumb;
+        preview.style.display = 'block';
+        badge.innerText = '🎬 VÍDEO GRAVADO (TOQUE P/ VER)';
+        badge.style.backgroundColor = '#dc3545';
+        badge.style.color = '#fff';
+        badge.style.display = 'inline-block';
+        btnRemover.style.display = 'flex';
+    } else if (foto) {
+        preview.src = foto;
+        preview.style.display = 'block';
+        badge.innerText = '📷 FOTO ANEXADA (TOQUE P/ VER)';
+        badge.style.backgroundColor = '#28a745';
+        badge.style.color = '#fff';
+        badge.style.display = 'inline-block';
+        btnRemover.style.display = 'flex';
+    } else {
+        preview.removeAttribute('src');
+        preview.style.display = 'none';
+        badge.style.display = 'none';
+        btnRemover.style.display = 'none';
+    }
+}
+
+function visualizarMidiaFormulario() {
+    const foto = document.getElementById('foto_base64').value;
+    const video = document.getElementById('video_base64').value;
+    if (!foto && !video) return;
+
+    const modal = document.getElementById('media-viewer-modal');
+    const img = document.getElementById('viewer-img');
+    const vid = document.getElementById('viewer-video');
+
+    if (video) {
+        vid.src = video;
+        vid.style.display = 'inline-block';
+        img.style.display = 'none';
+        modal.style.display = 'flex';
+        setTimeout(() => vid.play().catch(()=>{}), 200);
+    } else if (foto) {
+        img.src = foto;
+        img.style.display = 'inline-block';
+        vid.style.display = 'none';
+        modal.style.display = 'flex';
+    }
+}
+
 function removerMidiaFormulario() {
     document.getElementById('foto_base64').value = '';
     document.getElementById('video_base64').value = '';
-    const preview = document.getElementById('photo-preview');
-    preview.src = '';
-    preview.style.display = 'none';
-    document.getElementById('btn-remover-midia').style.display = 'none';
+    atualizarPreviewFormulario();
 }
 
 async function iniciarCamera(modo) {
@@ -936,12 +1018,28 @@ async function iniciarCamera(modo) {
     const modal = document.getElementById('camera-modal');
     const video = document.getElementById('video-preview');
     modal.style.display = 'flex';
-    document.getElementById('btn-tirar-foto').style.display = modo === 'foto' ? 'block' : 'none';
-    document.getElementById('btn-iniciar-gravacao').style.display = modo === 'video' ? 'block' : 'none';
+    document.getElementById('btn-tirar-foto').style.display = modo === 'foto' ? 'flex' : 'none';
+    document.getElementById('btn-iniciar-gravacao').style.display = modo === 'video' ? 'flex' : 'none';
     document.getElementById('btn-parar-gravacao').style.display = 'none';
     document.getElementById('status-gravacao').style.display = 'none';
+
     try {
-        streamDeVideo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: modo === 'video' });
+        try {
+            streamDeVideo = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: 'environment' } },
+                audio: modo === 'video'
+            });
+        } catch (errAudio) {
+            // Se o usuário bloqueou o microfone, grava o vídeo sem áudio em vez de falhar
+            if (modo === 'video') {
+                streamDeVideo = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } },
+                    audio: false
+                });
+            } else {
+                throw errAudio;
+            }
+        }
         video.srcObject = streamDeVideo;
         video.muted = true;
         await video.play();
@@ -950,13 +1048,29 @@ async function iniciarCamera(modo) {
         fecharCamera();
     }
 }
-function fecharCamera() {
-    document.getElementById('camera-modal').style.display = 'none';
-    if (streamDeVideo) { streamDeVideo.getTracks().forEach(track => track.stop()); streamDeVideo = null; }
+
+function encerrarStreamCamera() {
+    if (timerGravacao) {
+        clearTimeout(timerGravacao);
+        timerGravacao = null;
+    }
+    if (streamDeVideo) {
+        streamDeVideo.getTracks().forEach(track => track.stop());
+        streamDeVideo = null;
+    }
     const pv = document.getElementById('video-preview');
     if (pv) pv.srcObject = null;
-    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
 }
+
+function fecharCamera() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.onstop = null;
+        try { mediaRecorder.stop(); } catch (_) {}
+    }
+    encerrarStreamCamera();
+    document.getElementById('camera-modal').style.display = 'none';
+}
+
 function capturarFoto() {
     const video = document.getElementById('video-preview');
     const canvas = document.getElementById('canvas');
@@ -964,76 +1078,118 @@ function capturarFoto() {
     canvas.height = video.videoHeight || 720;
     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
     const fotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
+
     document.getElementById('foto_base64').value = fotoBase64;
     document.getElementById('video_base64').value = '';
-    document.getElementById('photo-preview').src = fotoBase64;
-    document.getElementById('photo-preview').style.display = 'block';
-    document.getElementById('btn-remover-midia').style.display = 'flex';
+    atualizarPreviewFormulario();
     fecharCamera();
 }
 
-// CORREÇÃO: Utiliza o formato nativo suportado pelo telemóvel e "timeslice" de 250ms para evitar ficheiros corrompidos
+// CORREÇÃO CRÍTICA: Captura a capa no início e espera o vídeo finalizar antes de desligar a câmera
 function iniciarGravacaoVideo() {
     pedacosGravados = [];
     if (!window.MediaRecorder) { alert('Gravação de vídeo não é suportada neste navegador.'); return; }
-    
-    let opcoes = {};
-    const tipos = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+    if (!streamDeVideo) { alert('Câmera não inicializada.'); return; }
+
+    // Limpa vídeo/foto anterior para garantir substituição limpa ao editar
+    document.getElementById('video_base64').value = '';
+    document.getElementById('foto_base64').value = '';
+
+    // Captura o frame de capa no início da gravação enquanto a câmera está ativa
+    try {
+        const video = document.getElementById('video-preview');
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
+    } catch (_) {}
+
+    let opcoes = undefined;
+    const tipos = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
     for (const t of tipos) {
-        if (MediaRecorder.isTypeSupported(t)) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
             opcoes = { mimeType: t };
             break;
         }
     }
 
-    try { 
-        mediaRecorder = new MediaRecorder(streamDeVideo, Object.keys(opcoes).length > 0 ? opcoes : undefined); 
-    } catch (e) { 
+    try {
+        mediaRecorder = opcoes ? new MediaRecorder(streamDeVideo, opcoes) : new MediaRecorder(streamDeVideo);
+    } catch (e) {
         try {
             mediaRecorder = new MediaRecorder(streamDeVideo);
         } catch (e2) {
-            alert('Erro ao iniciar a gravação de vídeo.'); 
-            return; 
+            alert('Erro ao iniciar gravação: ' + e2.message);
+            return;
         }
     }
-    
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
+
+    mediaRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) pedacosGravados.push(e.data);
+    };
+
     mediaRecorder.onstop = () => {
-        const tipoFinal = mediaRecorder.mimeType || 'video/webm';
+        const tipoFinal = (mediaRecorder && mediaRecorder.mimeType) || (pedacosGravados[0] && pedacosGravados[0].type) || 'video/webm';
         const blob = new Blob(pedacosGravados, { type: tipoFinal });
+
+        encerrarStreamCamera();
+        document.getElementById('camera-modal').style.display = 'none';
+
+        if (blob.size === 0) {
+            alert('⚠️ O vídeo ficou vazio. Tente gravar por pelo menos 2 segundos.');
+            return;
+        }
+
         const reader = new FileReader();
-        reader.readAsDataURL(blob);
         reader.onloadend = () => {
             document.getElementById('video_base64').value = reader.result;
-            document.getElementById('photo-preview').src = document.getElementById('foto_base64').value;
-            document.getElementById('photo-preview').style.display = 'block';
-            document.getElementById('btn-remover-midia').style.display = 'flex';
+            atualizarPreviewFormulario();
         };
+        reader.readAsDataURL(blob);
     };
-    mediaRecorder.start(250); 
+
+    mediaRecorder.start(200);
     document.getElementById('btn-iniciar-gravacao').style.display = 'none';
     document.getElementById('btn-parar-gravacao').style.display = 'flex';
     document.getElementById('status-gravacao').style.display = 'block';
-    setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') pararGravacaoVideo(); }, 5000);
+
+    if (timerGravacao) clearTimeout(timerGravacao);
+    timerGravacao = setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            pararGravacaoVideo();
+        }
+    }, 5000);
 }
 
 function pararGravacaoVideo() {
+    if (timerGravacao) {
+        clearTimeout(timerGravacao);
+        timerGravacao = null;
+    }
     if (mediaRecorder && mediaRecorder.state === 'recording') {
         try {
             const video = document.getElementById('video-preview');
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 720;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-            document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
-        } catch(e) {}
+            if (video && video.videoWidth) {
+                const canvas = document.getElementById('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                document.getElementById('foto_base64').value = canvas.toDataURL('image/jpeg', 0.5);
+            }
+        } catch (_) {}
+        // Apenas dá o stop(); o fechamento da câmera acontece dentro do onstop após salvar os dados!
         mediaRecorder.stop();
+    } else {
+        fecharCamera();
     }
-    fecharCamera();
 }
+
 function acionarGaleria() {
     fecharModalMidia();
     document.getElementById('input-galeria').click();
 }
+
 function processarMidiaGaleria(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1052,9 +1208,7 @@ function processarMidiaGaleria(event) {
                 const reduzida = canvas.toDataURL('image/jpeg', 0.65);
                 document.getElementById('foto_base64').value = reduzida;
                 document.getElementById('video_base64').value = '';
-                document.getElementById('photo-preview').src = reduzida;
-                document.getElementById('photo-preview').style.display = 'block';
-                document.getElementById('btn-remover-midia').style.display = 'flex';
+                atualizarPreviewFormulario();
             };
             img.src = result;
         } else if (file.type.startsWith('video/')) {
@@ -1065,12 +1219,13 @@ function processarMidiaGaleria(event) {
     reader.readAsDataURL(file);
     event.target.value = '';
 }
+
 function validarVideoGaleria(videoDataUrl) {
     const v = document.createElement('video');
     v.preload = 'metadata';
     v.src = videoDataUrl;
     v.onloadedmetadata = () => {
-        if (Number.isFinite(v.duration) && v.duration > 6.0) {
+        if (Number.isFinite(v.duration) && v.duration > 6.5) {
             alert('O vídeo da galeria deve ter até 5 segundos.');
             v.removeAttribute('src');
             v.load();
@@ -1081,16 +1236,15 @@ function validarVideoGaleria(videoDataUrl) {
     };
     v.onerror = () => alert('Não foi possível ler esse vídeo. Tente MP4 ou WebM compatível.');
 }
+
 function extrairFrameVideo(videoDataUrl) {
     const video = document.createElement('video');
     video.src = videoDataUrl; video.muted = true; video.playsInline = true;
-    video.onloadeddata = () => { video.currentTime = Math.min(1, Math.max(0, (video.duration || 1) / 2)); };
+    video.onloadeddata = () => { video.currentTime = Math.min(0.5, Math.max(0, (video.duration || 1) / 2)); };
     video.onerror = () => {
         let thumb = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzQzYTQwIi8+PC9zdmc+';
         document.getElementById('foto_base64').value = thumb;
-        document.getElementById('photo-preview').src = thumb;
-        document.getElementById('photo-preview').style.display = 'block';
-        document.getElementById('btn-remover-midia').style.display = 'flex';
+        atualizarPreviewFormulario();
     };
     video.onseeked = () => {
         const canvas = document.createElement('canvas');
@@ -1098,11 +1252,10 @@ function extrairFrameVideo(videoDataUrl) {
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
         const frameBase64 = canvas.toDataURL('image/jpeg', 0.6);
         document.getElementById('foto_base64').value = frameBase64;
-        document.getElementById('photo-preview').src = frameBase64;
-        document.getElementById('photo-preview').style.display = 'block';
-        document.getElementById('btn-remover-midia').style.display = 'flex';
+        atualizarPreviewFormulario();
     };
 }
+
 function abrirViewerMidia(index) {
     const reg = registros[index];
     if (!reg) return;
@@ -1110,18 +1263,27 @@ function abrirViewerMidia(index) {
     const img = document.getElementById('viewer-img');
     const video = document.getElementById('viewer-video');
     if (reg.video) {
-        video.src = reg.video; video.style.display = 'inline-block'; img.style.display = 'none';
-        setTimeout(() => video.play(), 200);
+        video.src = reg.video;
+        video.style.display = 'inline-block';
+        img.style.display = 'none';
+        modal.style.display = 'flex';
+        setTimeout(() => video.play().catch(()=>{}), 200);
     } else if (reg.foto) {
-        img.src = reg.foto; img.style.display = 'inline-block'; video.style.display = 'none';
+        img.src = reg.foto;
+        img.style.display = 'inline-block';
+        video.style.display = 'none';
+        modal.style.display = 'flex';
     }
-    modal.style.display = 'flex';
 }
+
 function fecharViewerMidia() {
     document.getElementById('media-viewer-modal').style.display = 'none';
     const v = document.getElementById('viewer-video');
-    v.pause(); v.src = '';
+    v.pause();
+    v.removeAttribute('src');
+    v.load();
 }
+
 function resetarBotoesAcao() {
     let radios = document.getElementsByName('acao');
     for (let i = 0; i < radios.length; i++) radios[i].checked = false;
@@ -1279,16 +1441,7 @@ function editarRegistro(index) {
 
     document.getElementById('foto_base64').value = reg.foto || '';
     document.getElementById('video_base64').value = reg.video || '';
-
-    const previewFoto = document.getElementById('photo-preview');
-    if (reg.foto) {
-        previewFoto.src = reg.foto;
-        previewFoto.style.display = 'block';
-        document.getElementById('btn-remover-midia').style.display = 'flex';
-    } else {
-        previewFoto.style.display = 'none';
-        document.getElementById('btn-remover-midia').style.display = 'none';
-    }
+    atualizarPreviewFormulario();
 
     document.getElementById('btn-salvar').innerText = "💾 SALVAR ALTERAÇÕES";
     document.getElementById('btn-cancelar-edicao').style.display = 'block';
@@ -1396,7 +1549,6 @@ function atualizarLista() {
             const play = el('div', 'play-icon', '▶');
             wrap.append(img, play);
             wrap.addEventListener('click', () => abrirViewerMidia(index));
-            wrap.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); abrirViewerMidia(index); } });
             conteudo.append(wrap);
         } else if (reg.foto) {
             const img = el('img', 'registro-miniatura');
@@ -1626,7 +1778,7 @@ function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES
 
 function normalizarDataUriMidiaPPTX(dataUri) {
     if (!dataUri || typeof dataUri !== 'string') return '';
-    return dataUri.replace(/^data:(image|video)\/([a-z0-9.+-]+)(?:;[^;]+)*;base64,/i, 'data:$1/$2;base64,');
+    return dataUri.replace(/^data:(image|video)\/([a-z0-9.+-]+)(?:;[^,]+)*;base64,/i, 'data:$1/$2;base64,');
 }
 
 function baixarBlob(blob, nomeArquivo) {
