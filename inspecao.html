@@ -352,7 +352,7 @@
     </div>
 </div>
 
-<!-- MODAL CÂMERA MÍDIA - COM OS IDs CORRIGIDOS AQUI -->
+<!-- MODAL CÂMERA MÍDIA - COM OS IDs CORRIGIDOS E LÓGICA REFORÇADA -->
 <div id="camera-modal">
     <div style="width: 100%; max-width: 600px;">
         <video id="video-preview" autoplay playsinline></video>
@@ -921,10 +921,13 @@ function preencherCampoDescricao(texto) {
     display.style.color = valorLimpo !== '' ? '#333' : '#6c757d';
 }
 
+// CORREÇÃO: Limpa e oculta visualmente a imagem imediatamente ao clicar na lixeira
 function removerMidiaFormulario() {
     document.getElementById('foto_base64').value = '';
     document.getElementById('video_base64').value = '';
-    document.getElementById('photo-preview').style.display = 'none';
+    const preview = document.getElementById('photo-preview');
+    preview.src = '';
+    preview.style.display = 'none';
     document.getElementById('btn-remover-midia').style.display = 'none';
 }
 
@@ -933,8 +936,8 @@ async function iniciarCamera(modo) {
     const modal = document.getElementById('camera-modal');
     const video = document.getElementById('video-preview');
     modal.style.display = 'flex';
-    document.getElementById('btn-tirar-foto').style.display = modo === 'foto' ? 'flex' : 'none';
-    document.getElementById('btn-iniciar-gravacao').style.display = modo === 'video' ? 'flex' : 'none';
+    document.getElementById('btn-tirar-foto').style.display = modo === 'foto' ? 'block' : 'none';
+    document.getElementById('btn-iniciar-gravacao').style.display = modo === 'video' ? 'block' : 'none';
     document.getElementById('btn-parar-gravacao').style.display = 'none';
     document.getElementById('status-gravacao').style.display = 'none';
     try {
@@ -968,17 +971,36 @@ function capturarFoto() {
     document.getElementById('btn-remover-midia').style.display = 'flex';
     fecharCamera();
 }
-// CORREÇÃO: Utiliza o formato automático de vídeo (MediaRecorder(streamDeVideo)) para evitar erro de compatibilidade
+
+// CORREÇÃO: Utiliza o formato nativo suportado pelo telemóvel e "timeslice" de 250ms para evitar ficheiros corrompidos
 function iniciarGravacaoVideo() {
     pedacosGravados = [];
     if (!window.MediaRecorder) { alert('Gravação de vídeo não é suportada neste navegador.'); return; }
+    
+    let opcoes = {};
+    const tipos = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+    for (const t of tipos) {
+        if (MediaRecorder.isTypeSupported(t)) {
+            opcoes = { mimeType: t };
+            break;
+        }
+    }
+
     try { 
-        mediaRecorder = new MediaRecorder(streamDeVideo); 
-    } catch (e) { alert('Erro ao iniciar a gravação de vídeo.'); return; }
+        mediaRecorder = new MediaRecorder(streamDeVideo, Object.keys(opcoes).length > 0 ? opcoes : undefined); 
+    } catch (e) { 
+        try {
+            mediaRecorder = new MediaRecorder(streamDeVideo);
+        } catch (e2) {
+            alert('Erro ao iniciar a gravação de vídeo.'); 
+            return; 
+        }
+    }
     
     mediaRecorder.ondataavailable = e => { if (e.data.size > 0) pedacosGravados.push(e.data); };
     mediaRecorder.onstop = () => {
-        const blob = new Blob(pedacosGravados, { type: mediaRecorder.mimeType || 'video/mp4' });
+        const tipoFinal = mediaRecorder.mimeType || 'video/webm';
+        const blob = new Blob(pedacosGravados, { type: tipoFinal });
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         reader.onloadend = () => {
@@ -988,12 +1010,13 @@ function iniciarGravacaoVideo() {
             document.getElementById('btn-remover-midia').style.display = 'flex';
         };
     };
-    mediaRecorder.start();
+    mediaRecorder.start(250); 
     document.getElementById('btn-iniciar-gravacao').style.display = 'none';
     document.getElementById('btn-parar-gravacao').style.display = 'flex';
     document.getElementById('status-gravacao').style.display = 'block';
     setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') pararGravacaoVideo(); }, 5000);
 }
+
 function pararGravacaoVideo() {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
         try {
@@ -1510,7 +1533,6 @@ function gerarWorkbookExcel(listaDados) {
     return workbook;
 }
 
-// CORREÇÃO: PPTX REVISADO A VERDE APLICADA
 function construirObjetoPPTX(listaDados, sufixoTitulo = "DESPERDÍCIOS UTILITIES") {
     let pptx = new PptxGenJS();
     let kw = obterKWRelatorio(listaDados);
@@ -1618,7 +1640,6 @@ function baixarBlob(blob, nomeArquivo) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
-// CORREÇÃO: Força o tipo PPTX no Chrome/Android
 async function gerarBlobPPTXSeguro(pptx) {
     let b;
     try {
@@ -1811,7 +1832,6 @@ function mesclarImportados(lista, concatenar) {
     return { adicionados, ignorados };
 }
 
-// CORREÇÃO: Importação e pergunto do mesclar JSON APLICADAS
 async function importarJSON(e) {
     const files = e.target.files;
     if (!files?.length) return;
